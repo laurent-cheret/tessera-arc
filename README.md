@@ -37,8 +37,6 @@ The [Abstraction and Reasoning Corpus (ARC)](https://github.com/fchollet/ARC-AGI
 - Hierarchical perceptual taxonomy
 - Behavioral action logging (cell clicks, tool usage)
 - Export capabilities (JSON/CSV)
-- Anonymous participant tracking
-- Quality control mechanisms
 
 ---
 
@@ -92,7 +90,7 @@ The [Abstraction and Reasoning Corpus (ARC)](https://github.com/fchollet/ARC-AGI
 ### Phase 1: Pre-Solving (3 questions)
 - **Q1:** Hierarchical first impressions (primary category + specific features)
 - **Q2:** Initial pattern hypothesis (10-100 words)
-- **Q4:** Pre-solving confidence (1-5 scale)
+- **Q3:** Pre-solving confidence (1-5 scale)
 
 ### Phase 2: Interactive Solving (automatic logging)
 - Every cell click with coordinates and color changes
@@ -101,13 +99,13 @@ The [Abstraction and Reasoning Corpus (ARC)](https://github.com/fchollet/ARC-AGI
 - Complete temporal sequence
 
 ### Phase 3: Post-Solving (3 questions)
-- **Q3:** What you tried (15-500 words)
-- **Q9:** Strategy revision (binary + explanation)
-- **Q5:** Problem-solving strategy (7 research-backed options)
+- **Q5:** What you tried (15-500 words)
+- **Q6:** Strategy revision (binary + explanation)
+- **Q7:** Problem-solving strategy (7 options)
 
 ### Phase 4: Reflection (2 questions)
-- **Q7:** Difficulty rating (1-5 scale)
-- **Q8:** Challenge factors (conditional, multiple selection)
+- **Q8:** Difficulty rating (1-5 scale)
+- **Q9:** Challenge factors (conditional, multiple selection)
 
 **Total per task:** 500-800 words + 10-50 behavioral actions + metadata
 
