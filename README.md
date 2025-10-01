@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/images/logo.png" alt="Tessera-ARC Logo" width="200"/>
+</p>
+
 # Tessera-ARC
 
 > **Capturing Human Reasoning, One Piece at a Time**
