@@ -4,9 +4,13 @@ import InteractiveGrid from './components/InteractiveGrid';
 import Phase1QuestionsHierarchical from './components/Phase1QuestionsHierarchical';
 import Phase3Questions from './components/Phase3Questions';
 import Phase4Questions from './components/Phase4Questions';
+import LandingPage from './components/LandingPage';
 import './App.css';
 
 function App() {
+  // NEW: Landing page state
+  const [showLanding, setShowLanding] = useState(true);
+  
   const [arcTask, setArcTask] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -33,10 +37,18 @@ function App() {
   // Submission status
   const [submissionStatus, setSubmissionStatus] = useState(null);
 
-  // Initialize participant on app load
+  // MODIFIED: Only initialize participant when they start (not on landing page)
   useEffect(() => {
-    initializeParticipant();
-  }, []);
+    if (!showLanding && !participantId) {
+      initializeParticipant();
+    }
+  }, [showLanding, participantId]);
+
+  // NEW: Handle starting participation from landing page
+  const handleStartParticipation = () => {
+    setShowLanding(false);
+    // Participant will be initialized by the useEffect above
+  };
 
   const initializeParticipant = async () => {
     try {
@@ -110,9 +122,12 @@ function App() {
       });
   };
 
+  // MODIFIED: Only fetch task when not showing landing page
   useEffect(() => {
-    fetchNewTask();
-  }, []);
+    if (!showLanding) {
+      fetchNewTask();
+    }
+  }, [showLanding]);
 
   const handlePhase1Complete = (data) => {
     setPhase1Data(data);
@@ -264,6 +279,12 @@ function App() {
     setCurrentPhase('phase1');
   };
 
+  // NEW: Show landing page first
+  if (showLanding) {
+    return <LandingPage onStartParticipation={handleStartParticipation} />;
+  }
+
+  // Rest of the component remains exactly the same...
   if (loading) {
     return (
       <div className="loading">
