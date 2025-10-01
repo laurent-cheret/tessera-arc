@@ -1,4 +1,3 @@
-```markdown
 # Tessera-ARC
 
 > **Capturing Human Reasoning, One Piece at a Time**
