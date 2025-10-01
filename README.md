@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/logo.png" alt="Tessera-ARC Logo" width="200"/>
+  <img src="docs/images/logo512.png" alt="Tessera-ARC Logo" width="200"/>
 </p>
 
 # Tessera-ARC
