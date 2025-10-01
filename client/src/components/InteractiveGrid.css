@@ -1,0 +1,160 @@
+.interactive-grid-container {
+  margin: 20px 0;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+}
+
+.interactive-grid-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Color Picker */
+.color-picker {
+  text-align: center;
+  padding: 15px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.color-picker h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.color-options {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.color-option {
+  width: 40px;
+  height: 40px;
+  border: 3px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+  border-color: #666;
+}
+
+.color-option.selected {
+  border-color: #0074D9;
+  border-width: 4px;
+  box-shadow: 0 0 10px rgba(0, 116, 217, 0.5);
+}
+
+.selected-color-label {
+  margin: 10px 0 0 0;
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Interactive Grid */
+.interactive-grid {
+  display: inline-block;
+  border: 2px solid #333;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.interactive-row {
+  display: flex;
+}
+
+.interactive-cell {
+  width: 35px;
+  height: 35px;
+  border: 1px solid #999;
+  flex-shrink: 0;
+  transition: opacity 0.1s;
+}
+
+.interactive-cell:hover {
+  opacity: 0.8;
+  border-color: #333;
+  border-width: 2px;
+}
+
+.interactive-cell:active {
+  opacity: 0.6;
+}
+
+/* Tools */
+.grid-tools {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.tool-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: #6c757d;
+  color: white;
+}
+
+.tool-btn:hover {
+  background-color: #5a6268;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.tool-btn:active {
+  transform: translateY(0);
+}
+
+.reset-btn {
+  background-color: #dc3545;
+}
+
+.reset-btn:hover {
+  background-color: #c82333;
+}
+
+.resize-btn {
+  background-color: #17a2b8;
+}
+
+.resize-btn:hover {
+  background-color: #138496;
+}
+
+.grid-info {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.grid-info p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .interactive-cell {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .color-option {
+    width: 35px;
+    height: 35px;
+  }
+}

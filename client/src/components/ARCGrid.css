@@ -1,0 +1,28 @@
+.arc-grid-container {
+    margin: 20px;
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+  
+  .arc-grid {
+    display: inline-block;
+    border: 1px solid #333;
+  }
+  
+  .arc-row {
+    display: flex;
+  }
+  
+  .arc-cell {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #999;
+    flex-shrink: 0;
+  }
+  
+  .arc-grid-container h3 {
+    margin-top: 0;
+    color: #333;
+  }

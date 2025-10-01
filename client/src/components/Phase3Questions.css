@@ -1,0 +1,239 @@
+.phase3-questions {
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.phase3-questions h2 {
+  color: #282c34;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.phase-intro {
+  text-align: center;
+  color: #666;
+  font-size: 15px;
+  margin-bottom: 30px;
+  padding: 15px;
+  background-color: #d1ecf1;
+  border-radius: 8px;
+  border-left: 4px solid #17a2b8;
+}
+
+.question-block {
+  margin-bottom: 40px;
+  padding: 25px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+}
+
+.question-block h3 {
+  color: #495057;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+.question-hint {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.hint-list {
+  margin: 15px 0;
+  padding-left: 20px;
+  color: #666;
+  font-size: 14px;
+}
+
+.hint-list li {
+  margin: 8px 0;
+}
+
+.hint-list strong {
+  color: #495057;
+}
+
+.response-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 15px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  resize: vertical;
+  min-height: 150px;
+  margin-top: 15px;
+}
+
+.response-textarea:focus {
+  border-color: #0074D9;
+  outline: none;
+}
+
+.word-counter {
+  text-align: right;
+  font-size: 13px;
+  color: #666;
+  margin-top: 8px;
+}
+
+.strategy-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.strategy-card {
+  padding: 20px;
+  background-color: white;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.strategy-card:hover {
+  border-color: #0074D9;
+  transform: translateX(5px);
+}
+
+.strategy-card.selected {
+  border-color: #0074D9;
+  border-width: 3px;
+  background-color: #E8F4F8;
+  box-shadow: 0 4px 12px rgba(0, 116, 217, 0.2);
+}
+
+.strategy-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.strategy-emoji {
+  font-size: 24px;
+}
+
+.strategy-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #282c34;
+}
+
+.strategy-description {
+  color: #495057;
+  font-size: 14px;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.strategy-when {
+  color: #666;
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.error-message {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.continue-section {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.continue-btn {
+  background-color: #0074D9;
+  color: white;
+  border: none;
+  padding: 14px 40px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.continue-btn:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 116, 217, 0.3);
+}
+
+@media (max-width: 768px) {
+  .strategy-card {
+    padding: 15px;
+  }
+}
+
+/* Q9: Strategy Revision */
+.revision-options {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.revision-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  background-color: white;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.revision-option:hover {
+  border-color: #0074D9;
+  transform: translateY(-2px);
+}
+
+.revision-option.selected {
+  border-color: #0074D9;
+  border-width: 3px;
+  background-color: #E8F4F8;
+  box-shadow: 0 4px 12px rgba(0, 116, 217, 0.2);
+}
+
+.revision-icon {
+  font-size: 32px;
+  min-width: 50px;
+  text-align: center;
+}
+
+.revision-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #282c34;
+}
+
+.revision-reason-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px dashed #ddd;
+  animation: slideDown 0.3s ease;
+}
+
+.response-textarea.small {
+  min-height: 80px;
+}
+
+@media (max-width: 768px) {
+  .revision-options {
+    flex-direction: column;
+  }
+}
