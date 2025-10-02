@@ -1,0 +1,219 @@
+/* Task Reference Component - Mobile-First */
+.task-reference {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: #ffffff;
+    border: 2px solid #0074D9;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Toggle Button - Large Touch Target */
+  .task-reference-toggle {
+    width: 100%;
+    min-height: 60px;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #0074D9 0%, #0056b3 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s;
+    text-align: left;
+  }
+  
+  .task-reference-toggle:hover {
+    background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 116, 217, 0.3);
+  }
+  
+  .task-reference-toggle:active {
+    transform: translateY(0);
+  }
+  
+  .toggle-icon {
+    font-size: 18px;
+    min-width: 20px;
+    transition: transform 0.3s;
+  }
+  
+  .task-reference-toggle[aria-expanded="true"] .toggle-icon {
+    transform: rotate(0deg);
+  }
+  
+  .toggle-text {
+    flex: 1;
+    font-size: 18px;
+  }
+  
+  .toggle-hint {
+    font-size: 13px;
+    opacity: 0.9;
+    font-weight: 400;
+  }
+  
+  /* Content Area */
+  .task-reference-content {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-top: 2px solid #e9ecef;
+    animation: slideDown 0.3s ease-out;
+  }
+  
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Training Examples - Compact View */
+  .training-examples-compact {
+    margin-bottom: 20px;
+  }
+  
+  .training-examples-compact h4 {
+    margin: 0 0 15px 0;
+    color: #495057;
+    font-size: 16px;
+  }
+  
+  .training-pair-compact {
+    margin-bottom: 15px;
+    padding: 15px;
+    background-color: white;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+  }
+  
+  .pair-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 10px;
+  }
+  
+  .pair-grids {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .pair-grids .arc-grid-container {
+    margin: 0;
+    padding: 10px;
+    flex: 0 0 auto;
+  }
+  
+  .pair-grids .arc-grid-container h3 {
+    font-size: 12px;
+    margin-bottom: 5px;
+  }
+  
+  .pair-grids .arc-cell {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .arrow {
+    font-size: 24px;
+    color: #0074D9;
+    font-weight: bold;
+  }
+  
+  /* User Solution Display */
+  .user-solution-display {
+    padding-top: 20px;
+    border-top: 2px solid #dee2e6;
+  }
+  
+  .user-solution-display h4 {
+    margin: 0 0 15px 0;
+    color: #495057;
+    font-size: 16px;
+  }
+  
+  .solution-with-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .solution-badge {
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  
+  .solution-badge.correct {
+    background-color: #d4edda;
+    color: #155724;
+    border: 2px solid #c3e6cb;
+  }
+  
+  .solution-badge.incorrect {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 2px solid #f5c6cb;
+  }
+  
+  /* Mobile Optimizations */
+  @media (max-width: 768px) {
+    .task-reference-toggle {
+      min-height: 70px;
+      padding: 15px;
+    }
+  
+    .toggle-text {
+      font-size: 16px;
+    }
+  
+    .toggle-hint {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+    }
+  
+    .pair-grids {
+      flex-direction: column;
+    }
+  
+    .arrow {
+      transform: rotate(90deg);
+      font-size: 20px;
+    }
+  }
+  
+  /* Desktop: Side-by-side if space allows */
+  @media (min-width: 1024px) {
+    .pair-grids {
+      justify-content: flex-start;
+    }
+  
+    .training-pair-compact {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+  
+    .pair-label {
+      min-width: 100px;
+      margin-bottom: 0;
+    }
+  }

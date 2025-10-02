@@ -1,15 +1,12 @@
--- ARC Crowdsourcing Platform Database Schema
--- PostgreSQL Version
-
--- Create database (run this separately)
--- CREATE DATABASE arc_crowdsourcing;
+-- ARC Crowdsourcing Platform Database Schema (Simplified)
+-- PostgreSQL Version - Fixed for proper table creation
 
 -- =====================================================
--- Core Tables (Phase 1 Implementation)
+-- Core Tables
 -- =====================================================
 
 -- 1. PARTICIPANTS Table
-CREATE TABLE participants (
+CREATE TABLE IF NOT EXISTS participants (
     -- Primary Key
     participant_id              VARCHAR(50) PRIMARY KEY,
     
@@ -51,8 +48,8 @@ CREATE TABLE participants (
     
     -- Session tracking
     session_id                  VARCHAR(100),
-    ip_address_hash             VARCHAR(64), -- Hashed for privacy
-    user_agent_hash             VARCHAR(64), -- Hashed for privacy
+    ip_address_hash             VARCHAR(64),
+    user_agent_hash             VARCHAR(64),
     
     CONSTRAINT valid_age_range CHECK (age_range IN (
         '18-24', '25-34', '35-44', '45-54', '55-64', '65+'
@@ -60,7 +57,7 @@ CREATE TABLE participants (
 );
 
 -- 2. TASKS Table  
-CREATE TABLE tasks (
+CREATE TABLE IF NOT EXISTS tasks (
     -- Primary Key
     task_id                     VARCHAR(50) PRIMARY KEY,
     
@@ -106,7 +103,7 @@ CREATE TABLE tasks (
 );
 
 -- 3. TASK_ATTEMPTS Table
-CREATE TABLE task_attempts (
+CREATE TABLE IF NOT EXISTS task_attempts (
     -- Primary Key
     attempt_id                  VARCHAR(50) PRIMARY KEY,
     
@@ -139,7 +136,7 @@ CREATE TABLE task_attempts (
 );
 
 -- 4. RESPONSES Table
-CREATE TABLE responses (
+CREATE TABLE IF NOT EXISTS responses (
     -- Primary Key
     response_id                 VARCHAR(50) PRIMARY KEY,
     
@@ -197,7 +194,7 @@ CREATE TABLE responses (
 );
 
 -- 5. ACTION_TRACES Table
-CREATE TABLE action_traces (
+CREATE TABLE IF NOT EXISTS action_traces (
     -- Primary Key
     action_id                   VARCHAR(50) PRIMARY KEY,
     
@@ -238,98 +235,40 @@ CREATE TABLE action_traces (
 -- =====================================================
 
 -- Participants
-CREATE INDEX idx_participants_registration ON participants(registration_date);
-CREATE INDEX idx_participants_source ON participants(platform_source);
-CREATE INDEX idx_participants_completed ON participants(total_tasks_completed);
+CREATE INDEX IF NOT EXISTS idx_participants_registration ON participants(registration_date);
+CREATE INDEX IF NOT EXISTS idx_participants_source ON participants(platform_source);
+CREATE INDEX IF NOT EXISTS idx_participants_completed ON participants(total_tasks_completed);
 
 -- Tasks  
-CREATE INDEX idx_tasks_set ON tasks(task_set);
-CREATE INDEX idx_tasks_difficulty ON tasks(estimated_difficulty);
-CREATE INDEX idx_tasks_validated ON tasks(task_validated);
+CREATE INDEX IF NOT EXISTS idx_tasks_set ON tasks(task_set);
+CREATE INDEX IF NOT EXISTS idx_tasks_difficulty ON tasks(estimated_difficulty);
+CREATE INDEX IF NOT EXISTS idx_tasks_validated ON tasks(task_validated);
 
 -- Task Attempts
-CREATE INDEX idx_attempts_participant ON task_attempts(participant_id);
-CREATE INDEX idx_attempts_task ON task_attempts(task_id);
-CREATE INDEX idx_attempts_correct ON task_attempts(is_correct);
-CREATE INDEX idx_attempts_start_time ON task_attempts(attempt_start_time);
-CREATE INDEX idx_attempts_status ON task_attempts(attempt_status);
+CREATE INDEX IF NOT EXISTS idx_attempts_participant ON task_attempts(participant_id);
+CREATE INDEX IF NOT EXISTS idx_attempts_task ON task_attempts(task_id);
+CREATE INDEX IF NOT EXISTS idx_attempts_correct ON task_attempts(is_correct);
+CREATE INDEX IF NOT EXISTS idx_attempts_start_time ON task_attempts(attempt_start_time);
+CREATE INDEX IF NOT EXISTS idx_attempts_status ON task_attempts(attempt_status);
 
 -- Responses
-CREATE INDEX idx_responses_attempt ON responses(attempt_id);
-CREATE INDEX idx_responses_confidence ON responses(confidence_level);
-CREATE INDEX idx_responses_strategy ON responses(strategy_used);
-CREATE INDEX idx_responses_difficulty ON responses(difficulty_rating);
+CREATE INDEX IF NOT EXISTS idx_responses_attempt ON responses(attempt_id);
+CREATE INDEX IF NOT EXISTS idx_responses_confidence ON responses(confidence_level);
+CREATE INDEX IF NOT EXISTS idx_responses_strategy ON responses(strategy_used);
+CREATE INDEX IF NOT EXISTS idx_responses_difficulty ON responses(difficulty_rating);
 
 -- Action Traces
-CREATE INDEX idx_actions_attempt ON action_traces(attempt_id);
-CREATE INDEX idx_actions_sequence ON action_traces(attempt_id, sequence_number);
-CREATE INDEX idx_actions_type ON action_traces(action_type);
-CREATE INDEX idx_actions_timestamp ON action_traces(timestamp_absolute);
+CREATE INDEX IF NOT EXISTS idx_actions_attempt ON action_traces(attempt_id);
+CREATE INDEX IF NOT EXISTS idx_actions_sequence ON action_traces(attempt_id, sequence_number);
+CREATE INDEX IF NOT EXISTS idx_actions_type ON action_traces(action_type);
+CREATE INDEX IF NOT EXISTS idx_actions_timestamp ON action_traces(timestamp_absolute);
 
 -- =====================================================
--- Functions and Triggers
+-- Simple Views for Common Queries
 -- =====================================================
 
--- Function to generate UUIDs for IDs
-CREATE OR REPLACE FUNCTION generate_id(prefix TEXT)
-RETURNS TEXT AS $$
-BEGIN
-    RETURN prefix || '_' || REPLACE(gen_random_uuid()::TEXT, '-', '');
-END;
-$$ LANGUAGE plpgsql;
-
--- Function to update participant stats
-CREATE OR REPLACE FUNCTION update_participant_stats()
-RETURNS TRIGGER AS $$
-BEGIN
-    UPDATE participants 
-    SET 
-        total_tasks_completed = (
-            SELECT COUNT(*) FROM task_attempts 
-            WHERE participant_id = NEW.participant_id 
-            AND attempt_status = 'completed'
-        ),
-        last_active_date = CURRENT_TIMESTAMP,
-        average_task_duration_sec = (
-            SELECT AVG(duration_seconds) FROM task_attempts 
-            WHERE participant_id = NEW.participant_id 
-            AND duration_seconds IS NOT NULL
-        )
-    WHERE participant_id = NEW.participant_id;
-    
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Trigger to update participant stats when task attempt is completed
-CREATE TRIGGER trigger_update_participant_stats
-    AFTER INSERT OR UPDATE ON task_attempts
-    FOR EACH ROW
-    WHEN (NEW.attempt_status = 'completed')
-    EXECUTE FUNCTION update_participant_stats();
-
--- =====================================================
--- Sample Data Population Functions
--- =====================================================
-
--- Function to populate tasks from ARC dataset
-CREATE OR REPLACE FUNCTION populate_tasks_from_arc()
-RETURNS INTEGER AS $$
-DECLARE
-    task_count INTEGER := 0;
-BEGIN
-    -- This will be called from the Node.js application
-    -- to populate the tasks table with ARC data
-    RETURN task_count;
-END;
-$$ LANGUAGE plpgsql;
-
--- =====================================================
--- Views for Common Queries
--- =====================================================
-
--- View: Complete participant performance
-CREATE VIEW participant_performance AS
+-- View: Participant performance summary
+CREATE OR REPLACE VIEW participant_performance AS
 SELECT 
     p.participant_id,
     p.registration_date,
@@ -345,7 +284,7 @@ LEFT JOIN responses r ON ta.attempt_id = r.attempt_id
 GROUP BY p.participant_id, p.registration_date, p.total_tasks_completed, p.average_task_duration_sec;
 
 -- View: Task difficulty analysis
-CREATE VIEW task_difficulty_analysis AS
+CREATE OR REPLACE VIEW task_difficulty_analysis AS
 SELECT 
     t.task_id,
     t.task_set,
@@ -360,90 +299,3 @@ LEFT JOIN task_attempts ta ON t.task_id = ta.task_id
 LEFT JOIN responses r ON ta.attempt_id = r.attempt_id
 WHERE ta.attempt_status = 'completed'
 GROUP BY t.task_id, t.task_set, t.estimated_difficulty;
-
--- =====================================================
--- Data Quality Checks
--- =====================================================
-
--- Function to check data quality
-CREATE OR REPLACE FUNCTION check_data_quality()
-RETURNS TABLE(
-    check_name TEXT,
-    status TEXT,
-    count INTEGER,
-    description TEXT
-) AS $$
-BEGIN
-    -- Check for incomplete responses
-    RETURN QUERY
-    SELECT 
-        'incomplete_responses'::TEXT,
-        'WARNING'::TEXT,
-        COUNT(*)::INTEGER,
-        'Responses missing required fields'::TEXT
-    FROM responses r
-    WHERE r.initial_hypothesis IS NULL 
-       OR r.transformation_rule_full IS NULL 
-       OR r.confidence_level IS NULL;
-       
-    -- Check for suspiciously fast completions
-    RETURN QUERY
-    SELECT 
-        'fast_completions'::TEXT,
-        'WARNING'::TEXT,
-        COUNT(*)::INTEGER,
-        'Task attempts completed in under 30 seconds'::TEXT
-    FROM task_attempts ta
-    WHERE ta.duration_seconds < 30 AND ta.attempt_status = 'completed';
-    
-    -- Check for participants with high activity
-    RETURN QUERY
-    SELECT 
-        'high_activity_participants'::TEXT,
-        'INFO'::TEXT,
-        COUNT(*)::INTEGER,
-        'Participants with more than 50 completed tasks'::TEXT
-    FROM participants p
-    WHERE p.total_tasks_completed > 50;
-    
-END;
-$$ LANGUAGE plpgsql;
-
--- =====================================================
--- Export Functions
--- =====================================================
-
--- Function to export data for ML training
-CREATE OR REPLACE FUNCTION export_training_data()
-RETURNS TABLE(
-    task_id TEXT,
-    input_grids JSON,
-    ground_truth_output JSON,
-    human_annotations JSON
-) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT 
-        t.task_id::TEXT,
-        t.input_grids,
-        t.ground_truth_output,
-        json_agg(
-            json_build_object(
-                'participant_id', ta.participant_id,
-                'attempt_id', ta.attempt_id,
-                'is_correct', ta.is_correct,
-                'duration_seconds', ta.duration_seconds,
-                'responses', row_to_json(r.*),
-                'action_count', (
-                    SELECT COUNT(*) FROM action_traces at 
-                    WHERE at.attempt_id = ta.attempt_id
-                )
-            )
-        ) as human_annotations
-    FROM tasks t
-    JOIN task_attempts ta ON t.task_id = ta.task_id
-    JOIN responses r ON ta.attempt_id = r.attempt_id
-    WHERE ta.attempt_status = 'completed'
-    GROUP BY t.task_id, t.input_grids, t.ground_truth_output;
-END;
-$$ LANGUAGE plpgsql;

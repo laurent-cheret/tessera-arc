@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ARCGrid from './components/ARCGrid';
 import InteractiveGrid from './components/InteractiveGrid';
 import Phase1QuestionsHierarchical from './components/Phase1QuestionsHierarchical';
 import Phase3Questions from './components/Phase3Questions';
 import Phase4Questions from './components/Phase4Questions';
+import TaskReference from './components/TaskReference';
 import LandingPage from './components/LandingPage';
 import './App.css';
 
 function App() {
-  // NEW: Landing page state
+  // Landing page state
   const [showLanding, setShowLanding] = useState(true);
   
   const [arcTask, setArcTask] = useState(null);
@@ -37,22 +38,31 @@ function App() {
   // Submission status
   const [submissionStatus, setSubmissionStatus] = useState(null);
 
-  // MODIFIED: Only initialize participant when they start (not on landing page)
+  // Ref for main content (for scrolling)
+  const mainContentRef = useRef(null);
+
+  // Auto-scroll function
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  // Initialize participant when they start (not on landing page)
   useEffect(() => {
     if (!showLanding && !participantId) {
       initializeParticipant();
     }
   }, [showLanding, participantId]);
 
-  // NEW: Handle starting participation from landing page
+  // Handle starting participation from landing page
   const handleStartParticipation = () => {
     setShowLanding(false);
-    // Participant will be initialized by the useEffect above
   };
 
   const initializeParticipant = async () => {
     try {
-      // Check if participant ID exists in localStorage (optional)
       let storedParticipantId = localStorage.getItem('arc_participant_id');
       
       const response = await fetch('/api/participants', {
@@ -63,7 +73,7 @@ function App() {
         body: JSON.stringify({
           participantId: storedParticipantId,
           sessionId: generateSessionId(),
-          demographics: {} // Could collect basic demographics here
+          demographics: {}
         }),
       });
       
@@ -72,14 +82,12 @@ function App() {
       if (response.ok) {
         setParticipantId(data.participantId);
         localStorage.setItem('arc_participant_id', data.participantId);
-        console.log(`👤 Participant: ${data.participantId} (${data.status})`);
+        console.log(`Participant: ${data.participantId} (${data.status})`);
       } else {
         console.error('Failed to initialize participant:', data.error);
-        // Continue without participant ID - submissions will still work
       }
     } catch (error) {
       console.error('Error initializing participant:', error);
-      // Continue without participant ID
     }
   };
 
@@ -122,7 +130,7 @@ function App() {
       });
   };
 
-  // MODIFIED: Only fetch task when not showing landing page
+  // Fetch task when not showing landing page
   useEffect(() => {
     if (!showLanding) {
       fetchNewTask();
@@ -132,20 +140,20 @@ function App() {
   const handlePhase1Complete = (data) => {
     setPhase1Data(data);
     setCurrentPhase('solving');
-    setStartTime(Date.now()); // Start timing when they begin solving
+    setStartTime(Date.now());
+    scrollToTop(); // Scroll to top when entering solving phase
     console.log('Phase 1 Complete:', data);
   };
 
   const handlePhase3Complete = (data) => {
     setPhase3Data(data);
     setCurrentPhase('phase4');
+    scrollToTop(); // Scroll to top when entering phase 4
     console.log('Phase 3 Complete:', data);
   };
 
   const handlePhase4Complete = async (data) => {
     setPhase4Data(data);
-    
-    // Compile all data and submit to database
     await submitCompleteResponse(data);
   };
 
@@ -166,24 +174,16 @@ function App() {
         taskType: arcTask.type,
         taskName: arcTask.name,
         
-        // Phase 1: Initial observations (BEFORE solving)
         phase1_initial_observations: phase1Data,
-        
-        // Phase 2: Solving behavior (action logs)
         phase2_solving_process: {
           actionLog: actionLog,
           solutionGrid: userGrid,
           durationSeconds: Math.floor((Date.now() - startTime) / 1000),
           isCorrect: solutionCorrect
         },
-        
-        // Phase 3: Post-solving questions
         phase3_post_solving: phase3Data,
-        
-        // Phase 4: Final reflection
         phase4_reflection: phase4Data,
         
-        // Metadata
         submissionTimestamp: new Date().toISOString(),
         totalTimeSeconds: Math.floor((Date.now() - startTime) / 1000)
       };
@@ -202,13 +202,11 @@ function App() {
       const result = await response.json();
       
       if (response.ok) {
-        console.log('✅ Submission successful:', result);
+        console.log('Submission successful:', result);
         setSubmissionStatus('success');
         
-        // Show success message
-        alert('🎉 Thank you! Your response has been saved to the database.\n\nYour contribution helps advance AI research!');
+        alert('Thank you! Your response has been saved to the database.\n\nYour contribution helps advance AI research!');
         
-        // Auto-load new task after short delay
         setTimeout(() => {
           setCurrentPhase('complete');
           setTimeout(() => {
@@ -217,15 +215,15 @@ function App() {
         }, 1000);
         
       } else {
-        console.error('❌ Submission failed:', result);
+        console.error('Submission failed:', result);
         setSubmissionStatus('error');
-        alert(`❌ Submission failed: ${result.error}\n\nPlease try again or contact support.`);
+        alert(`Submission failed: ${result.error}\n\nPlease try again or contact support.`);
       }
       
     } catch (error) {
-      console.error('❌ Network error during submission:', error);
+      console.error('Network error during submission:', error);
       setSubmissionStatus('error');
-      alert('❌ Network error. Please check your connection and try again.');
+      alert('Network error. Please check your connection and try again.');
     } finally {
       setSubmitting(false);
     }
@@ -246,7 +244,7 @@ function App() {
     if (userGrid.length !== correctOutput.length || 
         userGrid[0].length !== correctOutput[0].length) {
       setSolutionCorrect(false);
-      alert(`❌ Incorrect! Grid size doesn't match.\nYour grid: ${userGrid.length}×${userGrid[0].length}\nExpected: ${correctOutput.length}×${correctOutput[0].length}`);
+      alert(`Incorrect! Grid size doesn't match.\nYour grid: ${userGrid.length}×${userGrid[0].length}\nExpected: ${correctOutput.length}×${correctOutput[0].length}`);
       return;
     }
 
@@ -267,24 +265,25 @@ function App() {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     } else {
-      alert('❌ Not quite right! Keep trying!');
+      alert('Not quite right! Keep trying!');
     }
   };
 
   const proceedToPhase3 = () => {
     setCurrentPhase('phase3');
+    scrollToTop(); // Scroll to top when entering phase 3
   };
 
   const startPhase1 = () => {
     setCurrentPhase('phase1');
+    scrollToTop(); // Scroll to top when entering phase 1
   };
 
-  // NEW: Show landing page first
+  // Show landing page first
   if (showLanding) {
     return <LandingPage onStartParticipation={handleStartParticipation} />;
   }
 
-  // Rest of the component remains exactly the same...
   if (loading) {
     return (
       <div className="loading">
@@ -309,17 +308,17 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-      <img src="/logo192.png" alt="Tessera-ARC Logo" style={{ width: '60px', marginBottom: '10px' }} />
+        <img src="/logo192.png" alt="Tessera-ARC Logo" style={{ width: '60px', marginBottom: '10px' }} />
         <h1>Tessera ARC</h1>
         <p>Capturing human reasoning, one piece at a time</p>
         {participantId && (
           <div className="participant-info">
-            👤 Participant: {participantId.substring(0, 20)}...
+            Participant: {participantId.substring(0, 20)}...
           </div>
         )}
       </header>
 
-      <main className="main-content">
+      <main className="main-content" ref={mainContentRef}>
         {/* Progress Indicator */}
         {currentPhase !== 'complete' && (
           <div className="progress-indicator">
@@ -350,7 +349,26 @@ function App() {
           </div>
         )}
 
-        {/* Task Info - Always show training examples in viewing/phase1 */}
+        {/* Task Reference - Show in solving and phase3 */}
+        {currentPhase === 'solving' && (
+          <TaskReference
+            trainingExamples={arcTask.train}
+            userSolution={null}
+            isCorrect={null}
+            showUserSolution={false}
+          />
+        )}
+
+        {currentPhase === 'phase3' && (
+          <TaskReference
+            trainingExamples={arcTask.train}
+            userSolution={userGrid}
+            isCorrect={solutionCorrect}
+            showUserSolution={true}
+          />
+        )}
+
+        {/* Task Info - Show in viewing/phase1 */}
         {(currentPhase === 'viewing' || currentPhase === 'phase1') && (
           <section className="task-section">
             <div className="task-header">
@@ -390,7 +408,7 @@ function App() {
                   onClick={startPhase1}
                   type="button"
                 >
-                  I'm Ready - Let's Begin! →
+                  I'm Ready - Let's Begin!
                 </button>
               </div>
             )}
@@ -405,7 +423,7 @@ function App() {
         {currentPhase === 'solving' && (
           <>
             <section className="solving-section">
-              <h3>🎯 Now Solve the Test Case</h3>
+              <h3>Now Solve the Test Case</h3>
               <p><strong>Instructions:</strong> Based on the pattern you observed, create the correct output for this test input:</p>
               
               <div className="test-case">
@@ -448,13 +466,13 @@ function App() {
                   onClick={testSolution}
                   type="button"
                 >
-                  🧪 Test Solution
+                  Test Solution
                 </button>
                 {solutionCorrect === true && (
-                  <span className="solution-status correct">✓ Correct!</span>
+                  <span className="solution-status correct">Correct!</span>
                 )}
                 {solutionCorrect === false && (
-                  <span className="solution-status incorrect">✗ Incorrect</span>
+                  <span className="solution-status incorrect">Incorrect</span>
                 )}
               </div>
 
@@ -468,13 +486,13 @@ function App() {
                   onClick={proceedToPhase3}
                   type="button"
                 >
-                  Continue to Next Questions →
+                  Continue to Next Questions
                 </button>
               </div>
 
               <div className="submission-stats">
-                <p>📊 Actions taken: {actionLog.length}</p>
-                <p>⏱️ Time elapsed: {startTime ? Math.floor((Date.now() - startTime) / 1000) : 0}s</p>
+                <p>Actions taken: {actionLog.length}</p>
+                <p>Time elapsed: {startTime ? Math.floor((Date.now() - startTime) / 1000) : 0}s</p>
               </div>
             </section>
           </>
@@ -485,7 +503,7 @@ function App() {
           <Phase3Questions onComplete={handlePhase3Complete} />
         )}
 
-        {/* Phase 4: Final Reflection Questions */}
+        {/* Phase 4: Final Reflection Questions (NO task reference) */}
         {currentPhase === 'phase4' && (
           <Phase4Questions onComplete={handlePhase4Complete} />
         )}
@@ -500,7 +518,7 @@ function App() {
               <p>Loading next task...</p>
               {submissionStatus === 'success' && (
                 <div className="success-details">
-                  ✅ Successfully submitted to database
+                  Successfully submitted to database
                 </div>
               )}
             </div>

@@ -774,7 +774,7 @@
   height: 40px;
   border-radius: 50%;
   background-color: #dee2e6;
-  color: #ffffff;
+  color: #d6dadd;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -947,5 +947,93 @@
   
   .progress-step.completed .step-label {
     color: #68d391;
+  }
+}
+
+
+/* Mobile-First Base Styles */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Make all buttons mobile-friendly */
+button {
+  min-height: 48px;
+  font-size: 16px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Ensure text is readable on mobile */
+body {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Better spacing on mobile */
+.main-content {
+  padding: 15px;
+}
+
+/* Phase sections with better mobile spacing */
+.task-section,
+.solving-section,
+.response-section {
+  padding: 20px 15px;
+}
+
+/* Mobile-optimized progress indicator */
+@media (max-width: 768px) {
+  .progress-indicator {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    justify-content: flex-start;
+    padding: 20px 10px;
+  }
+
+  .progress-step {
+    min-width: 70px;
+  }
+
+  .step-label {
+    font-size: 10px;
+  }
+}
+
+/* Improved button spacing */
+.start-phase1-btn,
+.proceed-btn,
+.continue-btn {
+  min-height: 56px;
+  padding: 16px 24px;
+  font-size: 18px;
+  width: 100%;
+  max-width: 400px;
+}
+
+@media (max-width: 768px) {
+  .start-phase1-btn,
+  .proceed-btn,
+  .continue-btn {
+    width: 100%;
+  }
+}
+
+/* Better touch targets for test solution button */
+.test-solution-btn {
+  min-height: 52px;
+  padding: 14px 28px;
+  font-size: 18px;
+}
+
+/* Mobile-friendly training examples in viewing phase */
+@media (max-width: 768px) {
+  .training-pair {
+    padding: 15px;
+  }
+
+  .grids-container {
+    gap: 15px;
   }
 }
