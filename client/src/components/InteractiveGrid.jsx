@@ -4,7 +4,6 @@ import './InteractiveGrid.css';
 const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) => {
   const [grid, setGrid] = useState(currentGrid || initialGrid);
   const [selectedColor, setSelectedColor] = useState(1);
-  const [actionCount, setActionCount] = useState(0);
 
   // Official ARC color palette
   const colors = {
@@ -34,8 +33,38 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
     }
   };
 
+  // Helper: Deep compare two grids
+  const gridsAreEqual = (grid1, grid2) => {
+    if (grid1.length !== grid2.length) return false;
+    if (grid1[0]?.length !== grid2[0]?.length) return false;
+    
+    for (let i = 0; i < grid1.length; i++) {
+      for (let j = 0; j < grid1[0].length; j++) {
+        if (grid1[i][j] !== grid2[i][j]) return false;
+      }
+    }
+    return true;
+  };
+
+  // Helper: Check if grid is all zeros
+  const isGridAllZeros = (grid) => {
+    for (let i = 0; i < grid.length; i++) {
+      for (let j = 0; j < grid[0].length; j++) {
+        if (grid[i][j] !== 0) return false;
+      }
+    }
+    return true;
+  };
+
   const handleCellClick = (rowIndex, colIndex) => {
     const oldValue = grid[rowIndex][colIndex];
+    
+    // Only proceed if the cell value is actually changing
+    if (oldValue === selectedColor) {
+      console.log('Skipped redundant cell click: cell already has this color');
+      return;
+    }
+    
     const newGrid = grid.map((row, rIdx) =>
       rIdx === rowIndex
         ? row.map((cell, cIdx) => (cIdx === colIndex ? selectedColor : cell))
@@ -43,60 +72,71 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
     );
 
     updateGrid(newGrid);
-    setActionCount(prev => prev + 1);
 
     if (onAction) {
-      // FIXED: Explicitly pass row and col, even if they are 0
       onAction({
         type: 'cell_change',
-        row: rowIndex,        // This will be 0, 1, 2, etc.
-        col: colIndex,        // This will be 0, 1, 2, etc. - FIXED!
-        oldValue,
-        newValue: selectedColor,
-        timestamp: Date.now(),
-        actionNumber: actionCount + 1
-      });
-      
-      // DEBUG: Log to console to verify correct values
-      console.log('🔍 Action logged:', {
         row: rowIndex,
         col: colIndex,
         oldValue,
         newValue: selectedColor,
-        actionNumber: actionCount + 1
+        timestamp: Date.now()
+      });
+      
+      console.log('Cell change logged:', {
+        row: rowIndex,
+        col: colIndex,
+        oldValue,
+        newValue: selectedColor
       });
     }
   };
 
   const resetGrid = () => {
+    // Check if grid is already all zeros
+    if (isGridAllZeros(grid)) {
+      console.log('Skipped redundant reset: grid is already empty');
+      return;
+    }
+    
     const emptyGrid = grid.map(row => row.map(() => 0));
     updateGrid(emptyGrid);
-    setActionCount(prev => prev + 1);
 
     if (onAction) {
       onAction({
         type: 'reset',
-        timestamp: Date.now(),
-        actionNumber: actionCount + 1
+        timestamp: Date.now()
       });
+      console.log('Reset logged');
     }
   };
 
   const copyFromInitial = () => {
+    // Check if grid is already identical to initial
+    if (gridsAreEqual(grid, initialGrid)) {
+      console.log('Skipped redundant copy: grid is already identical to input');
+      return;
+    }
+    
     const copiedGrid = initialGrid.map(row => [...row]);
     updateGrid(copiedGrid);
-    setActionCount(prev => prev + 1);
 
     if (onAction) {
       onAction({
         type: 'copy_from_input',
-        timestamp: Date.now(),
-        actionNumber: actionCount + 1
+        timestamp: Date.now()
       });
+      console.log('Copy from input logged');
     }
   };
 
   const resizeGrid = (newRows, newCols) => {
+    // Check if dimensions are unchanged
+    if (newRows === grid.length && newCols === grid[0]?.length) {
+      console.log('Skipped redundant resize: dimensions unchanged');
+      return;
+    }
+    
     const newGrid = Array(newRows).fill(null).map((_, rowIdx) =>
       Array(newCols).fill(null).map((_, colIdx) => {
         if (rowIdx < grid.length && colIdx < grid[0].length) {
@@ -107,16 +147,15 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
     );
     
     updateGrid(newGrid);
-    setActionCount(prev => prev + 1);
 
     if (onAction) {
       onAction({
         type: 'resize',
         newRows,
         newCols,
-        timestamp: Date.now(),
-        actionNumber: actionCount + 1
+        timestamp: Date.now()
       });
+      console.log('Resize logged:', { newRows, newCols });
     }
   };
 

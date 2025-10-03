@@ -19,7 +19,7 @@ function App() {
   // Participant management
   const [participantId, setParticipantId] = useState(null);
   
-  // Phase tracking: viewing → phase1 → solving → phase3 → phase4 → complete
+  // Phase tracking
   const [currentPhase, setCurrentPhase] = useState('viewing');
   
   // All questionnaire data
@@ -32,16 +32,24 @@ function App() {
   const [testInputGrid, setTestInputGrid] = useState(null);
   const [actionLog, setActionLog] = useState([]);
   const [startTime, setStartTime] = useState(null);
+  const [solvingEndTime, setSolvingEndTime] = useState(null);
   const [solutionCorrect, setSolutionCorrect] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  
+  // Test solution tracking
+  const [testAttempts, setTestAttempts] = useState([]);
+  const [lastTestedGrid, setLastTestedGrid] = useState(null);
+  
+  // Action limit tracking
+  const ACTION_LIMIT = 1000;
+  const ACTION_WARNING_THRESHOLD = 900;
   
   // Submission status
   const [submissionStatus, setSubmissionStatus] = useState(null);
 
-  // Ref for main content (for scrolling)
+  // Ref for main content
   const mainContentRef = useRef(null);
 
-  // Auto-scroll function
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -49,14 +57,13 @@ function App() {
     });
   };
 
-  // Initialize participant when they start (not on landing page)
+  // Initialize participant when they start
   useEffect(() => {
     if (!showLanding && !participantId) {
       initializeParticipant();
     }
   }, [showLanding, participantId]);
 
-  // Handle starting participation from landing page
   const handleStartParticipation = () => {
     setShowLanding(false);
   };
@@ -120,7 +127,10 @@ function App() {
         
         // Reset solving state
         setActionLog([]);
+        setTestAttempts([]);
+        setLastTestedGrid(null);
         setStartTime(null);
+        setSolvingEndTime(null);
         setSolutionCorrect(null);
         setShowSuccess(false);
       })
@@ -130,7 +140,6 @@ function App() {
       });
   };
 
-  // Fetch task when not showing landing page
   useEffect(() => {
     if (!showLanding) {
       fetchNewTask();
@@ -141,14 +150,15 @@ function App() {
     setPhase1Data(data);
     setCurrentPhase('solving');
     setStartTime(Date.now());
-    scrollToTop(); // Scroll to top when entering solving phase
+    setSolvingEndTime(null);
+    scrollToTop();
     console.log('Phase 1 Complete:', data);
   };
 
   const handlePhase3Complete = (data) => {
     setPhase3Data(data);
     setCurrentPhase('phase4');
-    scrollToTop(); // Scroll to top when entering phase 4
+    scrollToTop();
     console.log('Phase 3 Complete:', data);
   };
 
@@ -168,6 +178,9 @@ function App() {
     setSubmissionStatus('submitting');
     
     try {
+      const endTime = solvingEndTime || Date.now();
+      const actualDuration = Math.floor((endTime - startTime) / 1000);
+      
       const completeSubmission = {
         participantId: participantId,
         taskId: arcTask.id,
@@ -177,15 +190,17 @@ function App() {
         phase1_initial_observations: phase1Data,
         phase2_solving_process: {
           actionLog: actionLog,
+          testAttempts: testAttempts,
           solutionGrid: userGrid,
-          durationSeconds: Math.floor((Date.now() - startTime) / 1000),
-          isCorrect: solutionCorrect
+          durationSeconds: actualDuration,
+          isCorrect: solutionCorrect,
+          reachedActionLimit: actionLog.length >= ACTION_LIMIT
         },
         phase3_post_solving: phase3Data,
         phase4_reflection: phase4Data,
         
         submissionTimestamp: new Date().toISOString(),
-        totalTimeSeconds: Math.floor((Date.now() - startTime) / 1000)
+        totalTimeSeconds: actualDuration
       };
       
       console.log('=== SUBMITTING TO DATABASE ===');
@@ -229,8 +244,42 @@ function App() {
     }
   };
 
+  // FIXED: Assign action number here automatically
   const handleAction = (action) => {
-    setActionLog(prev => [...prev, action]);
+    setActionLog(prev => {
+      const actionNumber = prev.length + 1;
+      const actionWithNumber = { ...action, actionNumber };
+      const newLog = [...prev, actionWithNumber];
+      
+      // Check if action limit reached
+      if (newLog.length >= ACTION_LIMIT) {
+        setTimeout(() => {
+          setSolvingEndTime(Date.now());
+          alert(`You've reached the maximum of ${ACTION_LIMIT} actions.\n\nMoving to the next phase...`);
+          proceedToPhase3();
+        }, 100);
+      }
+      // Show warning when approaching limit
+      else if (newLog.length === ACTION_WARNING_THRESHOLD) {
+        alert(`You're approaching the action limit (${newLog.length}/${ACTION_LIMIT}).\n\nConsider moving to the next phase soon.`);
+      }
+      
+      return newLog;
+    });
+  };
+
+  // Helper: Deep compare two grids
+  const gridsAreEqual = (grid1, grid2) => {
+    if (!grid1 || !grid2) return false;
+    if (grid1.length !== grid2.length) return false;
+    if (grid1[0]?.length !== grid2[0]?.length) return false;
+    
+    for (let i = 0; i < grid1.length; i++) {
+      for (let j = 0; j < grid1[0].length; j++) {
+        if (grid1[i][j] !== grid2[i][j]) return false;
+      }
+    }
+    return true;
   };
 
   const testSolution = () => {
@@ -239,44 +288,110 @@ function App() {
       return;
     }
 
+    // Check if grid changed since last test
+    if (lastTestedGrid && gridsAreEqual(userGrid, lastTestedGrid)) {
+      console.log('Skipped redundant test: grid unchanged since last test');
+      alert('No changes detected since last test. Make some changes before testing again.');
+      return;
+    }
+
     const correctOutput = arcTask.test[0].output;
     
+    // Check dimensions
     if (userGrid.length !== correctOutput.length || 
         userGrid[0].length !== correctOutput[0].length) {
       setSolutionCorrect(false);
+      
+      // Log test attempt metadata
+      const testAttempt = {
+        attemptNumber: testAttempts.length + 1,
+        timestamp: Date.now(),
+        result: 'incorrect_dimensions',
+        userDimensions: `${userGrid.length}×${userGrid[0].length}`,
+        expectedDimensions: `${correctOutput.length}×${correctOutput[0].length}`
+      };
+      setTestAttempts(prev => [...prev, testAttempt]);
+      setLastTestedGrid(userGrid.map(row => [...row]));
+      
+      // FIXED: Don't pass actionNumber - let handleAction assign it
+      handleAction({
+        type: 'test_solution',
+        result: 'incorrect_dimensions',
+        timestamp: Date.now()
+      });
+      
       alert(`Incorrect! Grid size doesn't match.\nYour grid: ${userGrid.length}×${userGrid[0].length}\nExpected: ${correctOutput.length}×${correctOutput[0].length}`);
       return;
     }
 
+    // Check cell values
     let allMatch = true;
+    let incorrectCells = 0;
     for (let i = 0; i < userGrid.length; i++) {
       for (let j = 0; j < userGrid[0].length; j++) {
         if (userGrid[i][j] !== correctOutput[i][j]) {
           allMatch = false;
-          break;
+          incorrectCells++;
         }
       }
-      if (!allMatch) break;
     }
 
     setSolutionCorrect(allMatch);
     
+    // Log test attempt metadata
+    const testAttempt = {
+      attemptNumber: testAttempts.length + 1,
+      timestamp: Date.now(),
+      result: allMatch ? 'correct' : 'incorrect_values',
+      incorrectCells: incorrectCells,
+      totalCells: userGrid.length * userGrid[0].length
+    };
+    setTestAttempts(prev => [...prev, testAttempt]);
+    setLastTestedGrid(userGrid.map(row => [...row]));
+    
+    // FIXED: Don't pass actionNumber - let handleAction assign it
+    handleAction({
+      type: 'test_solution',
+      result: allMatch ? 'correct' : 'incorrect_values',
+      incorrectCells: incorrectCells,
+      timestamp: Date.now()
+    });
+    
+    console.log('Test attempt logged:', testAttempt);
+    
     if (allMatch) {
+      // Stop timer and auto-advance
+      setSolvingEndTime(Date.now());
       setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
+      
+      setTimeout(() => {
+        setShowSuccess(false);
+        setCurrentPhase('phase3');
+        scrollToTop();
+      }, 2000);
+      
     } else {
-      alert('Not quite right! Keep trying!');
+      alert(`Not quite right! ${incorrectCells} cell${incorrectCells !== 1 ? 's' : ''} incorrect. Keep trying!`);
     }
   };
 
   const proceedToPhase3 = () => {
+    if (!solvingEndTime) {
+      setSolvingEndTime(Date.now());
+    }
     setCurrentPhase('phase3');
-    scrollToTop(); // Scroll to top when entering phase 3
+    scrollToTop();
   };
 
   const startPhase1 = () => {
     setCurrentPhase('phase1');
-    scrollToTop(); // Scroll to top when entering phase 1
+    scrollToTop();
+  };
+
+  const getElapsedTime = () => {
+    if (!startTime) return 0;
+    const endTime = solvingEndTime || Date.now();
+    return Math.floor((endTime - startTime) / 1000);
   };
 
   // Show landing page first
@@ -349,7 +464,7 @@ function App() {
           </div>
         )}
 
-        {/* Task Reference - Show in solving and phase3 */}
+        {/* Task Reference */}
         {currentPhase === 'solving' && (
           <TaskReference
             trainingExamples={arcTask.train}
@@ -368,7 +483,7 @@ function App() {
           />
         )}
 
-        {/* Task Info - Show in viewing/phase1 */}
+        {/* Task Info */}
         {(currentPhase === 'viewing' || currentPhase === 'phase1') && (
           <section className="task-section">
             <div className="task-header">
@@ -455,7 +570,7 @@ function App() {
                   <div className="success-content">
                     <div className="success-icon">🎉</div>
                     <h2>Correct Solution!</h2>
-                    <p>Great job! You solved it!</p>
+                    <p>Moving to next questions...</p>
                   </div>
                 </div>
               )}
@@ -465,6 +580,7 @@ function App() {
                   className="test-solution-btn"
                   onClick={testSolution}
                   type="button"
+                  disabled={actionLog.length >= ACTION_LIMIT}
                 >
                   Test Solution
                 </button>
@@ -473,6 +589,11 @@ function App() {
                 )}
                 {solutionCorrect === false && (
                   <span className="solution-status incorrect">Incorrect</span>
+                )}
+                {testAttempts.length > 0 && (
+                  <span className="test-attempts-count">
+                    Attempts: {testAttempts.length}
+                  </span>
                 )}
               </div>
 
@@ -491,8 +612,16 @@ function App() {
               </div>
 
               <div className="submission-stats">
-                <p>Actions taken: {actionLog.length}</p>
-                <p>Time elapsed: {startTime ? Math.floor((Date.now() - startTime) / 1000) : 0}s</p>
+                <p>Actions taken: {actionLog.length} / {ACTION_LIMIT}</p>
+                <p>Time elapsed: {getElapsedTime()}s</p>
+                {actionLog.length >= ACTION_WARNING_THRESHOLD && actionLog.length < ACTION_LIMIT && (
+                  <p style={{ color: '#ff6b6b', fontWeight: 'bold' }}>
+                    Approaching action limit!
+                  </p>
+                )}
+                {solvingEndTime && (
+                  <p style={{ color: '#28a745', fontWeight: 'bold' }}>Timer stopped</p>
+                )}
               </div>
             </section>
           </>
@@ -503,7 +632,7 @@ function App() {
           <Phase3Questions onComplete={handlePhase3Complete} />
         )}
 
-        {/* Phase 4: Final Reflection Questions (NO task reference) */}
+        {/* Phase 4: Final Reflection Questions */}
         {currentPhase === 'phase4' && (
           <Phase4Questions onComplete={handlePhase4Complete} />
         )}

@@ -370,12 +370,11 @@ app.post('/api/submissions',
         ]);
         
 
-        // 3. Insert action traces (ENHANCED VERSION - Stores resize dimensions)
+        // 3. Insert action traces (FIXED - Handles test_solution properly)
         if (phase2_solving_process.actionLog && phase2_solving_process.actionLog.length > 0) {
           for (const action of phase2_solving_process.actionLog) {
             const actionId = db.generateId('action');
             
-            // Handle different action types with proper data storage
             let cellRow = null;
             let cellColumn = null;
             let oldValue = null;
@@ -383,14 +382,12 @@ app.post('/api/submissions',
             let gridStateAfter = null;
             
             if (action.type === 'cell_change') {
-              // Cell change actions
               cellRow = action.row !== undefined && action.row !== null ? action.row : null;
               cellColumn = action.col !== undefined && action.col !== null ? action.col : null;
               oldValue = action.oldValue !== undefined && action.oldValue !== null ? action.oldValue : null;
               newValue = action.newValue !== undefined && action.newValue !== null ? action.newValue : null;
               
             } else if (action.type === 'resize') {
-              // FIXED: Store resize dimensions
               gridStateAfter = JSON.stringify({
                 newRows: action.newRows,
                 newCols: action.newCols,
@@ -398,30 +395,25 @@ app.post('/api/submissions',
               });
               
             } else if (action.type === 'reset') {
-              // Store reset action metadata
               gridStateAfter = JSON.stringify({
                 actionType: 'reset',
                 description: 'Grid cleared to all zeros'
               });
               
             } else if (action.type === 'copy_from_input') {
-              // Store copy action metadata
               gridStateAfter = JSON.stringify({
                 actionType: 'copy_from_input', 
                 description: 'Grid restored to original input state'
               });
+              
+            } else if (action.type === 'test_solution') {
+              // FIXED: Store test solution result data
+              gridStateAfter = JSON.stringify({
+                actionType: 'test_solution',
+                result: action.result || 'unknown',
+                incorrectCells: action.incorrectCells || null
+              });
             }
-            
-            // DEBUG: Log what we're about to insert
-            console.log('🔍 Inserting action:', {
-              actionNumber: action.actionNumber,
-              type: action.type,
-              row: cellRow,
-              col: cellColumn,
-              oldValue,
-              newValue,
-              gridStateAfter: gridStateAfter ? JSON.parse(gridStateAfter) : null
-            });
             
             await client.query(`
               INSERT INTO action_traces (
@@ -448,7 +440,7 @@ app.post('/api/submissions',
               newValue,          
               action.timestamp - Date.now() + (totalTimeSeconds * 1000),
               new Date(action.timestamp),
-              gridStateAfter    // FIXED: Now stores action-specific metadata
+              gridStateAfter
             ]);
           }
         }
