@@ -327,20 +327,20 @@ app.post('/api/submissions',
           INSERT INTO responses (
             response_id,
             attempt_id,
-            primary_impression,
-            primary_features,
-            primary_other_text,
-            secondary_impressions,
-            initial_hypothesis,
-            confidence_level,
-            transformation_rule_full,
-            transformation_word_count,
-            hypothesis_revised,
-            revision_reason,
-            strategy_used,
-            difficulty_rating,
-            challenge_factors,
-            challenge_factors_other
+            q1_primary_impression,
+            q1_primary_features,
+            q1_primary_other_text,
+            q1_secondary_impressions,
+            q2_initial_hypothesis,
+            q3_confidence_level,
+            q4_what_you_tried,
+            q4_word_count,
+            q5_hypothesis_revised,
+            q5_revision_reason,
+            q6_strategy_used,
+            q7_difficulty_rating,
+            q8_challenge_factors,
+            q8_challenge_other
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         `, [
           responseId,
@@ -557,9 +557,9 @@ app.get('/api/admin/recent-submissions', async (req, res) => {
         ta.attempt_start_time,
         ta.duration_seconds,
         ta.is_correct,
-        r.confidence_level,
-        r.difficulty_rating,
-        r.strategy_used
+        r.q3_confidence_level,
+        r.q7_difficulty_rating,
+        r.q6_strategy_used
       FROM task_attempts ta
       LEFT JOIN responses r ON ta.attempt_id = r.attempt_id
       WHERE ta.attempt_status = 'completed'
