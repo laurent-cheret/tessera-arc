@@ -1,5 +1,6 @@
--- ARC Crowdsourcing Platform Database Schema (Simplified)
--- PostgreSQL Version - Fixed for proper table creation
+-- ARC Crowdsourcing Platform Database Schema
+-- PostgreSQL Version - Updated Oct 4, 2025
+-- Reflects Q1-Q8 column reorganization
 
 -- =====================================================
 -- Core Tables
@@ -135,7 +136,7 @@ CREATE TABLE IF NOT EXISTS task_attempts (
     CONSTRAINT unique_participant_task_attempt UNIQUE(participant_id, task_id, attempt_number)
 );
 
--- 4. RESPONSES Table
+-- 4. RESPONSES Table (UPDATED - Q1-Q8 Structure)
 CREATE TABLE IF NOT EXISTS responses (
     -- Primary Key
     response_id                 VARCHAR(50) PRIMARY KEY,
@@ -143,54 +144,51 @@ CREATE TABLE IF NOT EXISTS responses (
     -- Foreign Key
     attempt_id                  VARCHAR(50) REFERENCES task_attempts(attempt_id) ON DELETE CASCADE,
     
-    -- Q1: First Impressions (Phase 1)
-    initial_attention           JSON,
-    initial_attention_other     TEXT,
+    -- Phase 1: Pre-Solving Questions
+    -- Q1: Hierarchical First Impressions
+    q1_primary_impression       VARCHAR(50),
+    q1_primary_features         JSON,
+    q1_primary_other_text       TEXT,
+    q1_secondary_impressions    JSON,
     
-    -- Q2: Pattern Hypothesis (Phase 1)
-    initial_hypothesis          TEXT,
-    initial_hypothesis_word_count INTEGER,
+    -- Q2: Initial Pattern Hypothesis
+    q2_initial_hypothesis       TEXT,
     
-    -- Q3: Transformation Rule (Phase 3)
-    transformation_rule_full    TEXT,
-    transformation_what         TEXT,
-    transformation_how          TEXT,
-    transformation_conditions   TEXT,
-    transformation_word_count   INTEGER,
+    -- Q3: Confidence Level (moved to Phase 1)
+    q3_confidence_level         INTEGER,
     
-    -- Q4: Confidence Rating (Phase 3)
-    confidence_level            INTEGER,
+    -- Phase 3: Post-Solving Questions
+    -- Q4: What You Tried
+    q4_what_you_tried           TEXT,
+    q4_word_count               INTEGER,
     
-    -- Q5: Problem-Solving Strategy (Phase 3)
-    strategy_used               VARCHAR(50),
-    strategy_other              TEXT,
+    -- Q5: Strategy Revision (moved from Phase 4)
+    q5_hypothesis_revised       BOOLEAN,
+    q5_revision_reason          TEXT,
     
-    -- Q6: Step-by-Step Reasoning (Phase 4)
-    reasoning_narrative         TEXT,
-    reasoning_word_count        INTEGER,
+    -- Q6: Strategy Used
+    q6_strategy_used            VARCHAR(50),
     
-    -- Q7: Difficulty Rating (Phase 4)
-    difficulty_rating           INTEGER,
+    -- Phase 4: Reflection Questions
+    -- Q7: Difficulty Rating
+    q7_difficulty_rating        INTEGER,
     
-    -- Q8: Challenge Factors (Phase 4, conditional)
-    challenge_factors           JSON,
-    challenge_factors_other     TEXT,
+    -- Q8: Challenge Factors
+    q8_challenge_factors        JSON,
+    q8_challenge_other          TEXT,
     
-    -- Q9: Strategy Revision (Phase 4)
-    hypothesis_revised          BOOLEAN,
-    revision_reason             TEXT,
-    
-    -- Response Metadata
-    response_completion_rate    FLOAT DEFAULT 1.0,
-    time_to_complete_responses  INTEGER,
-    
-    -- Timestamps
-    phase1_timestamp            TIMESTAMP,
-    phase3_timestamp            TIMESTAMP,
-    phase4_timestamp            TIMESTAMP,
-    
-    CONSTRAINT valid_confidence CHECK (confidence_level BETWEEN 1 AND 5),
-    CONSTRAINT valid_difficulty CHECK (difficulty_rating BETWEEN 1 AND 5)
+    -- Constraints
+    CONSTRAINT valid_q3_confidence CHECK (q3_confidence_level BETWEEN 1 AND 5),
+    CONSTRAINT valid_q7_difficulty CHECK (q7_difficulty_rating BETWEEN 1 AND 5),
+    CONSTRAINT valid_q1_primary_impression CHECK (q1_primary_impression IS NULL OR q1_primary_impression IN (
+        'visual_appearance',
+        'spatial_arrangement',
+        'structure_connections',
+        'quantities_sizes',
+        'changes_movement',
+        'organization_grouping',
+        'rules_patterns'
+    ))
 );
 
 -- 5. ACTION_TRACES Table
@@ -251,11 +249,11 @@ CREATE INDEX IF NOT EXISTS idx_attempts_correct ON task_attempts(is_correct);
 CREATE INDEX IF NOT EXISTS idx_attempts_start_time ON task_attempts(attempt_start_time);
 CREATE INDEX IF NOT EXISTS idx_attempts_status ON task_attempts(attempt_status);
 
--- Responses
+-- Responses (UPDATED - Q1-Q8 indexes)
 CREATE INDEX IF NOT EXISTS idx_responses_attempt ON responses(attempt_id);
-CREATE INDEX IF NOT EXISTS idx_responses_confidence ON responses(confidence_level);
-CREATE INDEX IF NOT EXISTS idx_responses_strategy ON responses(strategy_used);
-CREATE INDEX IF NOT EXISTS idx_responses_difficulty ON responses(difficulty_rating);
+CREATE INDEX IF NOT EXISTS idx_responses_q3_confidence ON responses(q3_confidence_level);
+CREATE INDEX IF NOT EXISTS idx_responses_q6_strategy ON responses(q6_strategy_used);
+CREATE INDEX IF NOT EXISTS idx_responses_q7_difficulty ON responses(q7_difficulty_rating);
 
 -- Action Traces
 CREATE INDEX IF NOT EXISTS idx_actions_attempt ON action_traces(attempt_id);
@@ -264,7 +262,7 @@ CREATE INDEX IF NOT EXISTS idx_actions_type ON action_traces(action_type);
 CREATE INDEX IF NOT EXISTS idx_actions_timestamp ON action_traces(timestamp_absolute);
 
 -- =====================================================
--- Simple Views for Common Queries
+-- Views for Common Queries
 -- =====================================================
 
 -- View: Participant performance summary
@@ -275,8 +273,8 @@ SELECT
     p.total_tasks_completed,
     p.average_task_duration_sec,
     COALESCE(AVG(CASE WHEN ta.is_correct THEN 1.0 ELSE 0.0 END), 0) as accuracy_rate,
-    COALESCE(AVG(r.confidence_level), 0) as avg_confidence,
-    COALESCE(AVG(r.difficulty_rating), 0) as avg_perceived_difficulty,
+    COALESCE(AVG(r.q3_confidence_level), 0) as avg_confidence,
+    COALESCE(AVG(r.q7_difficulty_rating), 0) as avg_perceived_difficulty,
     COUNT(ta.attempt_id) as total_attempts
 FROM participants p
 LEFT JOIN task_attempts ta ON p.participant_id = ta.participant_id
@@ -291,9 +289,9 @@ SELECT
     t.estimated_difficulty,
     COUNT(ta.attempt_id) as attempt_count,
     COALESCE(AVG(CASE WHEN ta.is_correct THEN 1.0 ELSE 0.0 END), 0) as actual_accuracy,
-    COALESCE(AVG(r.difficulty_rating), 0) as perceived_difficulty,
+    COALESCE(AVG(r.q7_difficulty_rating), 0) as perceived_difficulty,
     COALESCE(AVG(ta.duration_seconds), 0) as avg_solve_time,
-    COALESCE(AVG(r.confidence_level), 0) as avg_confidence
+    COALESCE(AVG(r.q3_confidence_level), 0) as avg_confidence
 FROM tasks t
 LEFT JOIN task_attempts ta ON t.task_id = ta.task_id
 LEFT JOIN responses r ON ta.attempt_id = r.attempt_id
