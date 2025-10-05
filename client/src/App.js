@@ -497,20 +497,13 @@ function App() {
               </button>
             </div>
             
-            <div className="training-examples">
-              <h3>Training Examples</h3>
-              <p>Study these input-output pairs to understand the pattern:</p>
-              
-              {arcTask.train.map((pair, index) => (
-                <div key={index} className="training-pair">
-                  <h4>Example {index + 1}</h4>
-                  <div className="grids-container">
-                    <ARCGrid grid={pair.input} title="Input" />
-                    <ARCGrid grid={pair.output} title="Output" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* Unified Training Examples Display */}
+            <TaskReference
+              trainingExamples={arcTask.train}
+              userSolution={null}
+              isCorrect={null}
+              showUserSolution={false}
+            />
 
             {currentPhase === 'viewing' && (
               <div className="phase-transition">

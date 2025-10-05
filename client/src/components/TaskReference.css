@@ -1,219 +1,306 @@
-/* Task Reference Component - Mobile-First */
+/* Task Reference Component - Unified Design */
 .task-reference {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background-color: #ffffff;
-    border: 2px solid #0074D9;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  border: 2px solid #0074D9;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Toggle Button with Miniatures */
+.task-reference-toggle {
+  width: 100%;
+  min-height: 60px;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #0074D9 0%, #0056b3 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: all 0.3s;
+  text-align: left;
+  overflow: hidden;
+}
+
+.task-reference-toggle:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 116, 217, 0.3);
+}
+
+.task-reference-toggle:active {
+  transform: translateY(0);
+}
+
+.toggle-icon {
+  font-size: 18px;
+  min-width: 20px;
+  transition: transform 0.3s;
+}
+
+.toggle-text {
+  flex: 0 0 auto;
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+.example-count {
+  font-size: 14px;
+  opacity: 0.9;
+  font-weight: 400;
+}
+
+/* Miniatures Container - Fills remaining space */
+.miniatures-container {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+  margin-left: 10px;
+}
+
+/* Fade effect at the end */
+.miniatures-container::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(to left, #0056b3, transparent);
+  pointer-events: none;
+}
+
+.miniature-pair {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.miniature-pair:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+/* Mini Grid Display */
+.mini-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background-color: rgba(255, 255, 255, 0.3);
+  padding: 1px;
+  border-radius: 2px;
+}
+
+.mini-row {
+  display: flex;
+  gap: 1px;
+}
+
+.mini-cell {
+  width: 3px;
+  height: 3px;
+  border: 0.5px solid rgba(0, 0, 0, 0.2);
+}
+
+.mini-arrow {
+  font-size: 10px;
+  color: white;
+  opacity: 0.9;
+  font-weight: bold;
+}
+
+/* Content Area - Side-by-Side Layout */
+.task-reference-content {
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-top: 2px solid #e9ecef;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
   }
-  
-  /* Toggle Button - Large Touch Target */
-  .task-reference-toggle {
-    width: 100%;
-    min-height: 60px;
-    padding: 15px 20px;
-    background: linear-gradient(135deg, #0074D9 0%, #0056b3 100%);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    transition: all 0.3s;
-    text-align: left;
-  }
-  
-  .task-reference-toggle:hover {
-    background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 116, 217, 0.3);
-  }
-  
-  .task-reference-toggle:active {
+  to {
+    opacity: 1;
     transform: translateY(0);
   }
-  
-  .toggle-icon {
-    font-size: 18px;
-    min-width: 20px;
-    transition: transform 0.3s;
+}
+
+/* Training Examples - Compact Side-by-Side */
+.training-examples-compact {
+  margin-bottom: 20px;
+}
+
+.training-examples-compact h4 {
+  margin: 0 0 15px 0;
+  color: #495057;
+  font-size: 16px;
+  text-align: center;
+}
+
+.training-pair-compact {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.pair-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6c757d;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+/* Side-by-Side Grid Layout */
+.pair-grids {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.pair-grids .arc-grid-container {
+  margin: 0;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  flex: 0 0 auto;
+}
+
+.pair-grids .arc-grid-container h3 {
+  font-size: 13px;
+  margin-bottom: 8px;
+  color: #6c757d;
+  text-align: center;
+}
+
+/* Slightly smaller cells for compact view */
+.pair-grids .arc-cell {
+  width: 24px;
+  height: 24px;
+}
+
+.arrow {
+  font-size: 28px;
+  color: #0074D9;
+  font-weight: bold;
+  flex: 0 0 auto;
+}
+
+/* User Solution Display */
+.user-solution-display {
+  padding-top: 20px;
+  border-top: 2px solid #dee2e6;
+  margin-top: 20px;
+}
+
+.user-solution-display h4 {
+  margin: 0 0 15px 0;
+  color: #495057;
+  font-size: 16px;
+  text-align: center;
+}
+
+.solution-with-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.solution-badge {
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.solution-badge.correct {
+  background-color: #d4edda;
+  color: #155724;
+  border: 2px solid #c3e6cb;
+}
+
+.solution-badge.incorrect {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 2px solid #f5c6cb;
+}
+
+/* Responsive - Stack on Small Screens */
+@media (max-width: 768px) {
+  .task-reference-toggle {
+    min-height: 70px;
+    padding: 12px 15px;
   }
-  
-  .task-reference-toggle[aria-expanded="true"] .toggle-icon {
-    transform: rotate(0deg);
-  }
-  
+
   .toggle-text {
-    flex: 1;
-    font-size: 18px;
+    font-size: 15px;
   }
-  
-  .toggle-hint {
-    font-size: 13px;
-    opacity: 0.9;
-    font-weight: 400;
+
+  /* Hide miniatures on mobile to save space */
+  .miniatures-container {
+    display: none;
   }
-  
-  /* Content Area */
-  .task-reference-content {
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-top: 2px solid #e9ecef;
-    animation: slideDown 0.3s ease-out;
-  }
-  
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Training Examples - Compact View */
-  .training-examples-compact {
-    margin-bottom: 20px;
-  }
-  
-  .training-examples-compact h4 {
-    margin: 0 0 15px 0;
-    color: #495057;
-    font-size: 16px;
-  }
-  
-  .training-pair-compact {
-    margin-bottom: 15px;
-    padding: 15px;
-    background-color: white;
-    border-radius: 6px;
-    border: 1px solid #dee2e6;
-  }
-  
-  .pair-label {
-    font-size: 14px;
-    font-weight: 600;
-    color: #6c757d;
-    margin-bottom: 10px;
-  }
-  
+
+  /* Stack grids vertically on mobile */
   .pair-grids {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  
-  .pair-grids .arc-grid-container {
-    margin: 0;
-    padding: 10px;
-    flex: 0 0 auto;
-  }
-  
-  .pair-grids .arc-grid-container h3 {
-    font-size: 12px;
-    margin-bottom: 5px;
-  }
-  
-  .pair-grids .arc-cell {
-    width: 20px;
-    height: 20px;
-  }
-  
-  .arrow {
-    font-size: 24px;
-    color: #0074D9;
-    font-weight: bold;
-  }
-  
-  /* User Solution Display */
-  .user-solution-display {
-    padding-top: 20px;
-    border-top: 2px solid #dee2e6;
-  }
-  
-  .user-solution-display h4 {
-    margin: 0 0 15px 0;
-    color: #495057;
-    font-size: 16px;
-  }
-  
-  .solution-with-status {
-    display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 15px;
+    gap: 10px;
+  }
+
+  .arrow {
+    transform: rotate(90deg);
+    font-size: 24px;
+  }
+
+  .pair-grids .arc-cell {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* Medium screens - Show fewer miniatures */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .mini-cell {
+    width: 2.5px;
+    height: 2.5px;
   }
   
-  .solution-badge {
-    padding: 8px 20px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 14px;
+  .miniature-pair {
+    gap: 3px;
+    padding: 3px 6px;
   }
-  
-  .solution-badge.correct {
-    background-color: #d4edda;
-    color: #155724;
-    border: 2px solid #c3e6cb;
+}
+
+/* Large screens - Full layout */
+@media (min-width: 1200px) {
+  .pair-grids .arc-cell {
+    width: 28px;
+    height: 28px;
   }
-  
-  .solution-badge.incorrect {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 2px solid #f5c6cb;
+
+  .training-pair-compact {
+    padding: 20px;
   }
-  
-  /* Mobile Optimizations */
-  @media (max-width: 768px) {
-    .task-reference-toggle {
-      min-height: 70px;
-      padding: 15px;
-    }
-  
-    .toggle-text {
-      font-size: 16px;
-    }
-  
-    .toggle-hint {
-      display: block;
-      margin-top: 4px;
-      font-size: 12px;
-    }
-  
-    .pair-grids {
-      flex-direction: column;
-    }
-  
-    .arrow {
-      transform: rotate(90deg);
-      font-size: 20px;
-    }
-  }
-  
-  /* Desktop: Side-by-side if space allows */
-  @media (min-width: 1024px) {
-    .pair-grids {
-      justify-content: flex-start;
-    }
-  
-    .training-pair-compact {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-  
-    .pair-label {
-      min-width: 100px;
-      margin-bottom: 0;
-    }
-  }
+}

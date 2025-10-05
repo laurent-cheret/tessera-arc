@@ -2,8 +2,38 @@ import React, { useState } from 'react';
 import ARCGrid from './ARCGrid';
 import './TaskReference.css';
 
-const TaskReference = ({ trainingExamples, userSolution, isCorrect, showUserSolution }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+// Mini grid component for collapsed preview
+const MiniGrid = ({ grid }) => {
+  const colors = {
+    0: '#000000', 1: '#0074D9', 2: '#FF4136', 3: '#2ECC40', 4: '#FFDC00',
+    5: '#AAAAAA', 6: '#F012BE', 7: '#FF851B', 8: '#7FDBFF', 9: '#870C25'
+  };
+
+  return (
+    <div className="mini-grid">
+      {grid.map((row, i) => (
+        <div key={i} className="mini-row">
+          {row.map((cell, j) => (
+            <div
+              key={`${i}-${j}`}
+              className="mini-cell"
+              style={{ backgroundColor: colors[cell] || '#CCC' }}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const TaskReference = ({ 
+  trainingExamples, 
+  userSolution, 
+  isCorrect, 
+  showUserSolution,
+  defaultExpanded = false // NEW: Allow starting expanded
+}) => {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   return (
     <div className="task-reference">
@@ -14,24 +44,35 @@ const TaskReference = ({ trainingExamples, userSolution, isCorrect, showUserSolu
       >
         <span className="toggle-icon">{isExpanded ? '▼' : '▶'}</span>
         <span className="toggle-text">
-          {isExpanded ? 'Hide Task Examples' : 'View Task Examples'}
+          {isExpanded ? 'Hide Training Examples' : 'Show Training Examples'}
+          {!isExpanded && <span className="example-count"> ({trainingExamples.length})</span>}
         </span>
-        <span className="toggle-hint">
-          (Tap to {isExpanded ? 'hide' : 'see'} the training examples)
-        </span>
+        
+        {/* Miniature previews when collapsed */}
+        {!isExpanded && (
+          <div className="miniatures-container">
+            {trainingExamples.map((pair, index) => (
+              <div key={index} className="miniature-pair">
+                <MiniGrid grid={pair.input} />
+                <span className="mini-arrow">→</span>
+                <MiniGrid grid={pair.output} />
+              </div>
+            ))}
+          </div>
+        )}
       </button>
 
       {isExpanded && (
         <div className="task-reference-content">
           <div className="training-examples-compact">
-            <h4>Training Examples:</h4>
+            <h4>Training Examples - Study the Pattern:</h4>
             {trainingExamples.map((pair, index) => (
               <div key={index} className="training-pair-compact">
                 <div className="pair-label">Example {index + 1}</div>
                 <div className="pair-grids">
-                  <ARCGrid grid={pair.input} title="In" />
+                  <ARCGrid grid={pair.input} title="Input" />
                   <span className="arrow">→</span>
-                  <ARCGrid grid={pair.output} title="Out" />
+                  <ARCGrid grid={pair.output} title="Output" />
                 </div>
               </div>
             ))}
