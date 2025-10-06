@@ -1,0 +1,55 @@
+.painting-animation-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    margin-top: 15px;
+    min-height: 120px;
+  }
+  
+  .painting-grid {
+    display: inline-block;
+    border: 2px solid #333;
+    background-color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .painting-row {
+    display: flex;
+    line-height: 0;
+  }
+  
+  .painting-cell {
+    width: 25px;
+    height: 25px;
+    border: 1px solid #999;
+    transition: background-color 0.2s ease;
+  }
+  
+  @keyframes paintPop {
+    0% {
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+    50% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .painting-cell {
+      width: 20px;
+      height: 20px;
+    }
+    
+    .painting-animation-container {
+      min-height: 100px;
+      padding: 15px;
+    }
+  }

@@ -1,0 +1,49 @@
+.typewriter-container {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px 20px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    margin-top: 15px;
+  }
+  
+  .typewriter-text {
+    font-size: 15px;
+    color: #495057;
+    font-weight: 500;
+    text-align: center;
+    min-height: 30px;
+  }
+  
+  .typewriter-text.italic {
+    font-style: italic;
+    color: #666;
+  }
+  
+  .typewriter-cursor {
+    animation: blink 1s infinite;
+    color: #667eea;
+    font-weight: bold;
+  }
+  
+  @keyframes blink {
+    0%, 49% {
+      opacity: 1;
+    }
+    50%, 100% {
+      opacity: 0;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .typewriter-text {
+      font-size: 14px;
+    }
+    
+    .typewriter-container {
+      min-height: 50px;
+      padding: 12px 15px;
+    }
+  }
