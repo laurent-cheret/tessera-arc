@@ -103,13 +103,13 @@ The [Abstraction and Reasoning Corpus (ARC)](https://github.com/fchollet/ARC-AGI
 - Complete temporal sequence
 
 ### Phase 3: Post-Solving (3 questions)
-- **Q5:** What you tried (15-500 words)
-- **Q6:** Strategy revision (binary + explanation)
-- **Q7:** Problem-solving strategy (7 options)
+- **Q4:** What you tried (15-500 words)
+- **Q5:** Strategy revision (binary + explanation)
+- **Q6:** Problem-solving strategy (7 options)
 
 ### Phase 4: Reflection (2 questions)
-- **Q8:** Difficulty rating (1-5 scale)
-- **Q9:** Challenge factors (conditional, multiple selection)
+- **Q7:** Difficulty rating (1-5 scale)
+- **Q8:** Challenge factors (conditional, multiple selection)
 
 **Total per task:** 500-800 words + 10-50 behavioral actions + metadata
 
