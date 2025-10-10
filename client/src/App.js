@@ -425,7 +425,7 @@ function App() {
       <header className="App-header">
         <img src="/logo192.png" alt="Tessera-ARC Logo" style={{ width: '60px', marginBottom: '10px' }} />
         <h1>Tessera ARC</h1>
-        <p>Capturing human reasoning, one piece at a time</p>
+        <p>Capturing human reasoning, one piece at a time.</p>
         {participantId && (
           <div className="participant-info">
             Participant: {participantId.substring(0, 20)}...

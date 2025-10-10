@@ -2,6 +2,7 @@ import React from 'react';
 import MiniARCExample from './MiniARCExample';
 import TypewriterAnimation from './TypewriterAnimation';
 import PaintingGridAnimation from './PaintingGridAnimation';
+import FallingCells from './FallingCells';
 import './LandingPage.css';
 
 const LandingPage = ({ onStartParticipation }) => {
@@ -32,7 +33,7 @@ const LandingPage = ({ onStartParticipation }) => {
             <img src="/logo192.png" alt="Tessera Logo" className="hero-logo" />
           </div>
           <h1 className="project-title">Tessera-ARC</h1>
-          <p className="tagline">Capturing human intelligence through abstract reasoning.</p>
+          <p className="tagline">Capturing human intelligence one piece at a time.</p>
         </div>
       </div>
 

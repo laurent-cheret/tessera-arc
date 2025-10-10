@@ -18,75 +18,104 @@ async function populateTasks() {
     console.log('📁 Loading ARC tasks from data directory...');
     
     const dataDir = path.join(__dirname, '../../data');
-    const trainingDir = path.join(dataDir, 'training');
-    const evaluationDir = path.join(dataDir, 'evaluation');
     
-    if (!fs.existsSync(trainingDir) || !fs.existsSync(evaluationDir)) {
-      throw new Error(`ARC data directories not found. Expected:\n  ${trainingDir}\n  ${evaluationDir}`);
-    }
+    // Process both v1 and v2
+    const versions = [
+      { path: path.join(dataDir, 'v1'), version: 'v1' },
+      { path: path.join(dataDir, 'v2'), version: 'v2' }
+    ];
     
-    // Step 3: Process training tasks
-    console.log('🔄 Processing training tasks...');
-    const trainingFiles = fs.readdirSync(trainingDir).filter(file => file.endsWith('.json'));
-    let trainingCount = 0;
+    let totalTraining = 0;
+    let totalEvaluation = 0;
+    const versionStats = {};
     
-    for (const file of trainingFiles) {
-      const taskId = file.replace('.json', '');
-      const filePath = path.join(trainingDir, file);
-      const taskData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    for (const { path: versionPath, version } of versions) {
+      const trainingDir = path.join(versionPath, 'training');
+      const evaluationDir = path.join(versionPath, 'evaluation');
       
-      await insertTask(taskId, 'training', taskData);
-      trainingCount++;
+      if (!fs.existsSync(trainingDir) && !fs.existsSync(evaluationDir)) {
+        console.log(`⚠️  Skipping ${version} - directories not found`);
+        continue;
+      }
       
-      if (trainingCount % 50 === 0) {
-        console.log(`   📝 Processed ${trainingCount}/${trainingFiles.length} training tasks...`);
+      console.log(`\n🔄 Processing ${version.toUpperCase()} tasks...`);
+      versionStats[version] = { training: 0, evaluation: 0 };
+      
+      // Step 3: Process training tasks
+      if (fs.existsSync(trainingDir)) {
+        console.log(`   📖 Processing ${version} training tasks...`);
+        const trainingFiles = fs.readdirSync(trainingDir).filter(file => file.endsWith('.json'));
+        
+        for (const file of trainingFiles) {
+          const taskId = file.replace('.json', '');
+          const filePath = path.join(trainingDir, file);
+          const taskData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+          
+          await insertTask(taskId, 'training', taskData, version);
+          versionStats[version].training++;
+          totalTraining++;
+          
+          if (totalTraining % 50 === 0) {
+            console.log(`      📝 Processed ${totalTraining} training tasks so far...`);
+          }
+        }
+        
+        console.log(`   ✅ Inserted ${versionStats[version].training} ${version} training tasks`);
+      }
+      
+      // Step 4: Process evaluation tasks
+      if (fs.existsSync(evaluationDir)) {
+        console.log(`   📖 Processing ${version} evaluation tasks...`);
+        const evaluationFiles = fs.readdirSync(evaluationDir).filter(file => file.endsWith('.json'));
+        
+        for (const file of evaluationFiles) {
+          const taskId = file.replace('.json', '');
+          const filePath = path.join(evaluationDir, file);
+          const taskData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+          
+          await insertTask(taskId, 'evaluation', taskData, version);
+          versionStats[version].evaluation++;
+          totalEvaluation++;
+          
+          if (totalEvaluation % 50 === 0) {
+            console.log(`      📝 Processed ${totalEvaluation} evaluation tasks so far...`);
+          }
+        }
+        
+        console.log(`   ✅ Inserted ${versionStats[version].evaluation} ${version} evaluation tasks`);
       }
     }
-    
-    console.log(`✅ Inserted ${trainingCount} training tasks`);
-    
-    // Step 4: Process evaluation tasks
-    console.log('🔄 Processing evaluation tasks...');
-    const evaluationFiles = fs.readdirSync(evaluationDir).filter(file => file.endsWith('.json'));
-    let evaluationCount = 0;
-    
-    for (const file of evaluationFiles) {
-      const taskId = file.replace('.json', '');
-      const filePath = path.join(evaluationDir, file);
-      const taskData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      
-      await insertTask(taskId, 'evaluation', taskData);
-      evaluationCount++;
-      
-      if (evaluationCount % 50 === 0) {
-        console.log(`   📝 Processed ${evaluationCount}/${evaluationFiles.length} evaluation tasks...`);
-      }
-    }
-    
-    console.log(`✅ Inserted ${evaluationCount} evaluation tasks`);
     
     // Step 5: Verify insertion
-    console.log('🔍 Verifying task insertion...');
+    console.log('\n🔍 Verifying task insertion...');
     const taskCountResult = await db.query(`
       SELECT 
         task_set,
+        arc_version,
         COUNT(*) as count,
         AVG(number_of_examples) as avg_examples
       FROM tasks 
-      GROUP BY task_set 
-      ORDER BY task_set
+      GROUP BY task_set, arc_version
+      ORDER BY arc_version, task_set
     `);
     
-    console.log('📊 Task summary:');
+    console.log('\n📊 Task summary by version:');
     taskCountResult.rows.forEach(row => {
-      console.log(`   ${row.task_set}: ${row.count} tasks (avg ${Math.round(row.avg_examples)} examples each)`);
+      console.log(`   ${row.arc_version} ${row.task_set}: ${row.count} tasks (avg ${Math.round(row.avg_examples)} examples each)`);
     });
     
-    const totalTasks = trainingCount + evaluationCount;
+    const totalTasks = totalTraining + totalEvaluation;
     console.log(`\n🎉 Successfully populated ${totalTasks} ARC tasks into database!`);
+    console.log(`   Training: ${totalTraining}`);
+    console.log(`   Evaluation: ${totalEvaluation}`);
+    
+    // Display unique task count
+    const uniqueCountResult = await db.query('SELECT COUNT(*) as count FROM tasks');
+    console.log(`\n📊 Unique tasks in database: ${uniqueCountResult.rows[0].count}`);
+    console.log(`   (${totalTasks - uniqueCountResult.rows[0].count} duplicates updated with v2 data)`);
     
     // Step 6: Update task statistics
-    console.log('📈 Updating task statistics...');
+    console.log('\n📈 Updating task statistics...');
     await updateTaskStatistics();
     
     console.log('\n✅ Task population completed successfully!');
@@ -99,14 +128,14 @@ async function populateTasks() {
     console.error('❌ Task population failed:', error.message);
     console.error('\n🔧 Troubleshooting tips:');
     console.error('   1. Make sure the database is set up: npm run db:setup');
-    console.error('   2. Check that ARC data exists in data/training and data/evaluation');
+    console.error('   2. Check that ARC data exists in data/v1 and data/v2');
     console.error('   3. Verify database connection in .env file');
     
     process.exit(1);
   }
 }
 
-async function insertTask(taskId, taskSet, taskData) {
+async function insertTask(taskId, taskSet, taskData, version) {
   try {
     // Calculate task properties
     const inputGrids = taskData.train.map(pair => pair.input);
@@ -134,11 +163,12 @@ async function insertTask(taskId, taskSet, taskData) {
       ? `${minRows}x${minCols}` 
       : `${minRows}-${maxRows}x${minCols}-${maxCols}`;
     
-    // Insert task
+    // Insert task with version
     await db.query(`
       INSERT INTO tasks (
         task_id,
         task_set,
+        arc_version,
         input_grids,
         output_grids,
         test_input_grid,
@@ -149,8 +179,10 @@ async function insertTask(taskId, taskSet, taskData) {
         created_date,
         source,
         task_validated
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP, $10, TRUE)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, $11, TRUE)
       ON CONFLICT (task_id) DO UPDATE SET
+        task_set = EXCLUDED.task_set,
+        arc_version = EXCLUDED.arc_version,
         input_grids = EXCLUDED.input_grids,
         output_grids = EXCLUDED.output_grids,
         test_input_grid = EXCLUDED.test_input_grid,
@@ -161,6 +193,7 @@ async function insertTask(taskId, taskSet, taskData) {
     `, [
       taskId,
       taskSet,
+      version,
       JSON.stringify(inputGrids),
       JSON.stringify(outputGrids),
       testInput ? JSON.stringify(testInput) : null,
@@ -168,7 +201,7 @@ async function insertTask(taskId, taskSet, taskData) {
       gridDimensions,
       colors.size,
       taskData.train.length,
-      'arc_original'
+      `arc_${version}`
     ]);
     
   } catch (error) {
