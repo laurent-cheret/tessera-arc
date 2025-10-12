@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './InteractiveGrid.css';
 
 const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) => {
   const [grid, setGrid] = useState(currentGrid || initialGrid);
   const [selectedColor, setSelectedColor] = useState(1);
+  const [mode, setMode] = useState('edit'); // 'edit', 'select', 'fill'
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionStart, setSelectionStart] = useState(null);
+  const [selectionEnd, setSelectionEnd] = useState(null);
+  
+  const gridRef = useRef(null);
 
   // Official ARC color palette
   const colors = {
@@ -56,44 +62,136 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
     return true;
   };
 
+  // EDIT MODE: Click individual cells
   const handleCellClick = (rowIndex, colIndex) => {
-    const oldValue = grid[rowIndex][colIndex];
-    
-    // Only proceed if the cell value is actually changing
-    if (oldValue === selectedColor) {
-      console.log('Skipped redundant cell click: cell already has this color');
-      return;
+    if (mode === 'edit') {
+      const oldValue = grid[rowIndex][colIndex];
+      
+      // Only proceed if the cell value is actually changing
+      if (oldValue === selectedColor) {
+        console.log('Skipped redundant cell click: cell already has this color');
+        return;
+      }
+      
+      const newGrid = grid.map((row, rIdx) =>
+        rIdx === rowIndex
+          ? row.map((cell, cIdx) => (cIdx === colIndex ? selectedColor : cell))
+          : [...row]
+      );
+
+      updateGrid(newGrid);
+
+      if (onAction) {
+        onAction({
+          type: 'cell_change',
+          row: rowIndex,
+          col: colIndex,
+          oldValue,
+          newValue: selectedColor,
+          timestamp: Date.now()
+        });
+      }
+    } else if (mode === 'fill') {
+      // FILL MODE: Fill entire grid with selected color
+      handleFillAll();
     }
-    
+  };
+
+  // SELECT MODE: Mouse down to start selection
+  const handleMouseDown = (rowIndex, colIndex) => {
+    if (mode === 'select') {
+      setIsSelecting(true);
+      setSelectionStart({ row: rowIndex, col: colIndex });
+      setSelectionEnd({ row: rowIndex, col: colIndex });
+    }
+  };
+
+  // SELECT MODE: Mouse move to update selection
+  const handleMouseMove = (rowIndex, colIndex) => {
+    if (mode === 'select' && isSelecting) {
+      setSelectionEnd({ row: rowIndex, col: colIndex });
+    }
+  };
+
+  // SELECT MODE: Mouse up to apply selection
+  const handleMouseUp = () => {
+    if (mode === 'select' && isSelecting && selectionStart && selectionEnd) {
+      applySelection();
+      setIsSelecting(false);
+      setSelectionStart(null);
+      setSelectionEnd(null);
+    }
+  };
+
+  // Apply color to selected region
+  const applySelection = () => {
+    if (!selectionStart || !selectionEnd) return;
+
+    const minRow = Math.min(selectionStart.row, selectionEnd.row);
+    const maxRow = Math.max(selectionStart.row, selectionEnd.row);
+    const minCol = Math.min(selectionStart.col, selectionEnd.col);
+    const maxCol = Math.max(selectionStart.col, selectionEnd.col);
+
     const newGrid = grid.map((row, rIdx) =>
-      rIdx === rowIndex
-        ? row.map((cell, cIdx) => (cIdx === colIndex ? selectedColor : cell))
-        : [...row]
+      row.map((cell, cIdx) => {
+        if (rIdx >= minRow && rIdx <= maxRow && cIdx >= minCol && cIdx <= maxCol) {
+          return selectedColor;
+        }
+        return cell;
+      })
     );
 
     updateGrid(newGrid);
 
     if (onAction) {
       onAction({
-        type: 'cell_change',
-        row: rowIndex,
-        col: colIndex,
-        oldValue,
-        newValue: selectedColor,
+        type: 'select_region',
+        startRow: minRow,
+        startCol: minCol,
+        endRow: maxRow,
+        endCol: maxCol,
+        color: selectedColor,
+        cellsAffected: (maxRow - minRow + 1) * (maxCol - minCol + 1),
         timestamp: Date.now()
-      });
-      
-      console.log('Cell change logged:', {
-        row: rowIndex,
-        col: colIndex,
-        oldValue,
-        newValue: selectedColor
       });
     }
   };
 
+  // FILL MODE: Fill entire grid
+  const handleFillAll = () => {
+    // Check if grid already all has this color
+    const allSameColor = grid.every(row => row.every(cell => cell === selectedColor));
+    if (allSameColor) {
+      console.log('Skipped redundant fill: grid already has this color');
+      return;
+    }
+
+    const newGrid = grid.map(row => row.map(() => selectedColor));
+    updateGrid(newGrid);
+
+    if (onAction) {
+      onAction({
+        type: 'fill_all',
+        color: selectedColor,
+        timestamp: Date.now()
+      });
+    }
+  };
+
+  // Check if cell is in selection
+  const isCellSelected = (rowIndex, colIndex) => {
+    if (!isSelecting || !selectionStart || !selectionEnd) return false;
+    
+    const minRow = Math.min(selectionStart.row, selectionEnd.row);
+    const maxRow = Math.max(selectionStart.row, selectionEnd.row);
+    const minCol = Math.min(selectionStart.col, selectionEnd.col);
+    const maxCol = Math.max(selectionStart.col, selectionEnd.col);
+    
+    return rowIndex >= minRow && rowIndex <= maxRow && 
+           colIndex >= minCol && colIndex <= maxCol;
+  };
+
   const resetGrid = () => {
-    // Check if grid is already all zeros
     if (isGridAllZeros(grid)) {
       console.log('Skipped redundant reset: grid is already empty');
       return;
@@ -107,12 +205,10 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
         type: 'reset',
         timestamp: Date.now()
       });
-      console.log('Reset logged');
     }
   };
 
   const copyFromInitial = () => {
-    // Check if grid is already identical to initial
     if (gridsAreEqual(grid, initialGrid)) {
       console.log('Skipped redundant copy: grid is already identical to input');
       return;
@@ -126,12 +222,10 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
         type: 'copy_from_input',
         timestamp: Date.now()
       });
-      console.log('Copy from input logged');
     }
   };
 
   const resizeGrid = (newRows, newCols) => {
-    // Check if dimensions are unchanged
     if (newRows === grid.length && newCols === grid[0]?.length) {
       console.log('Skipped redundant resize: dimensions unchanged');
       return;
@@ -155,7 +249,6 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
         newCols,
         timestamp: Date.now()
       });
-      console.log('Resize logged:', { newRows, newCols });
     }
   };
 
@@ -200,19 +293,59 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
           <p className="selected-color-label">Selected: Color {selectedColor}</p>
         </div>
 
+        {/* Mode Selector */}
+        <div className="mode-selector">
+          <h4>Edit Mode:</h4>
+          <div className="mode-buttons">
+            <button 
+              className={`mode-btn ${mode === 'edit' ? 'active' : ''}`}
+              onClick={() => setMode('edit')}
+              title="Click individual cells to change color"
+            >
+              ✏️ Edit
+            </button>
+            <button 
+              className={`mode-btn ${mode === 'select' ? 'active' : ''}`}
+              onClick={() => setMode('select')}
+              title="Click and drag to select a region, then apply color"
+            >
+              ⬚ Select
+            </button>
+            <button 
+              className={`mode-btn ${mode === 'fill' ? 'active' : ''}`}
+              onClick={() => setMode('fill')}
+              title="Click anywhere to fill entire grid with selected color"
+            >
+              🪣 Fill
+            </button>
+          </div>
+          <p className="mode-description">
+            {mode === 'edit' && '✏️ Click cells to paint them'}
+            {mode === 'select' && '⬚ Drag to select a region, then paint'}
+            {mode === 'fill' && '🪣 Click anywhere to fill entire grid'}
+          </p>
+        </div>
+
         {/* The Grid */}
-        <div className="interactive-grid">
+        <div 
+          className="interactive-grid"
+          ref={gridRef}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
           {grid.map((row, rowIndex) => (
             <div key={rowIndex} className="interactive-row">
               {row.map((cell, colIndex) => (
                 <div
                   key={`${rowIndex}-${colIndex}`}
-                  className="interactive-cell"
+                  className={`interactive-cell ${isCellSelected(rowIndex, colIndex) ? 'selected' : ''}`}
                   style={{
                     backgroundColor: colors[cell],
-                    cursor: 'pointer'
+                    cursor: mode === 'edit' ? 'pointer' : mode === 'select' ? 'crosshair' : 'copy'
                   }}
                   onClick={() => handleCellClick(rowIndex, colIndex)}
+                  onMouseDown={() => handleMouseDown(rowIndex, colIndex)}
+                  onMouseMove={() => handleMouseMove(rowIndex, colIndex)}
                   title={`Cell (${rowIndex}, ${colIndex}): ${cell}`}
                 />
               ))}

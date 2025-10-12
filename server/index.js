@@ -370,7 +370,7 @@ app.post('/api/submissions',
         ]);
         
 
-        // 3. Insert action traces (FIXED - Handles test_solution properly)
+        // 3. Insert action traces (HANDLES ALL ACTION TYPES)
         if (phase2_solving_process.actionLog && phase2_solving_process.actionLog.length > 0) {
           for (const action of phase2_solving_process.actionLog) {
             const actionId = db.generateId('action');
@@ -407,11 +407,29 @@ app.post('/api/submissions',
               });
               
             } else if (action.type === 'test_solution') {
-              // FIXED: Store test solution result data
               gridStateAfter = JSON.stringify({
                 actionType: 'test_solution',
                 result: action.result || 'unknown',
                 incorrectCells: action.incorrectCells || null
+              });
+              
+            } else if (action.type === 'select_region') {
+              // NEW: Handle select region action
+              gridStateAfter = JSON.stringify({
+                actionType: 'select_region',
+                startRow: action.startRow,
+                startCol: action.startCol,
+                endRow: action.endRow,
+                endCol: action.endCol,
+                color: action.color,
+                cellsAffected: action.cellsAffected
+              });
+              
+            } else if (action.type === 'fill_all') {
+              // NEW: Handle fill all action
+              gridStateAfter = JSON.stringify({
+                actionType: 'fill_all',
+                color: action.color
               });
             }
             

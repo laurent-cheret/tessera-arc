@@ -31,7 +31,7 @@ const TaskReference = ({
   userSolution, 
   isCorrect, 
   showUserSolution,
-  defaultExpanded = false // NEW: Allow starting expanded
+  defaultExpanded = false
 }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
@@ -70,9 +70,10 @@ const TaskReference = ({
               <div key={index} className="training-pair-compact">
                 <div className="pair-label">Example {index + 1}</div>
                 <div className="pair-grids">
-                  <ARCGrid grid={pair.input} title="Input" />
+                  {/* maxSize=250 for training examples to keep them compact */}
+                  <ARCGrid grid={pair.input} title="Input" maxSize={250} />
                   <span className="arrow">→</span>
-                  <ARCGrid grid={pair.output} title="Output" />
+                  <ARCGrid grid={pair.output} title="Output" maxSize={250} />
                 </div>
               </div>
             ))}
@@ -82,7 +83,8 @@ const TaskReference = ({
             <div className="user-solution-display">
               <h4>Your Solution:</h4>
               <div className="solution-with-status">
-                <ARCGrid grid={userSolution} title="Your Output" />
+                {/* maxSize=300 for user solution - slightly larger */}
+                <ARCGrid grid={userSolution} title="Your Output" maxSize={300} />
                 {isCorrect !== null && (
                   <div className={`solution-badge ${isCorrect ? 'correct' : 'incorrect'}`}>
                     {isCorrect ? '✓ Correct' : '✗ Incorrect'}
