@@ -1,13 +1,21 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// Database configuration
+// Database configuration - works for both local and production
 const dbConfig = {
-  user: process.env.DB_USER || 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'arc_crowdsourcing',
-  password: process.env.DB_PASSWORD || 'password',
-  port: process.env.DB_PORT || 5432,
+  // Production (Railway) uses PGUSER, PGHOST, etc.
+  // Local uses DB_USER, DB_HOST, etc.
+  user: process.env.PGUSER || process.env.DB_USER || 'postgres',
+  host: process.env.PGHOST || process.env.DB_HOST || 'localhost',
+  database: process.env.PGDATABASE || process.env.DB_NAME || 'arc_crowdsourcing',
+  password: process.env.PGPASSWORD || process.env.DB_PASSWORD || 'password',
+  port: process.env.PGPORT || process.env.DB_PORT || 5432,
+  
+  // Enable SSL for production (Railway), disable for local
+  ssl: process.env.NODE_ENV === 'production' 
+    ? { rejectUnauthorized: false } 
+    : false,
+  
   max: 20, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
   connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection cannot be established
@@ -19,6 +27,8 @@ const pool = new Pool(dbConfig);
 // Test connection on startup
 pool.on('connect', () => {
   console.log('✅ Connected to PostgreSQL database');
+  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🗄️ Database: ${dbConfig.database} @ ${dbConfig.host}`);
 });
 
 pool.on('error', (err) => {

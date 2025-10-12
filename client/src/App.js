@@ -7,6 +7,7 @@ import Phase4Questions from './components/Phase4Questions';
 import TaskReference from './components/TaskReference';
 import LandingPage from './components/LandingPage';
 import './App.css';
+import config from './config';
 
 function App() {
   // Landing page state
@@ -72,7 +73,7 @@ function App() {
     try {
       let storedParticipantId = localStorage.getItem('arc_participant_id');
       
-      const response = await fetch('/api/participants', {
+      const response = await fetch(`${config.API_URL}/api/participants`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,7 +113,7 @@ function App() {
     setPhase4Data(null);
     setSubmissionStatus(null);
     
-    fetch('/api/arc-tasks')
+    fetch(`${config.API_URL}/api/arc-tasks`)
       .then(res => res.json())
       .then(data => {
         setArcTask(data.task);
@@ -206,7 +207,7 @@ function App() {
       console.log('=== SUBMITTING TO DATABASE ===');
       console.log(JSON.stringify(completeSubmission, null, 2));
       
-      const response = await fetch('/api/submissions', {
+      const response = await fetch(`${config.API_URL}/api/submissions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

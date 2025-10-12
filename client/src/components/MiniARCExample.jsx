@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import './MiniARCExample.css';
-
+import config from '../config';
 const MiniARCExample = () => {
   const [exampleTask, setExampleTask] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Fetch a random task for display
-    fetch('/api/arc-tasks')
+    fetch(`${config.API_URL}/api/arc-tasks`)
       .then(res => res.json())
       .then(data => {
         setExampleTask(data.task);

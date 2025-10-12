@@ -21,7 +21,26 @@ const PORT = process.env.PORT || 5000;
 // =====================================================
 
 app.use(helmet());
-app.use(cors());
+// CORS configuration for production
+const allowedOrigins = [
+  'http://localhost:3000',
+  process.env.FRONTEND_URL,
+];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('❌ Blocked by CORS:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(compression());
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
