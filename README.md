@@ -31,7 +31,7 @@ The [Abstraction and Reasoning Corpus (ARC)](https://github.com/fchollet/ARC-AGI
 
 ### For Participants
 - Interactive grid editor with 10-color ARC palette
-- 800 official ARC tasks (training + evaluation sets)
+- 800 (V1) and 1120 (V2) official ARC tasks (training + evaluation sets)
 - Progressive 4-phase questionnaire (reduces cognitive load)
 - Real-time solution validation
 - Engaging UI with animations
@@ -119,7 +119,7 @@ The [Abstraction and Reasoning Corpus (ARC)](https://github.com/fchollet/ARC-AGI
 
 5 main tables:
 - `participants` - Anonymous user tracking
-- `tasks` - 800 ARC tasks with metadata
+- `tasks` - ARC tasks with metadata
 - `task_attempts` - Each solving session
 - `responses` - All questionnaire answers
 - `action_traces` - Complete behavioral logs
