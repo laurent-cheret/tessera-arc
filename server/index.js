@@ -28,15 +28,26 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
 ];
 
+// DEBUG: Log what we're actually checking
+console.log('🔍 CORS Configuration:');
+console.log('  FRONTEND_URL env var:', process.env.FRONTEND_URL);
+console.log('  Allowed origins array:', allowedOrigins);
+console.log('  FRONTEND_URL type:', typeof process.env.FRONTEND_URL);
+console.log('  FRONTEND_URL length:', process.env.FRONTEND_URL ? process.env.FRONTEND_URL.length : 0);
+
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, etc.)
+    console.log('🔍 CORS check - Incoming origin:', origin);
+    console.log('🔍 Is in allowedOrigins?', allowedOrigins.includes(origin));
+    
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.includes(origin)) {
+      console.log('✅ CORS allowed for:', origin);
       callback(null, true);
     } else {
       console.log('❌ Blocked by CORS:', origin);
+      console.log('❌ Allowed origins are:', allowedOrigins);
       callback(new Error('Not allowed by CORS'));
     }
   },
