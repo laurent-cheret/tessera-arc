@@ -28,12 +28,6 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
 ];
 
-// DEBUG: Log what we're actually checking
-console.log('🔍 CORS Configuration:');
-console.log('  FRONTEND_URL env var:', process.env.FRONTEND_URL);
-console.log('  Allowed origins array:', allowedOrigins);
-console.log('  FRONTEND_URL type:', typeof process.env.FRONTEND_URL);
-console.log('  FRONTEND_URL length:', process.env.FRONTEND_URL ? process.env.FRONTEND_URL.length : 0);
 
 app.use(cors({
   origin: function(origin, callback) {
