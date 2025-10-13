@@ -12,24 +12,24 @@ class TaskLoader {
     try {
       // Load v1 tasks
       this.loadTasksFromDirectory(
-        path.join(__dirname, '../data/v1/training'),
+        path.join(__dirname, './data/v1/training'),
         'training',
         'v1'
       );
       this.loadTasksFromDirectory(
-        path.join(__dirname, '../data/v1/evaluation'),
+        path.join(__dirname, './data/v1/evaluation'),
         'evaluation',
         'v1'
       );
 
       // Load v2 tasks
       this.loadTasksFromDirectory(
-        path.join(__dirname, '../data/v2/training'),
+        path.join(__dirname, './data/v2/training'),
         'training',
         'v2'
       );
       this.loadTasksFromDirectory(
-        path.join(__dirname, '../data/v2/evaluation'),
+        path.join(__dirname, './data/v2/evaluation'),
         'evaluation',
         'v2'
       );
