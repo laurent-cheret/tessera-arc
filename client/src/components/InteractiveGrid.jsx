@@ -25,6 +25,20 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
     9: '#870C25', // Maroon
   };
 
+  // Color names for display
+  const colorNames = {
+    0: 'Black',
+    1: 'Blue',
+    2: 'Red',
+    3: 'Green',
+    4: 'Yellow',
+    5: 'Gray',
+    6: 'Magenta',
+    7: 'Orange',
+    8: 'Cyan',
+    9: 'Maroon'
+  };
+
   // Sync with external grid changes
   useEffect(() => {
     if (currentGrid) {
@@ -283,14 +297,21 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
             {Object.entries(colors).map(([value, color]) => (
               <div
                 key={value}
-                className={`color-option ${selectedColor === parseInt(value) ? 'selected' : ''}`}
-                style={{ backgroundColor: color }}
-                onClick={() => setSelectedColor(parseInt(value))}
-                title={`Color ${value}`}
-              />
+                className="color-option-wrapper"
+              >
+                <div
+                  className={`color-option ${selectedColor === parseInt(value) ? 'selected' : ''}`}
+                  style={{ backgroundColor: color }}
+                  onClick={() => setSelectedColor(parseInt(value))}
+                  title={colorNames[value]}
+                />
+                <div className="color-name">{colorNames[value]}</div>
+              </div>
             ))}
           </div>
-          <p className="selected-color-label">Selected: Color {selectedColor}</p>
+          <p className="selected-color-label">
+            Selected: {colorNames[selectedColor]}
+          </p>
         </div>
 
         {/* Mode Selector */}
