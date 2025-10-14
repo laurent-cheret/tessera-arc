@@ -623,7 +623,12 @@ function App() {
 
         {/* Phase 3: Post-Solving Questions */}
         {currentPhase === 'phase3' && (
-          <Phase3Questions onComplete={handlePhase3Complete} />
+          <Phase3Questions 
+            onComplete={handlePhase3Complete}
+            testInput={arcTask.test[0].input}
+            userSolution={userGrid}
+            isCorrect={solutionCorrect}
+          />
         )}
 
         {/* Phase 4: Final Reflection Questions */}

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import SolutionSummary from './SolutionSummary';
 import './Phase3Questions.css';
 
-const Phase3Questions = ({ onComplete, initialData }) => {
+const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isCorrect }) => {
   const [whatYouTried, setWhatYouTried] = useState(initialData?.whatYouTried || '');
   const [hypothesisRevised, setHypothesisRevised] = useState(initialData?.hypothesisRevised || null);
   const [revisionReason, setRevisionReason] = useState(initialData?.revisionReason || '');
@@ -102,117 +103,129 @@ const Phase3Questions = ({ onComplete, initialData }) => {
   };
 
   return (
-    <div className="phase3-questions">
-      <h2>About Your Solving Attempt</h2>
-      <p className="phase-intro">
-        Whether you solved it correctly or not, we want to hear about your approach!
-        Your attempts and reasoning are valuable regardless of the outcome.
-      </p>
-
-      {/* Q3: What You Tried */}
-      <div className="question-block">
-        <h3>Q3: What did you try to solve this puzzle?</h3>
-        <p className="question-hint">
-          Describe your approach step-by-step. Try to include:
-        </p>
-        <ul className="hint-list">
-          <li><strong>What</strong> you focused on (objects, colors, positions, patterns)</li>
-          <li><strong>How</strong> you attempted to transform the input (what operations or changes you tried)</li>
-          <li><strong>When/Why</strong> certain approaches seemed right or wrong</li>
-        </ul>
-        
-        {errors.whatYouTried && <div className="error-message">{errors.whatYouTried}</div>}
-        
-        <textarea
-          className="response-textarea"
-          value={whatYouTried}
-          onChange={(e) => setWhatYouTried(e.target.value)}
-          placeholder="Example: 'I tried moving all the red objects to the right side of the grid. When that didn't look right, I attempted to rotate them 90 degrees instead. I noticed the pattern seemed to involve mirroring across the center line...'"
-          rows={6}
+    <div className="phase3-container">
+      {/* Side panel with solution summary */}
+      <div className="phase3-sidebar">
+        <SolutionSummary 
+          testInput={testInput}
+          userSolution={userSolution}
+          isCorrect={isCorrect}
         />
-        
-        <div className="word-counter">
-          {whatYouTried.trim().split(/\s+/).filter(w => w.length > 0).length} / 500 words
-          (minimum 15 words)
-        </div>
       </div>
 
-      {/* Q9: Strategy Revision (moved here from Phase 4) */}
-      <div className="question-block">
-        <h3>Q4: Did you change your mind about the pattern while solving?</h3>
-        
-        {errors.hypothesisRevised && <div className="error-message">{errors.hypothesisRevised}</div>}
-        
-        <div className="revision-options">
-          <div
-            className={`revision-option ${hypothesisRevised === false ? 'selected' : ''}`}
-            onClick={() => {
-              setHypothesisRevised(false);
-              setRevisionReason('');
-            }}
-          >
-            <div className="revision-icon">✓</div>
-            <div className="revision-label">No, I stuck with my original idea</div>
-          </div>
+      {/* Main questions area */}
+      <div className="phase3-questions">
+        <h2>About Your Solving Attempt</h2>
+        <p className="phase-intro">
+          Whether you solved it correctly or not, we want to hear about your approach!
+          Your attempts and reasoning are valuable regardless of the outcome.
+        </p>
 
-          <div
-            className={`revision-option ${hypothesisRevised === true ? 'selected' : ''}`}
-            onClick={() => setHypothesisRevised(true)}
-          >
-            <div className="revision-icon">🔄</div>
-            <div className="revision-label">Yes, I changed my approach</div>
+        {/* Q3: What You Tried */}
+        <div className="question-block">
+          <h3>Q3: What did you try to solve this puzzle?</h3>
+          <p className="question-hint">
+            Describe your approach step-by-step. Try to include:
+          </p>
+          <ul className="hint-list">
+            <li><strong>What</strong> you focused on (objects, colors, positions, patterns)</li>
+            <li><strong>How</strong> you attempted to transform the input (what operations or changes you tried)</li>
+            <li><strong>When/Why</strong> certain approaches seemed right or wrong</li>
+          </ul>
+          
+          {errors.whatYouTried && <div className="error-message">{errors.whatYouTried}</div>}
+          
+          <textarea
+            className="response-textarea"
+            value={whatYouTried}
+            onChange={(e) => setWhatYouTried(e.target.value)}
+            placeholder="Example: 'I tried moving all the red objects to the right side of the grid. When that didn't look right, I attempted to rotate them 90 degrees instead. I noticed the pattern seemed to involve mirroring across the center line...'"
+            rows={6}
+          />
+          
+          <div className="word-counter">
+            {whatYouTried.trim().split(/\s+/).filter(w => w.length > 0).length} / 500 words
+            (minimum 15 words)
           </div>
         </div>
 
-        {hypothesisRevised && (
-          <div className="revision-reason-section">
-            <p className="question-hint">What made you change your approach?</p>
-            
-            {errors.revisionReason && <div className="error-message">{errors.revisionReason}</div>}
-            
-            <textarea
-              className="response-textarea small"
-              value={revisionReason}
-              onChange={(e) => setRevisionReason(e.target.value)}
-              placeholder="Example: 'At first I thought shapes were just rotating, but example 3 showed some shapes staying still. I realized only shapes touching the border rotate.'"
-              rows={3}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Q5: Strategy Selection */}
-      <div className="question-block">
-        <h3>Q5: Which approach best describes how you tackled this puzzle?</h3>
-        <p className="question-hint">Select the ONE that fits best:</p>
-        
-        {errors.strategy && <div className="error-message">{errors.strategy}</div>}
-        
-        <div className="strategy-options">
-          {strategies.map(s => (
+        {/* Q9: Strategy Revision (moved here from Phase 4) */}
+        <div className="question-block">
+          <h3>Q4: Did you change your mind about the pattern while solving?</h3>
+          
+          {errors.hypothesisRevised && <div className="error-message">{errors.hypothesisRevised}</div>}
+          
+          <div className="revision-options">
             <div
-              key={s.value}
-              className={`strategy-card ${strategy === s.value ? 'selected' : ''}`}
-              onClick={() => setStrategy(s.value)}
+              className={`revision-option ${hypothesisRevised === false ? 'selected' : ''}`}
+              onClick={() => {
+                setHypothesisRevised(false);
+                setRevisionReason('');
+              }}
             >
-              <div className="strategy-header">
-                <span className="strategy-emoji">{s.emoji}</span>
-                <span className="strategy-label">{s.label}</span>
-              </div>
-              <p className="strategy-description">{s.description}</p>
-              <p className="strategy-when"><strong>When to select:</strong> {s.when}</p>
+              <div className="revision-icon">✓</div>
+              <div className="revision-label">No, I stuck with my original idea</div>
             </div>
-          ))}
-        </div>
-      </div>
 
-      <div className="continue-section">
-        <button 
-          className="continue-btn"
-          onClick={handleSubmit}
-        >
-          Continue to Final Question →
-        </button>
+            <div
+              className={`revision-option ${hypothesisRevised === true ? 'selected' : ''}`}
+              onClick={() => setHypothesisRevised(true)}
+            >
+              <div className="revision-icon">🔄</div>
+              <div className="revision-label">Yes, I changed my approach</div>
+            </div>
+          </div>
+
+          {hypothesisRevised && (
+            <div className="revision-reason-section">
+              <p className="question-hint">What made you change your approach?</p>
+              
+              {errors.revisionReason && <div className="error-message">{errors.revisionReason}</div>}
+              
+              <textarea
+                className="response-textarea small"
+                value={revisionReason}
+                onChange={(e) => setRevisionReason(e.target.value)}
+                placeholder="Example: 'At first I thought shapes were just rotating, but example 3 showed some shapes staying still. I realized only shapes touching the border rotate.'"
+                rows={3}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Q5: Strategy Selection */}
+        <div className="question-block">
+          <h3>Q5: Which approach best describes how you tackled this puzzle?</h3>
+          <p className="question-hint">Select the ONE that fits best:</p>
+          
+          {errors.strategy && <div className="error-message">{errors.strategy}</div>}
+          
+          <div className="strategy-options">
+            {strategies.map(s => (
+              <div
+                key={s.value}
+                className={`strategy-card ${strategy === s.value ? 'selected' : ''}`}
+                onClick={() => setStrategy(s.value)}
+              >
+                <div className="strategy-header">
+                  <span className="strategy-emoji">{s.emoji}</span>
+                  <span className="strategy-label">{s.label}</span>
+                </div>
+                <p className="strategy-description">{s.description}</p>
+                <p className="strategy-when"><strong>When to select:</strong> {s.when}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="continue-section">
+          <button 
+            className="continue-btn"
+            onClick={handleSubmit}
+          >
+            Continue to Final Question →
+          </button>
+        </div>
       </div>
     </div>
   );

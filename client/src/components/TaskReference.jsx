@@ -31,7 +31,7 @@ const TaskReference = ({
   userSolution, 
   isCorrect, 
   showUserSolution,
-  defaultExpanded = false
+  defaultExpanded = true
 }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 

@@ -17,7 +17,7 @@ async function populateTasks() {
     // Step 2: Load tasks from filesystem
     console.log('📁 Loading ARC tasks from data directory...');
     
-    const dataDir = path.join(__dirname, '../../data');
+    const dataDir = path.join(__dirname, '../data');
     
     // Process both v1 and v2
     const versions = [

@@ -1,0 +1,131 @@
+.solution-summary {
+    position: sticky;
+    top: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    color: white;
+  }
+  
+  .summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .summary-header h4 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .summary-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  
+  .summary-badge.correct {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  .summary-badge.incorrect {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .summary-grids {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.15);
+    padding: 15px;
+    border-radius: 8px;
+  }
+  
+  .summary-grid-container {
+    text-align: center;
+  }
+  
+  .summary-grid-title {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    opacity: 0.95;
+  }
+  
+  .summary-grid {
+    display: inline-block;
+    background-color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .summary-row {
+    display: flex;
+  }
+  
+  .summary-cell {
+    flex-shrink: 0;
+  }
+  
+  .summary-arrow {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 5px 0;
+    opacity: 0.9;
+  }
+  
+  .summary-footer {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .summary-hint {
+    margin: 0;
+    font-size: 13px;
+    text-align: center;
+    opacity: 0.9;
+    font-style: italic;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 1024px) {
+    .solution-summary {
+      position: relative;
+      top: 0;
+      margin-bottom: 20px;
+    }
+    
+    .summary-grids {
+      flex-direction: row;
+      justify-content: center;
+    }
+    
+    .summary-arrow {
+      font-size: 20px;
+      margin: 0 10px;
+      align-self: center;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .solution-summary {
+      padding: 15px;
+    }
+    
+    .summary-grids {
+      flex-direction: column;
+    }
+    
+    .summary-arrow {
+      margin: 5px 0;
+    }
+  }
