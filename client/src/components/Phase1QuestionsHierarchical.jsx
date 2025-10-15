@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Phase1QuestionsHierarchical.css';
+import ColorAutocompleteTextarea from './ColorAutocompleteTextarea';
 
 const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
   // State management
@@ -409,12 +410,12 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
           
           {errors.hypothesis && <div className="error-message">{errors.hypothesis}</div>}
           
-          <textarea
-            className="hypothesis-textarea"
+          <ColorAutocompleteTextarea
             value={initialHypothesis}
             onChange={(e) => setInitialHypothesis(e.target.value)}
             placeholder="Example: 'The colored squares move to the corners of the grid' or 'Red shapes become blue, and blue become red'"
             rows={4}
+            className="hypothesis-textarea"
           />
           
           <div className="word-counter">

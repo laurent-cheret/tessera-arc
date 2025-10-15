@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import SolutionSummary from './SolutionSummary';
 import './Phase3Questions.css';
+import ColorAutocompleteTextarea from './ColorAutocompleteTextarea';
 
 const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isCorrect }) => {
   const [whatYouTried, setWhatYouTried] = useState(initialData?.whatYouTried || '');
@@ -135,13 +136,13 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
           
           {errors.whatYouTried && <div className="error-message">{errors.whatYouTried}</div>}
           
-          <textarea
-            className="response-textarea"
-            value={whatYouTried}
-            onChange={(e) => setWhatYouTried(e.target.value)}
-            placeholder="Example: 'I tried moving all the red objects to the right side of the grid. When that didn't look right, I attempted to rotate them 90 degrees instead. I noticed the pattern seemed to involve mirroring across the center line...'"
-            rows={6}
-          />
+          <ColorAutocompleteTextarea
+          value={whatYouTried}
+          onChange={(e) => setWhatYouTried(e.target.value)}
+          placeholder="Example: 'I tried moving all the red objects to the right side of the grid. When that didn't look right, I attempted to rotate them 90 degrees instead. I noticed the pattern seemed to involve mirroring across the center line...'"
+          rows={6}
+          className="response-textarea"
+        />
           
           <div className="word-counter">
             {whatYouTried.trim().split(/\s+/).filter(w => w.length > 0).length} / 500 words
@@ -182,12 +183,12 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
               
               {errors.revisionReason && <div className="error-message">{errors.revisionReason}</div>}
               
-              <textarea
-                className="response-textarea small"
+              <ColorAutocompleteTextarea
                 value={revisionReason}
                 onChange={(e) => setRevisionReason(e.target.value)}
                 placeholder="Example: 'At first I thought shapes were just rotating, but example 3 showed some shapes staying still. I realized only shapes touching the border rotate.'"
                 rows={3}
+                className="response-textarea small"
               />
             </div>
           )}
