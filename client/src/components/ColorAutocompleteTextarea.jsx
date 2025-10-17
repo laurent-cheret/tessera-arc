@@ -206,7 +206,7 @@ const ColorAutocompleteTextarea = ({
 
     const before = value.substring(0, currentWordInfo.start);
     const after = value.substring(currentWordInfo.end);
-    const newValue = before + `[${colorName}] ` + after;
+    const newValue = before + `${colorName} ` + after;
     
     const syntheticEvent = { target: { value: newValue } };
     onChange(syntheticEvent);
@@ -270,7 +270,7 @@ const ColorAutocompleteTextarea = ({
         // Auto-replace with extra space after
         const before = newValue.substring(0, phraseStart);
         const after = newValue.substring(cursorPos);
-        const replaced = before + `[${matchedColor}] ` + after;
+        const replaced = before + `${matchedColor} ` + after;
         
         const syntheticEvent = { target: { value: replaced } };
         onChange(syntheticEvent);

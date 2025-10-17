@@ -91,6 +91,166 @@
   line-height: 1.8;
 }
 
+/* Read More Button */
+.read-more-button {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s;
+  margin-top: 25px;
+}
+
+.read-more-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.read-more-button .arrow {
+  font-size: 12px;
+}
+
+/* Expanded Content */
+.expanded-content {
+  margin-top: 30px;
+  border-top: 2px solid #e9ecef;
+  padding-top: 30px;
+}
+
+.expanded-content h3 {
+  color: #282c34;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  margin-top: 25px;
+}
+
+.expanded-content p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #495057;
+}
+
+.expanded-content ul {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #495057;
+  margin-bottom: 20px;
+}
+
+.expanded-content ul li {
+  margin-bottom: 10px;
+}
+
+/* Weakness Boxes */
+.weakness-box {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.weakness-1 {
+  border-left: 4px solid #667eea;
+}
+
+.weakness-2 {
+  border-left: 4px solid #764ba2;
+}
+
+.weakness-3 {
+  border-left: 4px solid #ffc107;
+}
+
+.weakness-4 {
+  border-left: 4px solid #e74c3c;
+}
+
+.weakness-box h4 {
+  color: #282c34;
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.weakness-box p {
+  margin-bottom: 15px;
+}
+
+.weakness-box p:last-child {
+  margin-bottom: 0;
+}
+
+.weakness-box ul {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+/* Stats Highlight */
+.stats-highlight {
+  background: #e8f4f8;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 20px 0;
+}
+
+.stats-highlight ul {
+  margin-bottom: 0;
+}
+
+/* Collection Boxes */
+.collection-box {
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.collection-1 {
+  background: #fff3cd;
+}
+
+.collection-2 {
+  background: #e8f4f8;
+}
+
+.collection-3 {
+  background: #e7f3e7;
+}
+
+.collection-4 {
+  background: #f3e7f3;
+}
+
+.collection-box h4 {
+  color: #282c34;
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.collection-box .collection-timing {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #495057;
+  margin-bottom: 10px;
+  font-style: italic;
+}
+
+.collection-box p {
+  margin-bottom: 0;
+}
+
 /* Highlight Cards */
 .highlight-primary {
   background: linear-gradient(135deg, #e8f4f8 0%, #d1ecf1 100%);
@@ -320,52 +480,6 @@
   font-size: 14px;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .project-title {
-    font-size: 36px;
-  }
-
-  .tagline {
-    font-size: 16px;
-  }
-
-  .content-card {
-    padding: 25px 20px;
-  }
-
-  .content-card h2 {
-    font-size: 24px;
-  }
-
-  .comparison-stats {
-    flex-direction: column;
-  }
-
-  .stat-divider {
-    transform: rotate(90deg);
-    margin: 10px 0;
-  }
-
-  .steps-grid-animated {
-    grid-template-columns: 1fr;
-  }
-
-  .privacy-badge {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .badge-text {
-    text-align: center;
-  }
-
-  .time-commitment {
-    flex-direction: column;
-    text-align: center;
-  }
-}
-
 /* CTA Section */
 .cta-section {
   text-align: center;
@@ -489,11 +603,8 @@
     margin: 10px 0;
   }
 
-  .step-animated {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 15px;
+  .steps-grid-animated {
+    grid-template-columns: 1fr;
   }
 
   .privacy-badge {
