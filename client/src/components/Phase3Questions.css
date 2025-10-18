@@ -279,4 +279,66 @@
   text-align: center;
 }
 
-/* ... rest of existing CSS ... */
+.strategy-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.strategy-subtitle {
+  font-size: 0.85em;
+  font-weight: normal;
+  color: #666;
+  font-style: italic;
+}
+
+.strategy-example {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: #f8f9fa;
+  border-left: 3px solid #007bff;
+  font-size: 0.9em;
+  font-style: italic;
+  color: #555;
+}
+
+.strategy-when {
+  margin-top: 6px;
+  font-size: 0.95em;
+}
+
+/* Center the strategy header */
+.strategy-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.strategy-emoji {
+  font-size: 2em;
+}
+
+.strategy-label {
+  font-size: 1.1em;
+  font-weight: 600;
+  text-align: center;
+}
+
+.strategy-when {
+  margin-top: 8px;
+  font-size: 0.95em;
+  line-height: 1.4;
+}
+
+.strategy-example {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: #f8f9fa;
+  border-left: 3px solid #007bff;
+  font-size: 0.9em;
+  font-style: italic;
+  color: #555;
+  line-height: 1.4;
+}

@@ -66,6 +66,7 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
     visual_appearance: [
       { value: 'background_color', label: 'Background color' },
       { value: 'specific_colors', label: 'Specific colors present' },
+      { value: 'color_changes', label: 'Changes in colors' },
       { value: 'shapes', label: 'Distinct shapes' },
       { value: 'symmetry', label: 'Symmetry' },
       { value: 'repeating_patterns', label: 'Repeating patterns or tiles' },
@@ -79,7 +80,7 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
       { value: 'spatial_other', label: 'Something else about position', needsText: true }
     ],
     structure_connections: [
-      { value: 'containment', label: 'Objects inside other objects' },
+      { value: 'containment', label: 'Objects inside or surrounding other objects' },
       { value: 'touching_connected', label: 'Objects touching or connected' },
       { value: 'paths_lines', label: 'Lines or paths connecting things' },
       { value: 'holes_gaps', label: 'Holes or gaps within objects' },
@@ -90,15 +91,16 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
       { value: 'counting_objects', label: 'Number of objects' },
       { value: 'counting_colors', label: 'Number of colors present' },
       { value: 'object_sizes', label: 'Different sizes of objects' },
+      { value: 'size_change', label: 'Objects growing or shrinking' },
       { value: 'size_comparison', label: 'Comparing relative sizes' },
+      { value: 'grid_size', label: 'Grid size changing' },
       { value: 'quantity_other', label: 'Something else about quantity/size', needsText: true }
     ],
     changes_movement: [
       { value: 'position_change', label: 'Objects moving or shifting position' },
-      { value: 'scale_change', label: 'Objects getting bigger or smaller' },
       { value: 'rotation_flip', label: 'Objects rotating or flipping' },
       { value: 'appearing_disappearing', label: 'Objects appearing or disappearing' },
-      { value: 'directional_flow', label: 'Directional flow or progression' },
+      { value: 'directional_flow', label: 'Physics like gravity, bouncing, falling or flowing' },
       { value: 'duplication', label: 'Objects being copied or duplicated' },
       { value: 'change_other', label: 'Something else about changes', needsText: true }
     ],
@@ -106,13 +108,15 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
       { value: 'similarity_groups', label: 'Objects grouped by similarity' },
       { value: 'location_groups', label: 'Objects grouped by location' },
       { value: 'sorting_ranking', label: 'Objects sorted or ranked' },
+      { value: 'object_layers', label: 'Objects layered on top of each other' },
+      { value: 'column_row_arrangement', label: 'Objects arranged in rows and columns' },
       { value: 'matching', label: 'Matching or comparing elements' },
       { value: 'organization_other', label: 'Something else about organization', needsText: true }
     ],
     rules_patterns: [
       { value: 'conditional_rules', label: 'Conditional rules (if X, then Y)' },
       { value: 'context_dependent', label: 'Context-dependent transformations' },
-      { value: 'multi_step', label: 'Multiple steps in sequence' },
+      { value: 'multi_step', label: 'Following a sequence or order' },
       { value: 'complex_combination', label: 'Complex pattern combining operations' },
       { value: 'rules_other', label: 'Something else about rules', needsText: true }
     ]

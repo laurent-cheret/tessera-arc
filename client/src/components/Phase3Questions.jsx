@@ -12,53 +12,32 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
 
   const strategies = [
     {
-      value: 'visual_pattern_matching',
-      emoji: '📸',
-      label: 'Visual Pattern Matching',
-      description: 'I recognized this pattern from similar puzzles I\'ve seen before. I matched the visual structure to a known transformation type.',
-      when: 'You immediately recognized the pattern type (rotation, reflection, etc.) because you\'ve seen similar puzzles.'
+      value: 'intuitive_recognition',
+      emoji: '💡',
+      label: 'Quick Recognition',
+      when: 'The transformation felt obvious to you. You recognized the pattern quickly, like spotting a familiar face in a crowd.',
+      example: 'You instantly thought "Oh, this is just flipping the shape horizontally" without analyzing why.'
     },
     {
-      value: 'rule_induction',
-      emoji: '🔍',
-      label: 'Rule Induction from Examples',
-      description: 'I systematically compared all training examples to find what stays the same and what changes, then extracted the underlying rule.',
-      when: 'You carefully analyzed each example pair to identify the consistent transformation rule.'
+      value: 'systematic_analysis',
+      emoji: '🔬',
+      label: 'Systematic Rule Finding',
+      when: 'You methodically analyzed the training examples, identified what changed and what stayed the same, and built up a clear rule in your mind.',
+      example: 'You noticed: "First, I identify all blue squares. Then, I move each one 2 spaces right. Finally, I change their color to red."'
     },
     {
-      value: 'trial_and_error',
-      emoji: '🎲',
-      label: 'Trial-and-Error Exploration',
-      description: 'I tried different ideas by manipulating the grid, seeing what works, and adjusting based on what I observed.',
-      when: 'You experimented with the interactive grid, testing multiple approaches until something looked right.'
+      value: 'hands_on_experimentation',
+      emoji: '🎯',
+      label: 'Learning by Trying',
+      when: 'You used the interactive grid to experiment—copying, editing, resizing—and learned from seeing what worked and what didn\'t.',
+      example: 'You tried rotating the pattern, saw it was wrong, then tried reflecting it instead, gradually refining your approach.'
     },
     {
-      value: 'decomposition',
-      emoji: '🧩',
-      label: 'Decomposition into Subtasks',
-      description: 'I broke the problem into smaller pieces (identify objects, apply transformation, position results) and solved each piece separately.',
-      when: 'You split the complex problem into manageable steps.'
-    },
-    {
-      value: 'working_backwards',
+      value: 'reverse_engineering',
       emoji: '⏪',
-      label: 'Working Backwards from Output',
-      description: 'I started with the expected output and worked backwards to figure out what operations would produce it from the input.',
-      when: 'You analyzed the output first, then reverse-engineered the transformation.'
-    },
-    {
-      value: 'constraint_based',
-      emoji: '📏',
-      label: 'Constraint-Based Reasoning',
-      description: 'I identified constraints (grid size, color rules, position limits) and used them to narrow down possible transformations.',
-      when: 'You focused on what\'s NOT allowed to eliminate options.'
-    },
-    {
-      value: 'geometric_reasoning',
-      emoji: '🔄',
-      label: 'Symmetry and Geometric Reasoning',
-      description: 'I focused on geometric properties like symmetry, rotation, reflection, or spatial relationships between objects.',
-      when: 'You primarily thought in terms of geometric transformations.'
+      label: 'Reverse Engineering',
+      when: 'You started by analyzing what the output needs to be, then determined which transformations would create that result.',
+      example: 'You thought "The output needs to be symmetric, so I need to mirror this half onto the other side"—starting with the end goal in mind.'
     }
   ];
 
@@ -196,7 +175,7 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
 
         {/* Q5: Strategy Selection */}
         <div className="question-block">
-          <h3>Q5: Which approach best describes how you tackled this puzzle?</h3>
+          <h3>Q5: Which approach best describes how you solved this puzzle?</h3>
           <p className="question-hint">Select the ONE that fits best:</p>
           
           {errors.strategy && <div className="error-message">{errors.strategy}</div>}
@@ -212,8 +191,12 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
                   <span className="strategy-emoji">{s.emoji}</span>
                   <span className="strategy-label">{s.label}</span>
                 </div>
-                <p className="strategy-description">{s.description}</p>
-                <p className="strategy-when"><strong>When to select:</strong> {s.when}</p>
+                <div className="strategy-when">
+                  <strong>When to select:</strong> {s.when}
+                </div>
+                <div className="strategy-example">
+                  <strong>Example:</strong> {s.example}
+                </div>
               </div>
             ))}
           </div>
