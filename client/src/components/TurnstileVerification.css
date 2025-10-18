@@ -1,0 +1,83 @@
+.turnstile-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  
+  .turnstile-card {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .turnstile-card h2 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 24px;
+  }
+  
+  .turnstile-card p {
+    margin: 0 0 30px 0;
+    color: #666;
+    font-size: 16px;
+  }
+  
+  .turnstile-widget {
+    display: flex;
+    justify-content: center;
+    margin: 30px 0;
+  }
+  
+  .verifying-message {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #667eea;
+    font-weight: 500;
+  }
+  
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .error-message {
+    margin-top: 20px;
+    padding: 12px;
+    background-color: #fee;
+    border: 1px solid #fcc;
+    border-radius: 8px;
+    color: #c00;
+    font-weight: 500;
+  }
+  
+  .privacy-note {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    color: #999;
+  }
+  
+  @media (max-width: 768px) {
+    .turnstile-card {
+      padding: 30px 20px;
+    }
+  }

@@ -22,12 +22,12 @@ const PORT = process.env.PORT || 5000;
 // =====================================================
 
 app.use(helmet());
+
 // CORS configuration for production
 const allowedOrigins = [
   'http://localhost:3000',
   process.env.FRONTEND_URL,
 ];
-
 
 app.use(cors({
   origin: function(origin, callback) {
@@ -47,6 +47,7 @@ app.use(cors({
   },
   credentials: true
 }));
+
 app.use(compression());
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
@@ -115,12 +116,69 @@ app.get('/api/health', async (req, res) => {
       message: 'ARC Server is running!',
       timestamp: new Date().toISOString(),
       database: dbHealth,
-      tasks_loaded: taskLoader.getTaskCount()
+      tasks_loaded: taskLoader.getTaskCount(),
+      bot_protection: 'Cloudflare Turnstile + Honeypots ENABLED'
     });
   } catch (error) {
     res.status(500).json({
       message: 'Server running but database unhealthy',
       error: error.message
+    });
+  }
+});
+
+// =====================================================
+// BOT PROTECTION: Cloudflare Turnstile Verification
+// =====================================================
+
+app.post('/api/verify-turnstile', async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    console.warn('❌ Turnstile verification failed: No token provided');
+    return res.status(400).json({ success: false, error: 'No token provided' });
+  }
+
+  try {
+    console.log('🔍 Verifying Turnstile token...');
+    
+    // Verify with Cloudflare
+    const verifyResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        secret: process.env.TURNSTILE_SECRET_KEY,
+        response: token
+      })
+    });
+
+    const verifyData = await verifyResponse.json();
+    console.log('Turnstile verification result:', verifyData);
+
+    if (verifyData.success) {
+      // Generate session ID for tracking
+      const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      
+      console.log('✅ Turnstile verification successful:', sessionId);
+      
+      res.json({ 
+        success: true, 
+        sessionId,
+        message: 'Verification successful' 
+      });
+    } else {
+      console.error('❌ Turnstile verification failed:', verifyData['error-codes']);
+      res.status(400).json({ 
+        success: false, 
+        error: 'Verification failed',
+        details: verifyData['error-codes']
+      });
+    }
+  } catch (error) {
+    console.error('❌ Turnstile verification error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Server error during verification' 
     });
   }
 });
@@ -284,7 +342,7 @@ async function ensureTaskInDatabase(taskData) {
 }
 
 // =====================================================
-// Data Submission
+// Data Submission (WITH BOT PROTECTION)
 // =====================================================
 
 // Submit complete questionnaire response
@@ -292,6 +350,7 @@ app.post('/api/submissions',
   submissionLimiter,
   body('participantId').notEmpty().isLength({ min: 5, max: 100 }),
   body('taskId').notEmpty().isLength({ min: 5, max: 50 }),
+  body('verificationSessionId').notEmpty().isString(),
   body('phase1_initial_observations').isObject(),
   body('phase2_solving_process').isObject(),
   body('phase3_post_solving').isObject(),
@@ -303,6 +362,7 @@ app.post('/api/submissions',
         participantId,
         taskId,
         taskType,
+        verificationSessionId,
         phase1_initial_observations,
         phase2_solving_process,
         phase3_post_solving,
@@ -310,6 +370,36 @@ app.post('/api/submissions',
         submissionTimestamp,
         totalTimeSeconds
       } = req.body;
+
+      // ========================================
+      // BOT PROTECTION: Validate Turnstile session
+      // ========================================
+      if (!verificationSessionId || !verificationSessionId.startsWith('session_')) {
+        console.warn('🤖 Bot blocked: Invalid verification session');
+        console.log('Received session ID:', verificationSessionId);
+        return res.status(400).json({ error: 'Invalid session' });
+      }
+
+      // Check if session is recent (within last hour)
+      const sessionParts = verificationSessionId.split('_');
+      if (sessionParts.length < 2) {
+        console.warn('🤖 Bot blocked: Malformed session ID');
+        return res.status(400).json({ error: 'Invalid session format' });
+      }
+
+      const sessionTimestamp = parseInt(sessionParts[1]);
+      const oneHourAgo = Date.now() - (60 * 60 * 1000);
+      
+      if (isNaN(sessionTimestamp) || sessionTimestamp < oneHourAgo) {
+        console.warn('🤖 Bot blocked: Expired verification session');
+        console.log('Session timestamp:', sessionTimestamp);
+        console.log('Current time:', Date.now());
+        console.log('Age (minutes):', Math.floor((Date.now() - sessionTimestamp) / 60000));
+        return res.status(400).json({ error: 'Session expired' });
+      }
+
+      console.log('✅ Turnstile session validated:', verificationSessionId);
+      console.log('   Session age:', Math.floor((Date.now() - sessionTimestamp) / 60000), 'minutes');
       
       await db.transaction(async (client) => {
         // 1. Create task attempt
@@ -439,7 +529,7 @@ app.post('/api/submissions',
               });
               
             } else if (action.type === 'select_region') {
-              // NEW: Handle select region action
+              // Handle select region action
               gridStateAfter = JSON.stringify({
                 actionType: 'select_region',
                 startRow: action.startRow,
@@ -451,7 +541,7 @@ app.post('/api/submissions',
               });
               
             } else if (action.type === 'fill_all') {
-              // NEW: Handle fill all action
+              // Handle fill all action
               gridStateAfter = JSON.stringify({
                 actionType: 'fill_all',
                 color: action.color
@@ -653,6 +743,8 @@ const startServer = async () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
       console.log(`🎯 Tasks loaded: ${taskLoader.getTaskCount()}`);
+      console.log(`🛡️  Bot protection: Cloudflare Turnstile + Honeypots ENABLED`);
+      console.log(`🔐 Turnstile key configured: ${process.env.TURNSTILE_SECRET_KEY ? 'YES' : 'NO'}`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

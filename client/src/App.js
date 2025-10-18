@@ -6,12 +6,21 @@ import Phase3Questions from './components/Phase3Questions';
 import Phase4Questions from './components/Phase4Questions';
 import TaskReference from './components/TaskReference';
 import LandingPage from './components/LandingPage';
+import TurnstileVerification from './components/TurnstileVerification';
+import HoneypotField from './components/HoneypotField';
 import './App.css';
 import config from './config';
 
 function App() {
   // Landing page state
   const [showLanding, setShowLanding] = useState(true);
+  
+  // Bot protection state
+  const [isTurnstileVerified, setIsTurnstileVerified] = useState(false);
+  const [verificationSessionId, setVerificationSessionId] = useState(null);
+  const [honeypot1, setHoneypot1] = useState('');
+  const [honeypot2, setHoneypot2] = useState('');
+  const [showTurnstile, setShowTurnstile] = useState(false);
   
   const [arcTask, setArcTask] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -58,15 +67,42 @@ function App() {
     });
   };
 
-  // Initialize participant when they start
+  // Initialize participant when they pass Turnstile
   useEffect(() => {
-    if (!showLanding && !participantId) {
+    if (isTurnstileVerified && !participantId) {
       initializeParticipant();
     }
-  }, [showLanding, participantId]);
+  }, [isTurnstileVerified, participantId]);
 
   const handleStartParticipation = () => {
-    setShowLanding(false);
+    // TEMPORARY: Skip Turnstile in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('⚠️ Development mode: Skipping Turnstile verification');
+      const devSessionId = `session_${Date.now()}_dev_bypass`;
+      setIsTurnstileVerified(true);
+      setVerificationSessionId(devSessionId);
+      setShowLanding(false);
+      setShowTurnstile(false);
+    } else {
+      // Production: Show Turnstile verification
+      setShowLanding(false);
+      setShowTurnstile(true);
+    }
+  };
+
+  const handleTurnstileVerified = (sessionId) => {
+    setIsTurnstileVerified(true);
+    setVerificationSessionId(sessionId);
+    setShowTurnstile(false);
+    console.log('✅ Turnstile verification successful:', sessionId);
+  };
+
+  const handleTurnstileError = (error) => {
+    console.error('❌ Turnstile error:', error);
+    alert('Verification failed. Please refresh the page and try again.');
+    // Reset to landing page
+    setShowLanding(true);
+    setShowTurnstile(false);
   };
 
   const initializeParticipant = async () => {
@@ -113,6 +149,10 @@ function App() {
     setPhase4Data(null);
     setSubmissionStatus(null);
     
+    // Reset honeypots
+    setHoneypot1('');
+    setHoneypot2('');
+    
     fetch(`${config.API_URL}/api/arc-tasks`)
       .then(res => res.json())
       .then(data => {
@@ -142,10 +182,10 @@ function App() {
   };
 
   useEffect(() => {
-    if (!showLanding) {
+    if (isTurnstileVerified && !showLanding && !showTurnstile) {
       fetchNewTask();
     }
-  }, [showLanding]);
+  }, [isTurnstileVerified, showLanding, showTurnstile]);
 
   const handlePhase1Complete = (data) => {
     setPhase1Data(data);
@@ -174,6 +214,64 @@ function App() {
       alert('Error: Could not identify participant. Please refresh and try again.');
       return;
     }
+
+    // ========================================
+    // BOT PROTECTION: Check honeypots FIRST
+    // ========================================
+    // Check React state
+    if (honeypot1 || honeypot2) {
+      console.warn('🤖 Bot detected via honeypot (React state)');
+      console.log('Honeypot1:', honeypot1);
+      console.log('Honeypot2:', honeypot2);
+      
+      // Silently fail - don't tell bot it was caught
+      alert('Thank you for your submission!');
+      
+      // Reset and show landing
+      setTimeout(() => {
+        setShowLanding(true);
+        setShowTurnstile(false);
+        setIsTurnstileVerified(false);
+        setVerificationSessionId(null);
+      }, 2000);
+      return;
+    }
+
+    // ADDITIONAL CHECK: Verify DOM inputs directly (catches bots that bypass React)
+    const honeypotInputs = document.querySelectorAll('input[name="website"]');
+    let honeypotFilled = false;
+    honeypotInputs.forEach((input, index) => {
+      if (input.value && input.value.trim() !== '') {
+        console.warn(`🤖 Bot detected via honeypot DOM check (field ${index + 1})`);
+        console.log(`Honeypot ${index + 1} value:`, input.value);
+        honeypotFilled = true;
+      }
+    });
+
+    if (honeypotFilled) {
+      // Silently fail - don't tell bot it was caught
+      alert('Thank you for your submission!');
+      
+      // Reset and show landing
+      setTimeout(() => {
+        setShowLanding(true);
+        setShowTurnstile(false);
+        setIsTurnstileVerified(false);
+        setVerificationSessionId(null);
+      }, 2000);
+      return;
+    }
+
+    // ========================================
+    // BOT PROTECTION: Check Turnstile session
+    // ========================================
+    if (!isTurnstileVerified || !verificationSessionId) {
+      console.warn('🤖 No valid Turnstile session');
+      alert('Your session has expired. Please start over.');
+      setShowLanding(true);
+      setShowTurnstile(false);
+      return;
+    }
     
     setSubmitting(true);
     setSubmissionStatus('submitting');
@@ -187,6 +285,9 @@ function App() {
         taskId: arcTask.id,
         taskType: arcTask.type,
         taskName: arcTask.name,
+        
+        // Include verification session for backend validation
+        verificationSessionId: verificationSessionId,
         
         phase1_initial_observations: phase1Data,
         phase2_solving_process: {
@@ -245,14 +346,12 @@ function App() {
     }
   };
 
-  // FIXED: Assign action number here automatically
   const handleAction = (action) => {
     setActionLog(prev => {
       const actionNumber = prev.length + 1;
       const actionWithNumber = { ...action, actionNumber };
       const newLog = [...prev, actionWithNumber];
       
-      // Check if action limit reached
       if (newLog.length >= ACTION_LIMIT) {
         setTimeout(() => {
           setSolvingEndTime(Date.now());
@@ -260,7 +359,6 @@ function App() {
           proceedToPhase3();
         }, 100);
       }
-      // Show warning when approaching limit
       else if (newLog.length === ACTION_WARNING_THRESHOLD) {
         alert(`You're approaching the action limit (${newLog.length}/${ACTION_LIMIT}).\n\nConsider moving to the next phase soon.`);
       }
@@ -269,7 +367,6 @@ function App() {
     });
   };
 
-  // Helper: Deep compare two grids
   const gridsAreEqual = (grid1, grid2) => {
     if (!grid1 || !grid2) return false;
     if (grid1.length !== grid2.length) return false;
@@ -289,7 +386,6 @@ function App() {
       return;
     }
 
-    // Check if grid changed since last test
     if (lastTestedGrid && gridsAreEqual(userGrid, lastTestedGrid)) {
       console.log('Skipped redundant test: grid unchanged since last test');
       alert('No changes detected since last test. Make some changes before testing again.');
@@ -298,12 +394,10 @@ function App() {
 
     const correctOutput = arcTask.test[0].output;
     
-    // Check dimensions
     if (userGrid.length !== correctOutput.length || 
         userGrid[0].length !== correctOutput[0].length) {
       setSolutionCorrect(false);
       
-      // Log test attempt metadata
       const testAttempt = {
         attemptNumber: testAttempts.length + 1,
         timestamp: Date.now(),
@@ -314,7 +408,6 @@ function App() {
       setTestAttempts(prev => [...prev, testAttempt]);
       setLastTestedGrid(userGrid.map(row => [...row]));
       
-      // FIXED: Don't pass actionNumber - let handleAction assign it
       handleAction({
         type: 'test_solution',
         result: 'incorrect_dimensions',
@@ -325,7 +418,6 @@ function App() {
       return;
     }
 
-    // Check cell values
     let allMatch = true;
     let incorrectCells = 0;
     for (let i = 0; i < userGrid.length; i++) {
@@ -339,7 +431,6 @@ function App() {
 
     setSolutionCorrect(allMatch);
     
-    // Log test attempt metadata
     const testAttempt = {
       attemptNumber: testAttempts.length + 1,
       timestamp: Date.now(),
@@ -350,7 +441,6 @@ function App() {
     setTestAttempts(prev => [...prev, testAttempt]);
     setLastTestedGrid(userGrid.map(row => [...row]));
     
-    // FIXED: Don't pass actionNumber - let handleAction assign it
     handleAction({
       type: 'test_solution',
       result: allMatch ? 'correct' : 'incorrect_values',
@@ -361,7 +451,6 @@ function App() {
     console.log('Test attempt logged:', testAttempt);
     
     if (allMatch) {
-      // Stop timer and auto-advance
       setSolvingEndTime(Date.now());
       setShowSuccess(true);
       
@@ -398,6 +487,16 @@ function App() {
   // Show landing page first
   if (showLanding) {
     return <LandingPage onStartParticipation={handleStartParticipation} />;
+  }
+
+  // Show Turnstile verification after landing page
+  if (showTurnstile) {
+    return (
+      <TurnstileVerification
+        onVerified={handleTurnstileVerified}
+        onError={handleTurnstileError}
+      />
+    );
   }
 
   if (loading) {
@@ -498,7 +597,6 @@ function App() {
               </button>
             </div>
             
-            {/* Unified Training Examples Display */}
             <TaskReference
               trainingExamples={arcTask.train}
               userSolution={null}
@@ -525,7 +623,10 @@ function App() {
         )}
 
         {currentPhase === 'phase1' && (
-          <Phase1QuestionsHierarchical onComplete={handlePhase1Complete} initialData={phase1Data} />
+          <div>
+            <Phase1QuestionsHierarchical onComplete={handlePhase1Complete} initialData={phase1Data} />
+            <HoneypotField value={honeypot1} onChange={setHoneypot1} />
+          </div>
         )}
 
         {/* Phase 2: Solving Interface */}
@@ -623,12 +724,15 @@ function App() {
 
         {/* Phase 3: Post-Solving Questions */}
         {currentPhase === 'phase3' && (
-          <Phase3Questions 
-            onComplete={handlePhase3Complete}
-            testInput={arcTask.test[0].input}
-            userSolution={userGrid}
-            isCorrect={solutionCorrect}
-          />
+          <div>
+            <Phase3Questions 
+              onComplete={handlePhase3Complete}
+              testInput={arcTask.test[0].input}
+              userSolution={userGrid}
+              isCorrect={solutionCorrect}
+            />
+            <HoneypotField value={honeypot2} onChange={setHoneypot2} />
+          </div>
         )}
 
         {/* Phase 4: Final Reflection Questions */}
