@@ -1,13 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import './MiniARCExample.css';
 import config from '../config';
+
 const MiniARCExample = () => {
   const [exampleTask, setExampleTask] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch a random task for display
-    fetch(`${config.API_URL}/api/arc-tasks`)
+    // List of hand-picked tasks with good visualization for landing page
+    const exampleTaskIds = [
+      '5ecac7f7',
+      'd22278a0', 
+      'bb43febb',
+      '00d62c1b',
+      'e4075551',
+      'e8dc4411'
+    ];
+    
+    // Pick a random task ID from the curated list
+    const randomTaskId = exampleTaskIds[Math.floor(Math.random() * exampleTaskIds.length)];
+    
+    // Fetch that specific task
+    fetch(`${config.API_URL}/api/arc-tasks/${randomTaskId}`)
       .then(res => res.json())
       .then(data => {
         setExampleTask(data.task);
@@ -18,6 +32,8 @@ const MiniARCExample = () => {
         setLoading(false);
       });
   }, []);
+
+  // ... rest of your code stays the same
 
   // Official ARC color palette
   const colors = {
