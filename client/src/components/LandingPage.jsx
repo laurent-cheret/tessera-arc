@@ -62,7 +62,6 @@ const LandingPage = ({ onStartParticipation }) => {
               <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
               </svg>
-              {/* GitHub */}
             </a>
 
             {/* X (Twitter) Link */}
@@ -91,7 +90,6 @@ const LandingPage = ({ onStartParticipation }) => {
               <svg height="20" width="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
               </svg>
-              {/* Follow Us */}
             </a>
           </div>
         </div>
@@ -371,20 +369,14 @@ const LandingPage = ({ onStartParticipation }) => {
           </div>
         </div>
 
-        {/* About Us Section */}
-        <div className="content-card">
-          <h2>👥 About Us</h2>
-          <div style={{ marginBottom: '20px' }}>
-            <p style={{ fontSize: '16px', lineHeight: '1.7', color: '#495057' }}>
-              My name is <strong>Laurent Cheret</strong>, and I'm a PhD candidate at the University of Ottawa. My research explores the intersection of deep learning, generative models, and the integration of geometrical and topological knowledge into AI systems.
-            </p>
-          </div>
-          
-          <h3 style={{ color: '#282c34', fontSize: '20px', fontWeight: '600', marginBottom: '15px' }}>
+        {/* Footer Info */}
+        <div className="content-card footer-info">
+          <h3>About This Research</h3>
+          <h4 style={{ color: '#282c34', fontSize: '20px', fontWeight: '600', marginBottom: '15px' }}>
             The Philosophy Behind Tessera-ARC
-          </h3>
+          </h4>
           <p style={{ fontSize: '16px', lineHeight: '1.7', color: '#495057' }}>
-            I believe that to build machines with human-like intelligence, we must teach them the <em>whole process</em>—not just the final answer, but how we get there.
+            In order to build machines with human-like intelligence, we must teach them the <em>whole process</em>—not just the final answer, but how we get there.
           </p>
           
           <div style={{ background: '#f8f9fa', padding: '20px', borderRadius: '10px', marginBottom: '20px' }}>
@@ -414,24 +406,81 @@ const LandingPage = ({ onStartParticipation }) => {
               <strong>📊 Dataset Status:</strong> We are currently in the initial development phase of this dataset. Once we gather a significant number of submissions for each task, we will begin sharing the data publicly with the research community.
             </p>
           </div>
-          
-          <p style={{ fontSize: '16px', lineHeight: '1.7', color: '#495057', marginBottom: '0' }}>
-            Your unique perspective, your reasoning process, and your way of seeing these puzzles could be the piece that helps future AI systems finally bridge the gap between human and machine intelligence.
-          </p>
-        </div>
-
-        {/* Footer Info */}
-        <div className="content-card footer-info">
-          <h3>About This Research</h3>
-          <p>
-            Tessera-ARC is an independent research project collecting human reasoning descriptions on abstract visual puzzles. The resulting dataset will be released as an open-source resource to help researchers worldwide improve AI reasoning capabilities and understand human intelligence better.
-          </p>
           <p className="research-citation">
             Based on François Chollet's <em>On the Measure of Intelligence</em> (2019)<br />
             <a href="https://arxiv.org/abs/1911.01547" target="_blank" rel="noopener noreferrer">
               arXiv:1911.01547
             </a>
           </p>
+        </div>
+
+        {/* About Us Section - MOVED TO END */}
+        <div className="content-card" style={{ marginTop: '40px' }}>
+          <h2>👥 About Us</h2>
+          <div style={{ marginBottom: '20px' }}>
+            <p style={{ fontSize: '16px', lineHeight: '1.7', color: '#495057' }}>
+              My name is <strong>Laurent Cheret</strong>, and I'm a PhD candidate at the University of Ottawa. My research explores the intersection of deep learning, generative models, and the integration of geometrical and topological knowledge into AI systems.
+            </p>
+          </div>
+          
+          {/* Contact Section */}
+          <div style={{ 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            padding: '25px',
+            borderRadius: '12px',
+            marginTop: '25px',
+            color: 'white'
+          }}>
+            <h3 style={{ 
+              color: 'white',
+              marginTop: '0',
+              marginBottom: '15px',
+              fontSize: '20px',
+              fontWeight: '600'
+            }}>
+              💬 Get in Touch
+            </h3>
+            <p style={{ 
+              fontSize: '16px',
+              lineHeight: '1.7',
+              marginBottom: '15px',
+              color: 'rgba(255,255,255,0.95)'
+            }}>
+              Interested in collaborating, contributing, or learning more about the project?
+            </p>
+            <a 
+              href="mailto:tesseraarc@gmail.com"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '12px 24px',
+                background: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: '600',
+                backdropFilter: 'blur(10px)',
+                border: '2px solid rgba(255,255,255,0.3)',
+                transition: 'all 0.3s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              tesseraarc@gmail.com
+            </a>
+          </div>
         </div>
       </div>
     </div>
