@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     
     -- Task Classification
     task_set                    VARCHAR(20) NOT NULL,
+    arc_version                 VARCHAR(10),
     task_category               VARCHAR(50),
     
     -- Core Knowledge Domain
