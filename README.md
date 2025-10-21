@@ -4,219 +4,174 @@
 
 # Tessera-ARC
 
-> **Capturing Human Reasoning, One Piece at a Time**
+> **Capturing Human Reasoning on Abstract Visual Puzzles**
 
-A crowdsourcing platform for collecting rich human cognitive data on Abstraction and Reasoning Corpus (ARC) tasks. Tessera-ARC captures not just solutions, but the complete reasoning process—from initial perception to final strategy.
-
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-www.tessera--arc.org-blue?style=for-the-badge)](https://www.tessera-arc.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+A crowdsourcing platform that collects rich human cognitive data on [ARC (Abstraction and Reasoning Corpus)](https://github.com/fchollet/ARC-AGI) tasks. We capture not just solutions, but the complete reasoning process—from first impressions to final strategies.
+---
+---
+> **⚠️ Note:** Platform is live and collecting data. Dataset will be released open-source once we reach sufficient task attempts.
+---
+## 🎯 Why This Matters
+
+The ARC benchmark measures general fluid intelligence in AI systems. Current state-of-the-art AI achieves ~55% accuracy, while humans reach 76%+ with minimal examples. **The gap is human reasoning.**
+
+Tessera-ARC bridges this gap by collecting:
+- 🧠 **Hierarchical perception data** (7 categories, 35 subcategories)
+- 📝 **Natural language reasoning** (500-800 words per task)
+- 🖱️ **Complete behavioral traces** (every click, resize, reset)
+- ⏱️ **Temporal dynamics** (millisecond-level timing)
+- 🎯 **Metacognitive insights** (confidence, difficulty, strategy)
+
+**Goal:** Build an open-source dataset to train more human-like AI reasoning systems.
+
 ---
 
-## 🎯 Project Overview
+## ✨ Key Features
 
-The [Abstraction and Reasoning Corpus (ARC)](https://github.com/fchollet/ARC-AGI) is a benchmark designed to measure general fluid intelligence in AI systems. While current AI achieves ~55% accuracy, humans reach 76%+ with minimal examples.
+**For Participants:**
+- Interactive grid editor with ARC's 10-color palette
+- 800 official V1 ARC tasks AND 1120 V2 tasks (total 1147 due to V1 tasks reused in V2) from training + evaluation sets
+- Progressive 4-phase questionnaire that reduces cognitive load
+- Real-time solution validation with visual feedback
 
-**Tessera-ARC bridges this gap by collecting:**
-- 🧠 Hierarchical perceptual observations (7 categories, 35 subcategories)
-- 📝 Natural language reasoning descriptions (500-800 words per task)
-- 🖱️ Complete behavioral traces (every click, resize, reset)
-- ⏱️ Temporal dynamics (millisecond-level timing)
-- 🎯 Metacognitive assessments (confidence, difficulty, strategy)
-
-**Goal:** Create an open-source dataset of human reasoning to train the next generation of AI systems.
-
----
-
-## ✨ Features
-
-### For Participants
-- Interactive grid editor with 10-color ARC palette
-- 800 (V1) and 1120 (V2) official ARC tasks (training + evaluation sets)
-- Progressive 4-phase questionnaire (reduces cognitive load)
-- Real-time solution validation
-- Engaging UI with animations
-
-### For Researchers
-- Complete PostgreSQL database schema
-- Hierarchical perceptual taxonomy
-- Behavioral action logging (cell clicks, tool usage)
-- Export capabilities (JSON/CSV)
+**For Researchers:**
+- Complete PostgreSQL schema with 5 normalized tables
+- Hierarchical perceptual taxonomy based on cognitive science
+- Full behavioral logging (cell clicks, tool usage, temporal sequences)
+- Export to JSON/CSV for analysis
 
 ---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- [PostgreSQL](https://www.postgresql.org/) (v18 or higher)
+- Node.js v18+
+- PostgreSQL v18+
 - npm
 
 ### Installation
+```bash
+# Clone and install
+git clone https://github.com/laurent-cheret/tessera-arc.git
+cd tessera-arc
+npm run install:all
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/laurent-cheret/tessera-arc.git
-   cd tessera-arc
-   ```
+# Configure database
+cd server
+cp .env.example .env
+# Edit .env with your PostgreSQL credentials
 
-2. **Install dependencies**
-   ```bash
-   npm run install:all
-   ```
+# Initialize database
+npm run db:setup
+npm run db:populate
 
-3. **Set up environment variables**
-   ```bash
-   cd server
-   cp .env.example .env
-   # Edit .env with your PostgreSQL password
-   ```
+# Start development
+cd ..
+npm run dev
+```
 
-4. **Initialize database**
-   ```bash
-   npm run db:setup
-   npm run db:populate
-   ```
-
-5. **Start development servers**
-   ```bash
-   cd ..
-   npm run dev
-   ```
-
-6. **Open application**
-   - Frontend: http://localhost:3000
-   - Backend: http://localhost:5000
+**Access:**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5000
 
 ---
 
-## 📊 Data Collection Structure
+## 📊 What We Collect
 
-### Phase 1: Pre-Solving (3 questions)
-- **Q1:** Hierarchical first impressions (primary category + specific features)
-- **Q2:** Initial pattern hypothesis (10-100 words)
-- **Q3:** Pre-solving confidence (1-5 scale)
+### Phase 1: First Impressions (Pre-Solving)
+- Hierarchical visual observations (primary + secondary features)
+- Initial pattern hypothesis (10-100 words)
+- Confidence level (1-5 scale)
 
-### Phase 2: Interactive Solving (automatic logging)
-- Every cell click with coordinates and color changes
-- Grid resizing operations
-- Reset and copy actions
-- Complete temporal sequence
+### Phase 2: Solving Process (Automatic)
+- Every cell modification (coordinates, colors, timestamps)
+- Grid operations (resize, reset, copy)
+- Complete action sequence with millisecond precision
 
-### Phase 3: Post-Solving (3 questions)
-- **Q4:** What you tried (15-500 words)
-- **Q5:** Strategy revision (binary + explanation)
-- **Q6:** Problem-solving strategy (7 options)
+### Phase 3: Reflection (Post-Solving)
+- What you tried and why (15-500 words)
+- Hypothesis revisions
+- Problem-solving strategy used
 
-### Phase 4: Reflection (2 questions)
-- **Q7:** Difficulty rating (1-5 scale)
-- **Q8:** Challenge factors (conditional, multiple selection)
+### Phase 4: Metacognition
+- Difficulty rating (1-5 scale)
+- Challenge factors (visual complexity, pattern ambiguity, etc.)
 
-**Total per task:** 500-800 words + 10-50 behavioral actions + metadata
+**Per task:** 500-800 words + 10-50 actions + metadata
 
 ---
 
 ## 🗄️ Database Schema
-
-5 main tables:
-- `participants` - Anonymous user tracking
-- `tasks` - ARC tasks with metadata
-- `task_attempts` - Each solving session
-- `responses` - All questionnaire answers
-- `action_traces` - Complete behavioral logs
-
-See [database_schema_fixed.sql](server/database_schema_fixed.sql) for details.
+Full schema: [database_schema_fixed.sql](server/database_schema_fixed.sql)
 
 ---
 
-## 🛠️ Project Structure
+## 🛠️ Tech Stack
 
-```
-tessera-arc/
-├── client/                 # React frontend (port 3000)
-│   ├── src/
-│   │   ├── components/     # UI components
-│   │   ├── App.js         # Main application
-│   │   └── ...
-│   └── package.json
-├── server/                 # Node.js backend (port 5000)
-│   ├── database/          # Database connection
-│   ├── scripts/           # Setup scripts
-│   ├── index.js          # Express API
-│   └── package.json
-├── data/                  # ARC dataset (800 tasks)
-│   ├── training/         # 400 training tasks
-│   └── evaluation/       # 400 evaluation tasks
-├── docs/                  # Documentation
-└── package.json          # Root scripts
-```
+**Frontend:** React, Tailwind CSS  
+**Backend:** Node.js, Express  
+**Database:** PostgreSQL  
+**Security:** Cloudflare Turnstile, rate limiting  
+**Deployment:** Railway (backend), custom domain
 
 ---
 
-## 🧪 Development
+## 📖 Research Context
 
-### Available Scripts
+**Key Papers:**
+- Chollet, F. (2019). "On the Measure of Intelligence." [Paper](https://arxiv.org/abs/1911.01547)
+- [ARC Prize 2024](https://arcprize.org/) - Current SOTA: 55.5% (Anthropic)
 
-```bash
-npm run dev              # Start both frontend and backend
-npm run install:all      # Install all dependencies
-npm run server:dev       # Start backend only
-npm run client:dev       # Start frontend only
-```
+**ARC Dataset:**
+- [ARC-AGI Repository](https://github.com/fchollet/ARC-AGI) - 800 training tasks, 400 evaluation tasks
 
-### Database Management
+**If you use this dataset:**
+```bibtex
+@software{tessera_arc_2025,
+  author = {Laurent Cheret},
+  title = {Tessera-ARC: A Dataset of Human Reasoning on Abstract Visual Tasks},
+  year = {2025},
+  url = {https://github.com/laurent-cheret/tessera-arc},
+  note = {Live demo: https://www.tessera-arc.org}
+}
 
-```bash
-cd server
-npm run db:setup         # Create database schema
-npm run db:populate      # Load 800 ARC tasks
+@article{chollet2019measure,
+  title={On the Measure of Intelligence},
+  author={Chollet, Fran{\c{c}}ois},
+  journal={arXiv preprint arXiv:1911.01547},
+  year={2019},
+  url={https://arxiv.org/abs/1911.01547}
+}
 ```
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions welcome! Open an issue or submit a PR.
+
+**Priority areas:**
+- Mobile responsiveness improvements
+- Additional analysis tools
+- Data visualization dashboards
+- Multi-language support
 
 ---
 
-## 📖 Research & Citations
-
-This project builds upon:
-- Chollet, F. (2019). "On the Measure of Intelligence." *arXiv:1911.01547*
-- [ARC Prize 2024](https://arcprize.org/) - Current state-of-the-art: 55.5%
-- [ARC-AGI Dataset](https://github.com/fchollet/ARC-AGI)
-
-If you use this dataset in your research, please cite:
-```bibtex
-@software{tessera_arc_2025,
-  author = {Laurent Cheret},
-  title = {Tessera-ARC: A Dataset of Human Reasoning on Abstract Tasks},
-  year = {2025},
-  url = {https://github.com/laurent-cheret/tessera-arc}
-}
-```
+## 📧 Contact
+**Email:** tesseraarc@gmail.com
+**GitHub:** [@laurent-cheret](https://github.com/laurent-cheret)  
+**Live Platform:** [www.tessera-arc.org](https://www.tessera-arc.org)
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-## 🌟 Acknowledgments
-
-- François Chollet for creating the ARC benchmark
-- The ARC Prize team for advancing the challenge
-- All participants who contribute their reasoning data
-
----
-
-## 📧 Contact
-
-- GitHub: [@laurent-cheret](https://github.com/laurent-cheret)
-- Project: [tessera-arc](https://github.com/laurent-cheret/tessera-arc)
-
----
-
-**⭐ Star this repo if you find it interesting!**
+**⭐ Star this repo to support open research in AI reasoning!**
