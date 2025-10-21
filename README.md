@@ -12,7 +12,7 @@
 A crowdsourcing platform that collects rich human cognitive data on [ARC (Abstraction and Reasoning Corpus)](https://github.com/fchollet/ARC-AGI) tasks. We capture not just solutions, but the complete reasoning process—from first impressions to final strategies.
 ---
 ---
-> **⚠️ Note:** Platform is live and collecting data. Dataset will be released open-source once we reach 1,000+ task attempts.
+> **⚠️ Note:** Platform is live and collecting data. Dataset will be released open-source once we reach sufficient task attempts.
 ---
 ## 🎯 Why This Matters
 
