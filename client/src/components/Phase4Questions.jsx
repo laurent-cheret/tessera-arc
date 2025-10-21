@@ -65,7 +65,7 @@ const Phase4Questions = ({ onComplete, initialData }) => {
 
       {/* Q7: Difficulty Rating */}
       <div className="question-block">
-        <h3>Q6: How difficult was this puzzle for you?</h3>
+        <h3>How difficult was this puzzle for you?</h3>
         
         {errors.difficulty && <div className="error-message">{errors.difficulty}</div>}
         
@@ -95,7 +95,7 @@ const Phase4Questions = ({ onComplete, initialData }) => {
       {/* Q8: Challenge Factors (conditional) */}
       {difficultyRating >= 3 && (
         <div className="question-block">
-          <h3>Q7: What made this puzzle challenging?</h3>
+          <h3>What made this puzzle challenging?</h3>
           <p className="question-hint">Check all that apply:</p>
           
           {errors.challengeFactors && <div className="error-message">{errors.challengeFactors}</div>}

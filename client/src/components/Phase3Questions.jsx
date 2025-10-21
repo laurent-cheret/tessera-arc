@@ -104,14 +104,13 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
         <h2>About Your Solving Attempt</h2>
         <p className="phase-intro">
           Whether you solved it correctly or not, we want to hear about your approach!
-          Your attempts and reasoning are valuable regardless of the outcome.
         </p>
 
         {/* Q3: What You Tried */}
         <div className="question-block">
-          <h3>Q3: What did you try to solve this puzzle?</h3>
+          <h3>What did you try to solve this puzzle?</h3>
           <p className="question-hint">
-            Describe your approach step-by-step. Try to include:
+            Try to include:
           </p>
           <ul className="hint-list">
             <li><strong>What</strong> you focused on (objects, colors, positions, patterns)</li>
@@ -137,7 +136,7 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
 
         {/* Q9: Strategy Revision (moved here from Phase 4) */}
         <div className="question-block">
-          <h3>Q4: Did you change your mind about the pattern while solving?</h3>
+          <h3>Did you change your mind about the pattern while solving?</h3>
           
           {errors.hypothesisRevised && <div className="error-message">{errors.hypothesisRevised}</div>}
           
