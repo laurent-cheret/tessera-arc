@@ -361,10 +361,10 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
           <div className="secondary-prominent-section">
             <h3>Did anything else catch your attention?</h3>
             <p className="secondary-instruction">
-              <strong>This is optional!</strong> You can select additional things you noticed, or skip this step if your primary observation covers everything.
+              <strong>This is optional!</strong> You can select additional things you noticed, or skip this step.
             </p>
             <p className="secondary-hint">
-              You can select as many categories as you want. For each category you select, you'll be asked which specific features you noticed.
+              Select as many categories as you want.
             </p>
             
             <div className="secondary-categories-grid">
