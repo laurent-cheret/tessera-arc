@@ -7,9 +7,11 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
   const [whatYouTried, setWhatYouTried] = useState(initialData?.whatYouTried || '');
   const [hypothesisRevised, setHypothesisRevised] = useState(initialData?.hypothesisRevised || null);
   const [revisionReason, setRevisionReason] = useState(initialData?.revisionReason || '');
-  const [strategy, setStrategy] = useState(initialData?.strategy || '');
+  // const [strategy, setStrategy] = useState(initialData?.strategy || ''); // REMOVED: Q5 strategy not needed
   const [errors, setErrors] = useState({});
 
+  // REMOVED: Q5 strategy options array - not adding sufficient value to dataset
+  /*
   const strategies = [
     {
       value: 'intuitive_recognition',
@@ -40,6 +42,7 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
       example: 'You thought "The output needs to be symmetric, so I need to mirror this half onto the other side"—starting with the end goal in mind.'
     }
   ];
+  */
 
   const validate = () => {
     const newErrors = {};
@@ -60,9 +63,12 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
       newErrors.revisionReason = 'Please explain what made you change your approach.';
     }
     
+    // REMOVED: Q5 strategy validation - question removed from questionnaire
+    /*
     if (!strategy) {
       newErrors.strategy = 'Please select the strategy that best describes your approach.';
     }
+    */
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -75,7 +81,7 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
         q3_word_count: whatYouTried.trim().split(/\s+/).filter(w => w.length > 0).length,
         q9_hypothesis_revised: hypothesisRevised,
         q9_revision_reason: hypothesisRevised ? revisionReason.trim() : null,
-        q5_strategy_used: strategy,
+        // q5_strategy_used: strategy, // REMOVED: Q5 strategy field not collected anymore
         phase3_timestamp: new Date().toISOString()
       };
       onComplete(data);
@@ -173,7 +179,8 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
           )}
         </div>
 
-        {/* Q5: Strategy Selection */}
+        {/* REMOVED: Q5 Strategy Selection - Question removed as it wasn't adding sufficient value to dataset */}
+        {/*
         <div className="question-block">
           <h3>Q5: Which approach best describes how you solved this puzzle?</h3>
           <p className="question-hint">Select the ONE that fits best:</p>
@@ -201,6 +208,7 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
             ))}
           </div>
         </div>
+        */}
 
         <div className="continue-section">
           <button 

@@ -438,6 +438,8 @@ app.post('/api/submissions',
         // 2. Create response record
         const responseId = db.generateId('response');
 
+        // ⚠️ REMOVED: q6_strategy_used field (Q5 removed from questionnaire)
+        // The column still exists in the database but will be NULL for new submissions
         await client.query(`
           INSERT INTO responses (
             response_id,
@@ -452,11 +454,10 @@ app.post('/api/submissions',
             q4_word_count,
             q5_hypothesis_revised,
             q5_revision_reason,
-            q6_strategy_used,
             q7_difficulty_rating,
             q8_challenge_factors,
             q8_challenge_other
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         `, [
           responseId,
           attemptId,
@@ -475,8 +476,7 @@ app.post('/api/submissions',
           // Phase 3 - Q9 (revision - moved from Phase 4)
           phase3_post_solving.q9_hypothesis_revised || null,
           phase3_post_solving.q9_revision_reason || null,
-          // Phase 3 - Q5 (strategy)
-          phase3_post_solving.q5_strategy_used || null,
+          // ⚠️ REMOVED: phase3_post_solving.q5_strategy_used || null (Q5 removed)
           // Phase 4 - Q7 (difficulty)
           phase4_reflection.q7_difficulty_rating || null,
           // Phase 4 - Q8 (challenges)
@@ -691,8 +691,7 @@ app.get('/api/admin/recent-submissions', async (req, res) => {
         ta.duration_seconds,
         ta.is_correct,
         r.q3_confidence_level,
-        r.q7_difficulty_rating,
-        r.q6_strategy_used
+        r.q7_difficulty_rating
       FROM task_attempts ta
       LEFT JOIN responses r ON ta.attempt_id = r.attempt_id
       WHERE ta.attempt_status = 'completed'

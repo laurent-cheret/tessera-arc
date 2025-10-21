@@ -4,15 +4,13 @@ import ColorAutocompleteTextarea from './ColorAutocompleteTextarea';
 
 const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
   // State management
+  const [currentStep, setCurrentStep] = useState('primary'); // 'primary', 'secondary', 'hypothesis', 'confidence'
   const [primaryImpression, setPrimaryImpression] = useState(initialData?.primaryImpression || '');
   const [primaryFeatures, setPrimaryFeatures] = useState(initialData?.primaryFeatures || []);
   const [primaryOtherText, setPrimaryOtherText] = useState(initialData?.primaryOtherText || '');
   const [secondaryImpressions, setSecondaryImpressions] = useState(initialData?.secondaryImpressions || []);
   const [initialHypothesis, setInitialHypothesis] = useState(initialData?.initialHypothesis || '');
   const [hypothesisConfidence, setHypothesisConfidence] = useState(initialData?.hypothesisConfidence || null);
-  const [showSecondary, setShowSecondary] = useState(false);
-  const [showQ2, setShowQ2] = useState(false);
-  const [showQ4, setShowQ4] = useState(false);
   const [errors, setErrors] = useState({});
 
   // Tier 1: Primary categories
@@ -185,36 +183,40 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
     }));
   };
 
-  // Validation
-  const validate = () => {
+  // Validation for each step
+  const validateCurrentStep = () => {
     const newErrors = {};
     
-    if (!primaryImpression) {
-      newErrors.primary = 'Please select what caught your attention most.';
-    }
-    
-    if (primaryFeatures.length === 0) {
-      newErrors.features = 'Please select at least one specific feature you noticed.';
-    }
-    
-    const otherSelected = primaryFeatures.some(f => f.endsWith('_other'));
-    if (otherSelected && !primaryOtherText.trim()) {
-      newErrors.otherText = 'Please describe what else you noticed, or uncheck "Something else".';
-    }
-    
-    // Validate secondary impressions
-    secondaryImpressions.forEach(secondary => {
-      if (secondary.features.length === 0) {
-        newErrors[`secondary_${secondary.category}`] = 'Please select at least one feature or remove this category.';
+    if (currentStep === 'primary') {
+      if (!primaryImpression) {
+        newErrors.primary = 'Please select what caught your attention most.';
       }
       
-      const secondaryOther = secondary.features.some(f => f.endsWith('_other'));
-      if (secondaryOther && !secondary.otherText?.trim()) {
-        newErrors[`secondary_other_${secondary.category}`] = 'Please describe what you noticed.';
+      if (primaryFeatures.length === 0) {
+        newErrors.features = 'Please select at least one specific feature you noticed.';
       }
-    });
+      
+      const otherSelected = primaryFeatures.some(f => f.endsWith('_other'));
+      if (otherSelected && !primaryOtherText.trim()) {
+        newErrors.otherText = 'Please describe what else you noticed, or uncheck "Something else".';
+      }
+    }
     
-    if (showQ2) {
+    if (currentStep === 'secondary') {
+      // Validate secondary impressions (only if any are selected)
+      secondaryImpressions.forEach(secondary => {
+        if (secondary.features.length === 0) {
+          newErrors[`secondary_${secondary.category}`] = 'Please select at least one feature or remove this category.';
+        }
+        
+        const secondaryOther = secondary.features.some(f => f.endsWith('_other'));
+        if (secondaryOther && !secondary.otherText?.trim()) {
+          newErrors[`secondary_other_${secondary.category}`] = 'Please describe what you noticed.';
+        }
+      });
+    }
+    
+    if (currentStep === 'hypothesis') {
       const wordCount = initialHypothesis.trim().split(/\s+/).filter(w => w.length > 0).length;
       if (wordCount < 10) {
         newErrors.hypothesis = 'Please write at least 10 words describing the pattern.';
@@ -224,42 +226,50 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
       }
     }
 
-    if (showQ4 && !hypothesisConfidence) {
-      newErrors.confidence = 'Please select your confidence level.';
+    if (currentStep === 'confidence') {
+      if (!hypothesisConfidence) {
+        newErrors.confidence = 'Please select your confidence level.';
+      }
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle continue button
-  const handleContinue = () => {
-    if (!showQ2) {
-      // Step 1: Q1 → Q2
-      if (validate()) {
-        setShowQ2(true);
-        setErrors({});
-      }
-    } else if (!showQ4) {
-      // Step 2: Q2 → Q4 (confidence)
-      if (validate()) {
-        setShowQ4(true);
-        setErrors({});
-      }
-    } else {
-      // Step 3: Complete Phase 1
-      if (validate()) {
-        const data = {
-          primaryImpression,
-          primaryFeatures,
-          primaryOtherText: primaryOtherText.trim() || null,
-          secondaryImpressions: secondaryImpressions.filter(s => s.features.length > 0),
-          initialHypothesis: initialHypothesis.trim(),
-          hypothesisConfidence
-        };
-        onComplete(data);
-      }
+  // Handle next button click
+  const handleNext = () => {
+    if (!validateCurrentStep()) {
+      return;
     }
+
+    if (currentStep === 'primary') {
+      setCurrentStep('secondary');
+      setErrors({});
+    } else if (currentStep === 'secondary') {
+      setCurrentStep('hypothesis');
+      setErrors({});
+    } else if (currentStep === 'hypothesis') {
+      setCurrentStep('confidence');
+      setErrors({});
+    } else if (currentStep === 'confidence') {
+      // Complete Phase 1
+      const data = {
+        primaryImpression,
+        primaryFeatures,
+        primaryOtherText: primaryOtherText.trim() || null,
+        secondaryImpressions: secondaryImpressions.filter(s => s.features.length > 0),
+        initialHypothesis: initialHypothesis.trim(),
+        hypothesisConfidence
+      };
+      onComplete(data);
+    }
+  };
+
+  // Handle skip (only for secondary)
+  const handleSkipSecondary = () => {
+    setSecondaryImpressions([]);
+    setCurrentStep('hypothesis');
+    setErrors({});
   };
 
   const currentSubcategories = primaryImpression ? subcategories[primaryImpression] : [];
@@ -269,218 +279,255 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
     <div className="phase1-hierarchical">
       <h2>Initial Observations</h2>
       
-      {/* Tier 1: Primary Impression */}
-      <div className="tier1-section">
-        <h3>When you FIRST looked at the puzzle examples, what caught your attention MOST?</h3>
-        <p className="instruction">Select ONE:</p>
-        
-        {errors.primary && <div className="error-message">{errors.primary}</div>}
-        
-        <div className="primary-cards-grid">
-          {primaryCategories.map(category => (
-            <div
-              key={category.value}
-              className={`primary-card ${primaryImpression === category.value ? 'selected' : ''}`}
-              onClick={() => handlePrimarySelect(category.value)}
-            >
-              <div className="card-icon">{category.icon}</div>
-              <div className="card-label">{category.label}</div>
-              <div className="card-description">{category.description}</div>
+      {/* STEP 1: Primary Impression */}
+      {currentStep === 'primary' && (
+        <div className="step-container">
+          <div className="tier1-section">
+            <h3>When you FIRST looked at the puzzle examples, what caught your attention MOST?</h3>
+            <p className="instruction">Select ONE category:</p>
+            
+            {errors.primary && <div className="error-message">{errors.primary}</div>}
+            
+            <div className="primary-cards-grid">
+              {primaryCategories.map(category => (
+                <div
+                  key={category.value}
+                  className={`primary-card ${primaryImpression === category.value ? 'selected' : ''}`}
+                  onClick={() => handlePrimarySelect(category.value)}
+                >
+                  <div className="card-icon">{category.icon}</div>
+                  <div className="card-label">{category.label}</div>
+                  <div className="card-description">{category.description}</div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Tier 2: Specific Features */}
-      {primaryImpression && (
-        <div className="tier2-section">
-          <h3>What specifically did you notice about {primaryCategories.find(c => c.value === primaryImpression)?.label.toLowerCase()}?</h3>
-          <p className="instruction">Check ALL that apply:</p>
-          
-          {errors.features && <div className="error-message">{errors.features}</div>}
-          
-          <div className="features-list">
-            {currentSubcategories.map(feature => (
-              <div key={feature.value} className="feature-item">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={primaryFeatures.includes(feature.value)}
-                    onChange={() => handleFeatureToggle(feature.value)}
-                  />
-                  <span>{feature.label}</span>
-                </label>
-                
-                {feature.needsText && primaryFeatures.includes(feature.value) && (
-                  <div className="other-text-input">
-                    <input
-                      type="text"
-                      placeholder="Describe what you noticed..."
-                      value={primaryOtherText}
-                      onChange={(e) => setPrimaryOtherText(e.target.value)}
-                      maxLength={100}
-                    />
-                    {errors.otherText && <div className="error-message-small">{errors.otherText}</div>}
-                  </div>
-                )}
-              </div>
-            ))}
           </div>
-        </div>
-      )}
 
-      {/* Tier 3: Secondary Impressions */}
-      {primaryImpression && primaryFeatures.length > 0 && !showQ2 && (
-        <div className="tier3-section">
-          <button 
-            className="expand-secondary-btn"
-            onClick={() => setShowSecondary(!showSecondary)}
-          >
-            {showSecondary ? '▼' : '▶'} Did you notice anything else? (Optional)
-          </button>
-          
-          {showSecondary && (
-            <div className="secondary-content">
-              <p className="secondary-hint">Select any additional categories you noticed:</p>
+          {/* Tier 2: Specific Features */}
+          {primaryImpression && (
+            <div className="tier2-section">
+              <h3>What specifically did you notice about {primaryCategories.find(c => c.value === primaryImpression)?.label.toLowerCase()}?</h3>
+              <p className="instruction">Check ALL that apply:</p>
               
-              <div className="secondary-categories-grid">
-                {availableSecondaryCategories.map(category => {
-                  const isSelected = secondaryImpressions.some(s => s.category === category.value);
-                  
-                  return (
-                    <div key={category.value} className="secondary-category-wrapper">
-                      <div
-                        className={`secondary-card ${isSelected ? 'selected' : ''}`}
-                        onClick={() => handleSecondaryToggle(category.value)}
-                      >
-                        <div className="card-icon-small">{category.icon}</div>
-                        <div className="card-label-small">{category.label}</div>
+              {errors.features && <div className="error-message">{errors.features}</div>}
+              
+              <div className="features-list">
+                {currentSubcategories.map(feature => (
+                  <div key={feature.value} className="feature-item">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={primaryFeatures.includes(feature.value)}
+                        onChange={() => handleFeatureToggle(feature.value)}
+                      />
+                      <span>{feature.label}</span>
+                    </label>
+                    
+                    {feature.needsText && primaryFeatures.includes(feature.value) && (
+                      <div className="other-text-input">
+                        <input
+                          type="text"
+                          placeholder="Describe what you noticed..."
+                          value={primaryOtherText}
+                          onChange={(e) => setPrimaryOtherText(e.target.value)}
+                          maxLength={100}
+                        />
+                        {errors.otherText && <div className="error-message-small">{errors.otherText}</div>}
                       </div>
-                      
-                      {isSelected && (
-                        <div className="secondary-features">
-                          {errors[`secondary_${category.value}`] && (
-                            <div className="error-message-small">{errors[`secondary_${category.value}`]}</div>
-                          )}
-                          
-                          {subcategories[category.value].map(feature => {
-                            const secondary = secondaryImpressions.find(s => s.category === category.value);
-                            const isChecked = secondary?.features.includes(feature.value);
-                            
-                            return (
-                              <div key={feature.value} className="secondary-feature-item">
-                                <label>
-                                  <input
-                                    type="checkbox"
-                                    checked={isChecked}
-                                    onChange={() => handleSecondaryFeatureToggle(category.value, feature.value)}
-                                  />
-                                  <span>{feature.label}</span>
-                                </label>
-                                
-                                {feature.needsText && isChecked && (
-                                  <div className="other-text-input">
-                                    <input
-                                      type="text"
-                                      placeholder="Describe..."
-                                      value={secondary?.otherText || ''}
-                                      onChange={(e) => handleSecondaryOtherText(category.value, e.target.value)}
-                                      maxLength={100}
-                                    />
-                                    {errors[`secondary_other_${category.value}`] && (
-                                      <div className="error-message-small">{errors[`secondary_other_${category.value}`]}</div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}
-        </div>
-      )}
 
-      {/* Q2: Initial Hypothesis */}
-      {showQ2 && !showQ4 && (
-        <div className="q2-section">
-          <h3>What pattern do you think connects the inputs to outputs?</h3>
-          <p className="instruction">In simple terms, describe what rule or transformation you see:</p>
-          
-          {errors.hypothesis && <div className="error-message">{errors.hypothesis}</div>}
-          
-          <ColorAutocompleteTextarea
-            value={initialHypothesis}
-            onChange={(e) => setInitialHypothesis(e.target.value)}
-            placeholder="Example: 'The colored squares move to the corners of the grid' or 'Red shapes become blue, and blue become red'"
-            rows={4}
-            className="hypothesis-textarea"
-          />
-          
-          <div className="word-counter">
-            {initialHypothesis.trim().split(/\s+/).filter(w => w.length > 0).length} / 100 words
-            (minimum 10 words)
-          </div>
-          
-          <div className="q2-examples">
-            <p><strong>Good examples:</strong></p>
-            <ul>
-              <li>"The colored squares move to the corners of the grid"</li>
-              <li>"Each object gets flipped upside down"</li>
-              <li>"Red shapes become blue, and blue become red"</li>
-            </ul>
-            <p><strong>Avoid:</strong> Too vague ("Things change position") or too technical ("Applying a 90-degree rotational matrix transformation")</p>
+          <div className="button-section">
+            <button 
+              className="continue-btn"
+              onClick={handleNext}
+              disabled={!primaryImpression || primaryFeatures.length === 0}
+            >
+              Next →
+            </button>
           </div>
         </div>
       )}
 
-      {/* Q4: Hypothesis Confidence (NEW - moved here) */}
-      {showQ4 && (
-        <div className="q4-section">
-          <h3>How confident are you in your hypothesis?</h3>
-          <p className="instruction">Before you try to solve it, how sure are you that your pattern idea is correct?</p>
-          
-          {errors.confidence && <div className="error-message">{errors.confidence}</div>}
-          
-          <div className="confidence-scale">
-            {[
-              { value: 1, label: 'Not confident at all', description: 'Just guessing / No idea' },
-              { value: 2, label: 'Slightly confident', description: 'Not very sure / Probably wrong' },
-              { value: 3, label: 'Moderately confident', description: 'Somewhat confident / Might be right' },
-              { value: 4, label: 'Very confident', description: 'Pretty sure / Likely correct' },
-              { value: 5, label: 'Extremely confident', description: 'Very sure / Definitely correct' }
-            ].map(option => (
-              <div
-                key={option.value}
-                className={`confidence-option ${hypothesisConfidence === option.value ? 'selected' : ''}`}
-                onClick={() => setHypothesisConfidence(option.value)}
-              >
-                <div className="confidence-number">{option.value}</div>
-                <div className="confidence-text">
-                  <div className="confidence-label">{option.label}</div>
-                  <div className="confidence-description">{option.description}</div>
+      {/* STEP 2: Secondary Impressions (PROMINENT) */}
+      {currentStep === 'secondary' && (
+        <div className="step-container">
+          <div className="secondary-prominent-section">
+            <h3>Did anything else catch your attention?</h3>
+            <p className="secondary-instruction">
+              <strong>This is optional!</strong> You can select additional things or skip this step.
+            </p>
+            <p className="secondary-hint">
+              You can select as many categories as you want.
+            </p>
+            
+            <div className="secondary-categories-grid">
+              {availableSecondaryCategories.map(category => {
+                const isSelected = secondaryImpressions.some(s => s.category === category.value);
+                
+                return (
+                  <div key={category.value} className="secondary-category-wrapper">
+                    <div
+                      className={`secondary-card-prominent ${isSelected ? 'selected' : ''}`}
+                      onClick={() => handleSecondaryToggle(category.value)}
+                    >
+                      <div className="card-icon">{category.icon}</div>
+                      <div className="card-label">{category.label}</div>
+                      <div className="card-description">{category.description}</div>
+                      {isSelected && <div className="selected-checkmark">✓</div>}
+                    </div>
+                    
+                    {isSelected && (
+                      <div className="secondary-features-prominent">
+                        <p className="features-prompt">What did you notice about {category.label.toLowerCase()}?</p>
+                        
+                        {errors[`secondary_${category.value}`] && (
+                          <div className="error-message">{errors[`secondary_${category.value}`]}</div>
+                        )}
+                        
+                        {subcategories[category.value].map(feature => {
+                          const secondary = secondaryImpressions.find(s => s.category === category.value);
+                          const isChecked = secondary?.features.includes(feature.value);
+                          
+                          return (
+                            <div key={feature.value} className="feature-item">
+                              <label>
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => handleSecondaryFeatureToggle(category.value, feature.value)}
+                                />
+                                <span>{feature.label}</span>
+                              </label>
+                              
+                              {feature.needsText && isChecked && (
+                                <div className="other-text-input">
+                                  <input
+                                    type="text"
+                                    placeholder="Describe..."
+                                    value={secondary?.otherText || ''}
+                                    onChange={(e) => handleSecondaryOtherText(category.value, e.target.value)}
+                                    maxLength={100}
+                                  />
+                                  {errors[`secondary_other_${category.value}`] && (
+                                    <div className="error-message-small">{errors[`secondary_other_${category.value}`]}</div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="button-section">
+            <button 
+              className={secondaryImpressions.some(s => s.features.length > 0) ? "continue-btn" : "skip-btn"}
+              onClick={secondaryImpressions.some(s => s.features.length > 0) ? handleNext : handleSkipSecondary}
+            >
+              {secondaryImpressions.some(s => s.features.length > 0)
+                ? "Next Question →" 
+                : "Skip (Nothing else caught my attention)"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 3: Initial Hypothesis */}
+      {currentStep === 'hypothesis' && (
+        <div className="step-container">
+          <div className="q2-section">
+            <h3>What pattern do you think connects the inputs to outputs?</h3>
+            <p className="instruction">In simple terms, describe what rule or transformation you see:</p>
+            
+            {errors.hypothesis && <div className="error-message">{errors.hypothesis}</div>}
+            
+            <ColorAutocompleteTextarea
+              value={initialHypothesis}
+              onChange={(e) => setInitialHypothesis(e.target.value)}
+              placeholder="Example: 'The colored squares move to the corners of the grid' or 'Red shapes become blue, and blue become red'"
+              rows={4}
+              className="hypothesis-textarea"
+            />
+            
+            <div className="word-counter">
+              {initialHypothesis.trim().split(/\s+/).filter(w => w.length > 0).length} / 100 words
+              (minimum 10 words)
+            </div>
+            
+            <div className="q2-examples">
+              <p><strong>Good examples:</strong></p>
+              <ul>
+                <li>"The colored squares move to the corners of the grid"</li>
+                <li>"Each object gets flipped upside down"</li>
+                <li>"Red shapes become blue, and blue become red"</li>
+              </ul>
+              <p><strong>Avoid:</strong> Too vague ("Things change position") or too technical ("Applying a 90-degree rotational matrix transformation")</p>
+            </div>
+          </div>
+
+          <div className="button-section">
+            <button 
+              className="continue-btn"
+              onClick={handleNext}
+            >
+              Next Question →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 4: Hypothesis Confidence */}
+      {currentStep === 'confidence' && (
+        <div className="step-container">
+          <div className="q4-section">
+            <h3>How confident are you in your hypothesis?</h3>
+            <p className="instruction">Before you try to solve it, how sure are you that your pattern idea is correct?</p>
+            
+            {errors.confidence && <div className="error-message">{errors.confidence}</div>}
+            
+            <div className="confidence-scale">
+              {[
+                { value: 1, label: 'Not confident at all', description: 'Just guessing / No idea' },
+                { value: 2, label: 'Slightly confident', description: 'Not very sure / Probably wrong' },
+                { value: 3, label: 'Moderately confident', description: 'Somewhat confident / Might be right' },
+                { value: 4, label: 'Very confident', description: 'Pretty sure / Likely correct' },
+                { value: 5, label: 'Extremely confident', description: 'Very sure / Definitely correct' }
+              ].map(option => (
+                <div
+                  key={option.value}
+                  className={`confidence-option ${hypothesisConfidence === option.value ? 'selected' : ''}`}
+                  onClick={() => setHypothesisConfidence(option.value)}
+                >
+                  <div className="confidence-number">{option.value}</div>
+                  <div className="confidence-text">
+                    <div className="confidence-label">{option.label}</div>
+                    <div className="confidence-description">{option.description}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+
+          <div className="button-section">
+            <button 
+              className="continue-btn"
+              onClick={handleNext}
+            >
+              Continue to Solving →
+            </button>
           </div>
         </div>
       )}
-
-      {/* Continue Button */}
-      <div className="continue-section">
-        <button 
-          className="continue-btn"
-          onClick={handleContinue}
-          disabled={!primaryImpression || primaryFeatures.length === 0}
-        >
-          {showQ4 ? 'Continue to Solving →' : showQ2 ? 'Next Question →' : 'Next Question →'}
-        </button>
-      </div>
     </div>
   );
 };
