@@ -145,9 +145,14 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
     const existing = secondaryImpressions.find(s => s.category === categoryValue);
     
     if (existing) {
+      // If clicking on an already selected category, remove it
       setSecondaryImpressions(secondaryImpressions.filter(s => s.category !== categoryValue));
     } else {
-      setSecondaryImpressions([...secondaryImpressions, {
+      // When selecting a new category, remove any categories with no features selected
+      const cleanedImpressions = secondaryImpressions.filter(s => s.features.length > 0);
+      
+      // Add the new category
+      setSecondaryImpressions([...cleanedImpressions, {
         category: categoryValue,
         features: [],
         otherText: null
@@ -203,12 +208,9 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
     }
     
     if (currentStep === 'secondary') {
-      // Validate secondary impressions (only if any are selected)
-      secondaryImpressions.forEach(secondary => {
-        if (secondary.features.length === 0) {
-          newErrors[`secondary_${secondary.category}`] = 'Please select at least one feature or remove this category.';
-        }
-        
+      // Only validate secondary impressions that have at least one feature selected
+      // Ignore empty categories - they'll be filtered out on submit
+      secondaryImpressions.filter(s => s.features.length > 0).forEach(secondary => {
         const secondaryOther = secondary.features.some(f => f.endsWith('_other'));
         if (secondaryOther && !secondary.otherText?.trim()) {
           newErrors[`secondary_other_${secondary.category}`] = 'Please describe what you noticed.';
@@ -359,26 +361,28 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
           <div className="secondary-prominent-section">
             <h3>Did anything else catch your attention?</h3>
             <p className="secondary-instruction">
-              <strong>This is optional!</strong> You can select additional things or skip this step.
+              <strong>This is optional!</strong> You can select additional things you noticed, or skip this step if your primary observation covers everything.
             </p>
             <p className="secondary-hint">
-              You can select as many categories as you want.
+              You can select as many categories as you want. For each category you select, you'll be asked which specific features you noticed.
             </p>
             
             <div className="secondary-categories-grid">
               {availableSecondaryCategories.map(category => {
-                const isSelected = secondaryImpressions.some(s => s.category === category.value);
+                const secondaryData = secondaryImpressions.find(s => s.category === category.value);
+                const isSelected = secondaryData !== undefined;
+                const hasFeatures = secondaryData && secondaryData.features.length > 0;
                 
                 return (
                   <div key={category.value} className="secondary-category-wrapper">
                     <div
-                      className={`secondary-card-prominent ${isSelected ? 'selected' : ''}`}
+                      className={`secondary-card-prominent ${hasFeatures ? 'selected' : ''}`}
                       onClick={() => handleSecondaryToggle(category.value)}
                     >
                       <div className="card-icon">{category.icon}</div>
                       <div className="card-label">{category.label}</div>
                       <div className="card-description">{category.description}</div>
-                      {isSelected && <div className="selected-checkmark">✓</div>}
+                      {hasFeatures && <div className="selected-checkmark">✓</div>}
                     </div>
                     
                     {isSelected && (
@@ -390,8 +394,7 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
                         )}
                         
                         {subcategories[category.value].map(feature => {
-                          const secondary = secondaryImpressions.find(s => s.category === category.value);
-                          const isChecked = secondary?.features.includes(feature.value);
+                          const isChecked = secondaryData?.features.includes(feature.value);
                           
                           return (
                             <div key={feature.value} className="feature-item">
@@ -409,7 +412,7 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
                                   <input
                                     type="text"
                                     placeholder="Describe..."
-                                    value={secondary?.otherText || ''}
+                                    value={secondaryData?.otherText || ''}
                                     onChange={(e) => handleSecondaryOtherText(category.value, e.target.value)}
                                     maxLength={100}
                                   />
