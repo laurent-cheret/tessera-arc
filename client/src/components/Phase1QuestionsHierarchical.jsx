@@ -17,105 +17,102 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
   const primaryCategories = [
     {
       value: 'visual_appearance',
-      label: 'Visual appearance',
+      label: 'Colored figures, shapes, or patterns',
       icon: '🎨',
-      description: 'Colors, shapes, patterns, symmetry'
+      description: ''
     },
     {
       value: 'spatial_arrangement',
-      label: 'Spatial arrangement',
+      label: 'Where objects are located in the grid',
       icon: '📍',
-      description: 'Where things are located, positions'
+      description: ''
     },
     {
       value: 'structure_connections',
-      label: 'Structure & connections',
+      label: 'How objects are connected or linked to others',
       icon: '🔗',
-      description: 'How things connect or contain each other'
+      description: ''
     },
     {
       value: 'quantities_sizes',
-      label: 'Quantities & sizes',
+      label: 'How many, or how large?',
       icon: '🔢',
-      description: 'Counting, comparing sizes'
+      description: ''
     },
     {
       value: 'changes_movement',
-      label: 'Changes & movement',
+      label: 'Flow & movement',
       icon: '➡️',
-      description: "What's moving, transforming, changing"
+      description: ""
     },
     {
       value: 'organization_grouping',
-      label: 'Organization & grouping',
+      label: 'How things seem to be grouped',
       icon: '📊',
-      description: 'How things are sorted or grouped'
+      description: ''
     },
     {
       value: 'rules_patterns',
-      label: 'Rules & patterns',
+      label: 'Rules or recipes to follow',
       icon: '🧩',
-      description: 'Conditional logic, multi-step processes'
+      description: ''
     }
   ];
 
   // Tier 2: Subcategories for each primary category
   const subcategories = {
     visual_appearance: [
-      { value: 'background_color', label: 'Background color' },
-      { value: 'specific_colors', label: 'Specific colors present' },
+      { value: 'specific_colors', label: 'Specific colors' },
       { value: 'color_changes', label: 'Changes in colors' },
       { value: 'shapes', label: 'Distinct shapes' },
       { value: 'symmetry', label: 'Symmetry' },
-      { value: 'repeating_patterns', label: 'Repeating patterns or tiles' },
+      { value: 'repeating_patterns', label: 'Repeating patterns' },
       { value: 'visual_other', label: 'Something else about appearance', needsText: true }
     ],
     spatial_arrangement: [
-      { value: 'specific_positions', label: 'Objects in specific positions' },
-      { value: 'alignment', label: 'Alignment of objects' },
-      { value: 'clustering', label: 'Objects spread out vs. clustered' },
-      { value: 'spacing', label: 'Distance or spacing between objects' },
+      { value: 'specific_positions', label: 'Specific positions' },
+      { value: 'alignment', label: 'Alignment' },
+      { value: 'clustering', label: 'Spread out vs. clustered' },
+      { value: 'spacing', label: 'Distance or spacing' },
       { value: 'spatial_other', label: 'Something else about position', needsText: true }
     ],
     structure_connections: [
-      { value: 'containment', label: 'Objects inside or surrounding other objects' },
-      { value: 'touching_connected', label: 'Objects touching or connected' },
-      { value: 'paths_lines', label: 'Lines or paths connecting things' },
-      { value: 'holes_gaps', label: 'Holes or gaps within objects' },
-      { value: 'grid_structure', label: 'Overall grid structure' },
+      { value: 'containment', label: 'Containment or enclosure' },
+      { value: 'touching_connected', label: 'In contact or connected' },
+      { value: 'paths_lines', label: 'Paths' },
+      { value: 'holes_gaps', label: 'Holes or gaps' },
+      { value: 'grid_structure', label: 'Grid divided in distinct areas' },
       { value: 'structure_other', label: 'Something else about structure', needsText: true }
     ],
     quantities_sizes: [
       { value: 'counting_objects', label: 'Number of objects' },
       { value: 'counting_colors', label: 'Number of colors present' },
-      { value: 'object_sizes', label: 'Different sizes of objects' },
+      { value: 'object_sizes', label: 'Different sizes' },
       { value: 'size_change', label: 'Objects growing or shrinking' },
-      { value: 'size_comparison', label: 'Comparing relative sizes' },
       { value: 'grid_size', label: 'Grid size changing' },
       { value: 'quantity_other', label: 'Something else about quantity/size', needsText: true }
     ],
     changes_movement: [
-      { value: 'position_change', label: 'Objects moving or shifting position' },
-      { value: 'rotation_flip', label: 'Objects rotating or flipping' },
-      { value: 'appearing_disappearing', label: 'Objects appearing or disappearing' },
-      { value: 'directional_flow', label: 'Physics like gravity, bouncing, falling or flowing' },
-      { value: 'duplication', label: 'Objects being copied or duplicated' },
+      { value: 'position_change', label: 'Moving or shifting position' },
+      { value: 'rotation_flip', label: 'Rotating or flipping' },
+      { value: 'appearing_disappearing', label: 'Appearing or disappearing' },
+      { value: 'directional_flow', label: 'Physics like gravity, bouncing or falling' },
+      { value: 'duplication', label: 'Copying or duplicating' },
       { value: 'change_other', label: 'Something else about changes', needsText: true }
     ],
     organization_grouping: [
-      { value: 'similarity_groups', label: 'Objects grouped by similarity' },
-      { value: 'location_groups', label: 'Objects grouped by location' },
-      { value: 'sorting_ranking', label: 'Objects sorted or ranked' },
-      { value: 'object_layers', label: 'Objects layered on top of each other' },
-      { value: 'column_row_arrangement', label: 'Objects arranged in rows and columns' },
-      { value: 'matching', label: 'Matching or comparing elements' },
+      { value: 'similarity_groups', label: 'Grouped by similarity' },
+      { value: 'location_groups', label: 'Grouped by location' },
+      { value: 'sorting_ranking', label: 'Sorting or ranking' },
+      { value: 'object_layers', label: 'Stacked layers' },
       { value: 'organization_other', label: 'Something else about organization', needsText: true }
     ],
     rules_patterns: [
-      { value: 'conditional_rules', label: 'Conditional rules (if X, then Y)' },
-      { value: 'context_dependent', label: 'Context-dependent transformations' },
-      { value: 'multi_step', label: 'Following a sequence or order' },
-      { value: 'complex_combination', label: 'Complex pattern combining operations' },
+      { value: 'conditional_rules', label: 'If X, then Y rules' },
+      { value: 'context_dependent', label: 'Changes depend on pattern' },
+      { value: 'multi_step', label: 'Sequence of steps like a recipe' },
+      { value: 'complex_combination', label: 'Several operations together' },
+      { value: 'logical_operations', label: 'Logical changes (AND, OR, NOT, XOR)' },
       { value: 'rules_other', label: 'Something else about rules', needsText: true }
     ]
   };
