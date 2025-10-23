@@ -7,42 +7,42 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
   const [whatYouTried, setWhatYouTried] = useState(initialData?.whatYouTried || '');
   const [hypothesisRevised, setHypothesisRevised] = useState(initialData?.hypothesisRevised || null);
   const [revisionReason, setRevisionReason] = useState(initialData?.revisionReason || '');
-  // const [strategy, setStrategy] = useState(initialData?.strategy || ''); // REMOVED: Q5 strategy not needed
+  const [strategy, setStrategy] = useState(initialData?.strategy || ''); // REMOVED: Q5 strategy not needed
   const [errors, setErrors] = useState({});
 
   // REMOVED: Q5 strategy options array - not adding sufficient value to dataset
-  /*
+  
   const strategies = [
     {
       value: 'intuitive_recognition',
       emoji: '💡',
       label: 'Quick Recognition',
-      when: 'The transformation felt obvious to you. You recognized the pattern quickly, like spotting a familiar face in a crowd.',
+      when: 'The transformation felt obvious to you. Like spotting a familiar face in a crowd.',
       example: 'You instantly thought "Oh, this is just flipping the shape horizontally" without analyzing why.'
     },
     {
       value: 'systematic_analysis',
       emoji: '🔬',
       label: 'Systematic Rule Finding',
-      when: 'You methodically analyzed the training examples, identified what changed and what stayed the same, and built up a clear rule in your mind.',
-      example: 'You noticed: "First, I identify all blue squares. Then, I move each one 2 spaces right. Finally, I change their color to red."'
+      when: 'You had to look at all the examples to be sure about the transformation, then built up a clear rule in your mind.',
+      example: 'You noticed: "Blue squares disappear. But, it only happens when they are close to green squares."'
     },
     {
       value: 'hands_on_experimentation',
       emoji: '🎯',
       label: 'Learning by Trying',
-      when: 'You used the interactive grid to experiment—copying, editing, resizing—and learned from seeing what worked and what didn\'t.',
+      when: 'The rule wasn\'t clear so you used the interactive grid to experiment, and learned from seeing what worked and what didn\'t.',
       example: 'You tried rotating the pattern, saw it was wrong, then tried reflecting it instead, gradually refining your approach.'
-    },
-    {
-      value: 'reverse_engineering',
-      emoji: '⏪',
-      label: 'Reverse Engineering',
-      when: 'You started by analyzing what the output needs to be, then determined which transformations would create that result.',
-      example: 'You thought "The output needs to be symmetric, so I need to mirror this half onto the other side"—starting with the end goal in mind.'
     }
+    // {
+    //   value: 'reverse_engineering',
+    //   emoji: '⏪',
+    //   label: 'Reverse Engineering',
+    //   when: 'You started by analyzing what the output needs to be, then determined which transformations would create that result.',
+    //   example: 'You thought "The output needs to be symmetric, so I need to mirror this half onto the other side"—starting with the end goal in mind.'
+    // }
   ];
-  */
+  
 
   const validate = () => {
     const newErrors = {};
@@ -63,12 +63,10 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
       newErrors.revisionReason = 'Please explain what made you change your approach.';
     }
     
-    // REMOVED: Q5 strategy validation - question removed from questionnaire
-    /*
     if (!strategy) {
       newErrors.strategy = 'Please select the strategy that best describes your approach.';
     }
-    */
+    
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -81,7 +79,7 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
         q3_word_count: whatYouTried.trim().split(/\s+/).filter(w => w.length > 0).length,
         q9_hypothesis_revised: hypothesisRevised,
         q9_revision_reason: hypothesisRevised ? revisionReason.trim() : null,
-        // q5_strategy_used: strategy, // REMOVED: Q5 strategy field not collected anymore
+        q5_strategy_used: strategy, 
         phase3_timestamp: new Date().toISOString()
       };
       onComplete(data);
@@ -178,10 +176,9 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
           )}
         </div>
 
-        {/* REMOVED: Q5 Strategy Selection - Question removed as it wasn't adding sufficient value to dataset */}
-        {/*
+        
         <div className="question-block">
-          <h3>Q5: Which approach best describes how you solved this puzzle?</h3>
+          <h3>Which strategy best describes how you solved this puzzle?</h3>
           <p className="question-hint">Select the ONE that fits best:</p>
           
           {errors.strategy && <div className="error-message">{errors.strategy}</div>}
@@ -207,7 +204,7 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
             ))}
           </div>
         </div>
-        */}
+        
 
         <div className="continue-section">
           <button 

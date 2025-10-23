@@ -454,10 +454,11 @@ app.post('/api/submissions',
             q4_word_count,
             q5_hypothesis_revised,
             q5_revision_reason,
+            q6_strategy_used,
             q7_difficulty_rating,
             q8_challenge_factors,
             q8_challenge_other
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         `, [
           responseId,
           attemptId,
@@ -476,7 +477,8 @@ app.post('/api/submissions',
           // Phase 3 - Q9 (revision - moved from Phase 4)
           phase3_post_solving.q9_hypothesis_revised || null,
           phase3_post_solving.q9_revision_reason || null,
-          // ⚠️ REMOVED: phase3_post_solving.q5_strategy_used || null (Q5 removed)
+          // Phase 3 - Q5 (strategy)
+          phase3_post_solving.q5_strategy_used || null,
           // Phase 4 - Q7 (difficulty)
           phase4_reflection.q7_difficulty_rating || null,
           // Phase 4 - Q8 (challenges)
