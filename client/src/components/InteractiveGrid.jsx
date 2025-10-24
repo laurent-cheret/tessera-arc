@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './InteractiveGrid.css';
 
-const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) => {
+const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, maxSize = 400 }) => {
   const [grid, setGrid] = useState(currentGrid || initialGrid);
   const [selectedColor, setSelectedColor] = useState(1);
   const [mode, setMode] = useState('edit'); // 'edit', 'select', 'fill'
@@ -9,13 +9,7 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
   const [selectionStart, setSelectionStart] = useState(null);
   const [selectionEnd, setSelectionEnd] = useState(null);
   
-  // NEW: Pinch-to-zoom state
-  const [scale, setScale] = useState(1);
-  const [isPinching, setIsPinching] = useState(false);
-  
   const gridRef = useRef(null);
-  const scrollWrapperRef = useRef(null);
-  const lastTouchDistance = useRef(null);
 
   // Official ARC color palette
   const colors = {
@@ -45,6 +39,17 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
     9: 'Maroon'
   };
 
+  // Calculate dynamic cell size based on grid dimensions
+  const rows = grid.length;
+  const cols = grid[0]?.length || 0;
+  const maxDimension = Math.max(rows, cols);
+  const cellSize = Math.floor(maxSize / maxDimension);
+  const finalCellSize = Math.max(cellSize, 8);
+
+  // Calculate actual grid dimensions
+  const gridWidth = cols * finalCellSize;
+  const gridHeight = rows * finalCellSize;
+
   // Sync with external grid changes
   useEffect(() => {
     if (currentGrid) {
@@ -52,53 +57,59 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
     }
   }, [currentGrid]);
 
-  // NEW: Reset scroll position to top-left when grid changes
+  // NEW: Add native touch event listeners with {passive: false}
   useEffect(() => {
-    if (scrollWrapperRef.current) {
-      scrollWrapperRef.current.scrollLeft = 0;
-      scrollWrapperRef.current.scrollTop = 0;
-    }
-  }, [grid]);
+    const gridElement = gridRef.current;
+    if (!gridElement) return;
 
-  // NEW: Calculate distance between two touch points (for pinch-to-zoom)
-  const getTouchDistance = (touches) => {
-    if (touches.length < 2) return 0;
-    const dx = touches[0].clientX - touches[1].clientX;
-    const dy = touches[0].clientY - touches[1].clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-  };
-
-  // NEW: Handle pinch-to-zoom start
-  const handleTouchStartZoom = (event) => {
-    if (event.touches.length === 2) {
-      setIsPinching(true);
-      lastTouchDistance.current = getTouchDistance(event.touches);
-    }
-  };
-
-  // NEW: Handle pinch-to-zoom move
-  const handleTouchMoveZoom = (event) => {
-    if (event.touches.length === 2 && isPinching) {
-      event.preventDefault();
-      
-      const currentDistance = getTouchDistance(event.touches);
-      const previousDistance = lastTouchDistance.current;
-      
-      if (previousDistance > 0) {
-        const scaleChange = currentDistance / previousDistance;
-        const newScale = Math.min(Math.max(scale * scaleChange, 0.5), 3);
-        setScale(newScale);
+    const handleTouchStart = (e) => {
+      if (mode === 'select') {
+        e.preventDefault(); // This now works without warning!
+        const touch = e.touches[0];
+        const cellCoords = getCellFromPosition(touch.clientX, touch.clientY);
+        if (cellCoords) {
+          setIsSelecting(true);
+          setSelectionStart({ row: cellCoords.row, col: cellCoords.col });
+          setSelectionEnd({ row: cellCoords.row, col: cellCoords.col });
+        }
       }
-      
-      lastTouchDistance.current = currentDistance;
-    }
-  };
+    };
 
-  // NEW: Handle pinch-to-zoom end
-  const handleTouchEndZoom = () => {
-    setIsPinching(false);
-    lastTouchDistance.current = null;
-  };
+    const handleTouchMove = (e) => {
+      if (mode === 'select' && isSelecting) {
+        e.preventDefault(); // This now works without warning!
+        const touch = e.touches[0];
+        const cellCoords = getCellFromPosition(touch.clientX, touch.clientY);
+        if (cellCoords) {
+          setSelectionEnd({ row: cellCoords.row, col: cellCoords.col });
+        }
+      }
+    };
+
+    const handleTouchEnd = (e) => {
+      if (mode === 'select' && isSelecting && selectionStart && selectionEnd) {
+        e.preventDefault(); // This now works without warning!
+        applySelection();
+        setIsSelecting(false);
+        setSelectionStart(null);
+        setSelectionEnd(null);
+      }
+    };
+
+    // Add listeners with {passive: false} - this is the key!
+    gridElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+    gridElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+    gridElement.addEventListener('touchend', handleTouchEnd, { passive: false });
+    gridElement.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+
+    // Cleanup
+    return () => {
+      gridElement.removeEventListener('touchstart', handleTouchStart);
+      gridElement.removeEventListener('touchmove', handleTouchMove);
+      gridElement.removeEventListener('touchend', handleTouchEnd);
+      gridElement.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [mode, isSelecting, selectionStart, selectionEnd]); // Re-attach when these change
 
   const updateGrid = (newGrid) => {
     setGrid(newGrid);
@@ -147,13 +158,47 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
         clientY >= rect.top &&
         clientY <= rect.bottom
       ) {
-        const rowIndex = Math.floor(i / grid[0].length);
-        const colIndex = i % grid[0].length;
+        const rowIndex = Math.floor(i / cols);
+        const colIndex = i % cols;
         return { row: rowIndex, col: colIndex };
       }
     }
     
     return null;
+  };
+
+  // Apply color to selected region
+  const applySelection = () => {
+    if (!selectionStart || !selectionEnd) return;
+
+    const minRow = Math.min(selectionStart.row, selectionEnd.row);
+    const maxRow = Math.max(selectionStart.row, selectionEnd.row);
+    const minCol = Math.min(selectionStart.col, selectionEnd.col);
+    const maxCol = Math.max(selectionStart.col, selectionEnd.col);
+
+    const newGrid = grid.map((row, rIdx) =>
+      row.map((cell, cIdx) => {
+        if (rIdx >= minRow && rIdx <= maxRow && cIdx >= minCol && cIdx <= maxCol) {
+          return selectedColor;
+        }
+        return cell;
+      })
+    );
+
+    updateGrid(newGrid);
+
+    if (onAction) {
+      onAction({
+        type: 'select_region',
+        startRow: minRow,
+        startCol: minCol,
+        endRow: maxRow,
+        endCol: maxCol,
+        color: selectedColor,
+        cellsAffected: (maxRow - minRow + 1) * (maxCol - minCol + 1),
+        timestamp: Date.now()
+      });
+    }
   };
 
   // EDIT MODE: Click individual cells
@@ -189,103 +234,27 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
     }
   };
 
-  // UNIFIED POINTER DOWN: Handle both mouse and touch events
-  const handlePointerDown = (rowIndex, colIndex, event) => {
+  // Mouse event handlers (for desktop)
+  const handleMouseDown = (rowIndex, colIndex) => {
     if (mode === 'select') {
-      if (event.type === 'touchstart') {
-        event.preventDefault();
-      }
-      
       setIsSelecting(true);
       setSelectionStart({ row: rowIndex, col: colIndex });
       setSelectionEnd({ row: rowIndex, col: colIndex });
     }
   };
 
-  // UNIFIED POINTER MOVE: Handle both mouse and touch events
-  const handlePointerMove = (rowIndex, colIndex, event) => {
+  const handleMouseMove = (rowIndex, colIndex) => {
     if (mode === 'select' && isSelecting) {
-      if (event.type === 'touchmove') {
-        event.preventDefault();
-        
-        const touch = event.touches[0];
-        const cellCoords = getCellFromPosition(touch.clientX, touch.clientY);
-        
-        if (cellCoords) {
-          setSelectionEnd({ row: cellCoords.row, col: cellCoords.col });
-        }
-      } else {
-        setSelectionEnd({ row: rowIndex, col: colIndex });
-      }
+      setSelectionEnd({ row: rowIndex, col: colIndex });
     }
   };
 
-  // Handle touch move on the grid container
-  const handleGridTouchMove = (event) => {
-    // Handle pinch-to-zoom if two fingers
-    if (event.touches.length === 2) {
-      handleTouchMoveZoom(event);
-      return;
-    }
-    
-    // Handle selection if in select mode
-    if (mode === 'select' && isSelecting) {
-      event.preventDefault();
-      
-      const touch = event.touches[0];
-      const cellCoords = getCellFromPosition(touch.clientX, touch.clientY);
-      
-      if (cellCoords) {
-        setSelectionEnd({ row: cellCoords.row, col: cellCoords.col });
-      }
-    }
-  };
-
-  // UNIFIED POINTER UP: Handle both mouse and touch events
-  const handlePointerUp = (event) => {
+  const handleMouseUp = () => {
     if (mode === 'select' && isSelecting && selectionStart && selectionEnd) {
-      if (event && (event.type === 'touchend' || event.type === 'touchcancel')) {
-        event.preventDefault();
-      }
-      
       applySelection();
       setIsSelecting(false);
       setSelectionStart(null);
       setSelectionEnd(null);
-    }
-  };
-
-  // Apply color to selected region
-  const applySelection = () => {
-    if (!selectionStart || !selectionEnd) return;
-
-    const minRow = Math.min(selectionStart.row, selectionEnd.row);
-    const maxRow = Math.max(selectionStart.row, selectionEnd.row);
-    const minCol = Math.min(selectionStart.col, selectionEnd.col);
-    const maxCol = Math.max(selectionStart.col, selectionEnd.col);
-
-    const newGrid = grid.map((row, rIdx) =>
-      row.map((cell, cIdx) => {
-        if (rIdx >= minRow && rIdx <= maxRow && cIdx >= minCol && cIdx <= maxCol) {
-          return selectedColor;
-        }
-        return cell;
-      })
-    );
-
-    updateGrid(newGrid);
-
-    if (onAction) {
-      onAction({
-        type: 'select_region',
-        startRow: minRow,
-        startCol: minCol,
-        endRow: maxRow,
-        endCol: maxCol,
-        color: selectedColor,
-        cellsAffected: (maxRow - minRow + 1) * (maxCol - minCol + 1),
-        timestamp: Date.now()
-      });
     }
   };
 
@@ -404,11 +373,6 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
     resizeGrid(rows, cols);
   };
 
-  // NEW: Reset zoom
-  const resetZoom = () => {
-    setScale(1);
-  };
-
   return (
     <div className="interactive-grid-container">
       <div className="interactive-grid-wrapper">
@@ -469,38 +433,18 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
           </p>
         </div>
 
-        {/* NEW: Zoom controls for mobile */}
-        {scale !== 1 && (
-          <div className="zoom-info">
-            <span>Zoom: {Math.round(scale * 100)}%</span>
-            <button className="zoom-reset-btn" onClick={resetZoom}>
-              Reset Zoom
-            </button>
-          </div>
-        )}
-
-        {/* The Grid */}
-        <div 
-          className="interactive-grid-scroll-wrapper"
-          ref={scrollWrapperRef}
-          data-select-mode={mode === 'select'}
-          onTouchStart={handleTouchStartZoom}
-          onTouchEnd={handleTouchEndZoom}
-        >
+        {/* The Grid - Touch events handled via native listeners */}
+        <div className="grid-display-area">
           <div 
             className="interactive-grid"
             ref={gridRef}
             data-mode={mode}
             style={{
-              transform: `scale(${scale})`,
-              transformOrigin: 'top left',
-              transition: isPinching ? 'none' : 'transform 0.1s ease-out'
+              width: `${gridWidth}px`,
+              height: `${gridHeight}px`,
             }}
-            onMouseUp={(e) => handlePointerUp(e)}
-            onMouseLeave={(e) => handlePointerUp(e)}
-            onTouchEnd={(e) => handlePointerUp(e)}
-            onTouchCancel={(e) => handlePointerUp(e)}
-            onTouchMove={(e) => handleGridTouchMove(e)}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
           >
             {grid.map((row, rowIndex) => (
               <div key={rowIndex} className="interactive-row">
@@ -510,12 +454,15 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
                     className={`interactive-cell ${isCellSelected(rowIndex, colIndex) ? 'selected' : ''}`}
                     style={{
                       backgroundColor: colors[cell],
-                      cursor: mode === 'edit' ? 'pointer' : mode === 'select' ? 'crosshair' : 'copy'
+                      cursor: mode === 'edit' ? 'pointer' : mode === 'select' ? 'crosshair' : 'copy',
+                      width: `${finalCellSize}px`,
+                      height: `${finalCellSize}px`,
+                      minWidth: `${finalCellSize}px`,
+                      minHeight: `${finalCellSize}px`,
                     }}
                     onClick={() => handleCellClick(rowIndex, colIndex)}
-                    onMouseDown={(e) => handlePointerDown(rowIndex, colIndex, e)}
-                    onMouseMove={(e) => handlePointerMove(rowIndex, colIndex, e)}
-                    onTouchStart={(e) => handlePointerDown(rowIndex, colIndex, e)}
+                    onMouseDown={() => handleMouseDown(rowIndex, colIndex)}
+                    onMouseMove={() => handleMouseMove(rowIndex, colIndex)}
                     title={`Cell (${rowIndex}, ${colIndex}): ${cell}`}
                   />
                 ))}
@@ -538,8 +485,7 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
         </div>
         
         <div className="grid-info">
-          <p>Grid size: {grid.length} × {grid[0]?.length || 0}</p>
-          <p className="zoom-hint">💡 Pinch to zoom on mobile</p>
+          <p>Grid size: {rows} × {cols}</p>
         </div>
       </div>
     </div>

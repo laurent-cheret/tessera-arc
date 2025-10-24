@@ -1,6 +1,6 @@
 /* ============================================================
-   INTERACTIVE GRID - ONLY EDITABLE GRID SCROLLS
-   Everything else (buttons, color picker, read-only grids) stays centered
+   INTERACTIVE GRID - DYNAMIC CELL SIZING (Like ARCGrid)
+   Grid always fits in view, cells scale based on dimensions
    ============================================================ */
 
    .interactive-grid-container {
@@ -11,7 +11,6 @@
     box-sizing: border-box;
     width: 100%;
     max-width: 100%;
-    overflow: visible; /* Allow internal scrolling only */
   }
   
   .interactive-grid-wrapper {
@@ -23,7 +22,7 @@
     max-width: 100%;
   }
   
-  /* Color Picker - ALWAYS CENTERED, NO SCROLL */
+  /* Color Picker - ALWAYS CENTERED */
   .color-picker {
     text-align: center;
     padding: 15px;
@@ -93,7 +92,7 @@
     text-align: center;
   }
   
-  /* Mode Selector - ALWAYS CENTERED, NO SCROLL */
+  /* Mode Selector - ALWAYS CENTERED */
   .mode-selector {
     text-align: center;
     padding: 15px;
@@ -162,42 +161,41 @@
     min-height: 20px;
   }
   
-  /* CRITICAL: Grid Scroll Wrapper - ONLY THIS PART SCROLLS */
-  .interactive-grid-scroll-wrapper {
+  /* Grid Display Area - Centers the grid, no scrolling needed */
+  .grid-display-area {
     width: 100%;
-    max-width: 100%;
-    overflow: auto; /* THIS is the only scrolling element */
-    -webkit-overflow-scrolling: touch;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    background-color: white;
-    padding: 10px;
-    box-sizing: border-box;
     display: flex;
-    justify-content: center; /* Center grid if it's small */
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    border: none;
+    box-sizing: border-box;
   }
   
-  /* The actual grid - centered when small, scrolls when large */
+  /* The actual grid - size determined by JS based on dimensions */
   .interactive-grid {
     display: inline-block;
     border: 2px solid #333;
     background-color: white;
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     box-sizing: border-box;
+    line-height: 0;
+    font-size: 0;
   }
   
   .interactive-row {
     display: flex;
+    line-height: 0;
   }
   
   .interactive-cell {
-    width: 35px;
-    height: 35px;
+    /* Size is set inline via style prop - dynamic! */
     border: 1px solid #999;
     flex-shrink: 0;
     transition: opacity 0.1s;
-    min-width: 35px;
-    min-height: 35px;
+    box-sizing: border-box;
   }
   
   .interactive-cell:hover {
@@ -249,7 +247,22 @@
     -ms-user-select: none;
   }
   
-  /* Tool Buttons - ALWAYS CENTERED, NO SCROLL */
+  /* Prevent touch scrolling in select mode */
+  .interactive-grid[data-mode="select"] {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  /* Prevent any text selection or callouts on mobile */
+  .interactive-cell {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Tool Buttons - ALWAYS CENTERED */
   .grid-tools {
     display: flex;
     gap: 10px;
@@ -311,15 +324,6 @@
     font-weight: 500;
   }
   
-  /* Scroll hint */
-  .scroll-hint {
-    text-align: center;
-    font-size: 12px;
-    color: #6c757d;
-    margin-top: 8px;
-    font-style: italic;
-  }
-  
   /* ============================================
      MOBILE OPTIMIZATIONS
      ============================================ */
@@ -334,7 +338,7 @@
       gap: 15px;
     }
   
-    /* Color Picker - Smaller on mobile but STAYS CENTERED */
+    /* Color Picker - Smaller on mobile */
     .color-picker {
       padding: 12px;
     }
@@ -357,7 +361,7 @@
       font-size: 13px;
     }
   
-    /* Mode Selector - Vertical stack but STAYS CENTERED */
+    /* Mode Selector - Vertical stack */
     .mode-selector {
       padding: 12px;
       margin-bottom: 12px;
@@ -380,20 +384,12 @@
       font-size: 12px;
     }
   
-    /* CRITICAL: Grid cells maintain touch-friendly size, scroll wrapper handles overflow */
-    .interactive-grid-scroll-wrapper {
-      padding: 8px;
-      /* If grid is larger than screen, it will scroll */
+    /* Grid display area - less padding on mobile */
+    .grid-display-area {
+      padding: 15px;
     }
   
-    .interactive-cell {
-      width: 32px; /* Touch-friendly minimum */
-      height: 32px;
-      min-width: 32px;
-      min-height: 32px;
-    }
-  
-    /* Tool buttons - Wrap nicely but STAY CENTERED */
+    /* Tool buttons - Wrap nicely */
     .grid-tools {
       gap: 8px;
     }
@@ -431,12 +427,8 @@
       min-width: 32px;
     }
   
-    /* Maintain minimum touch target */
-    .interactive-cell {
-      width: 28px;
-      height: 28px;
-      min-width: 28px;
-      min-height: 28px;
+    .grid-display-area {
+      padding: 10px;
     }
   
     .tool-btn {
@@ -450,148 +442,22 @@
     }
   }
   
-  /* Desktop - larger for comfort */
+  /* Desktop - More comfortable spacing */
   @media (min-width: 1200px) {
-    .interactive-cell {
-      width: 40px;
-      height: 40px;
-      min-width: 40px;
-      min-height: 40px;
-    }
-  
     .color-option {
       width: 44px;
       height: 44px;
     }
-  }
-
-  /* MOBILE TOUCH FIX: Prevent page scroll during drag selection */
-
-.interactive-grid[data-mode="select"] {
-  touch-action: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-.interactive-grid-scroll-wrapper[data-select-mode="true"] {
-  touch-action: none;
-  overflow: hidden;
-}
-
-.interactive-grid-scroll-wrapper[data-select-mode="false"] {
-  touch-action: auto;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.interactive-cell {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-@media (hover: none) and (pointer: coarse) {
-  .interactive-cell:active {
-    opacity: 0.7;
-    transition: all 0.05s ease;
-  }
-}
-
-/* ============================================================
-   ADD THESE TO YOUR InteractiveGrid.css
-   Fixes scroll position and adds zoom support
-   ============================================================ */
-
-/* FIX: Grid always starts scrolled to the left (not centered) */
-.interactive-grid-scroll-wrapper {
-  width: 100%;
-  max-width: 100%;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  border: 2px solid #dee2e6;
-  border-radius: 8px;
-  background-color: white;
-  padding: 10px;
-  box-sizing: border-box;
-  display: flex;
-  justify-content: flex-start; /* CHANGED FROM center to flex-start */
-  align-items: flex-start;
-}
-
-/* NEW: Zoom info display */
-.zoom-info {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 8px 16px;
-  background-color: #e8f4f8;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #0074D9;
-}
-
-.zoom-reset-btn {
-  padding: 6px 14px;
-  background-color: #0074D9;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.zoom-reset-btn:hover {
-  background-color: #0056b3;
-  transform: translateY(-1px);
-}
-
-.zoom-reset-btn:active {
-  transform: translateY(0);
-}
-
-/* NEW: Zoom hint text */
-.zoom-hint {
-  margin: 5px 0 0 0;
-  font-size: 12px;
-  color: #6c757d;
-  font-style: italic;
-}
-
-/* Hide zoom hint on desktop */
-@media (min-width: 769px) {
-  .zoom-hint {
-    display: none;
-  }
-}
-
-/* Ensure grid scales properly when zoomed */
-.interactive-grid {
-  display: inline-block;
-  border: 2px solid #333;
-  background-color: white;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-  box-sizing: border-box;
-  /* Remove any max-width constraints that might interfere with zoom */
-}
-
-/* Mobile: Better zoom control hints */
-@media (max-width: 768px) {
-  .zoom-info {
-    font-size: 13px;
-    padding: 6px 12px;
+    
+    .grid-display-area {
+      padding: 25px;
+    }
   }
   
-  .zoom-reset-btn {
-    font-size: 11px;
-    padding: 5px 12px;
+  /* Better touch feedback for cells on mobile */
+  @media (hover: none) and (pointer: coarse) {
+    .interactive-cell:active {
+      opacity: 0.7;
+      transition: all 0.05s ease;
+    }
   }
-  
-  .zoom-hint {
-    font-size: 11px;
-  }
-}
