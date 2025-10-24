@@ -122,7 +122,7 @@
   font-weight: bold;
 }
 
-/* Content Area - Side-by-Side Layout */
+/* Content Area */
 .task-reference-content {
   padding: 20px;
   background-color: #f8f9fa;
@@ -141,25 +141,66 @@
   }
 }
 
-/* Training Examples - Compact Side-by-Side */
-.training-examples-compact {
+/* Training Examples - HORIZONTAL SCROLLABLE LAYOUT */
+.training-examples-horizontal {
   margin-bottom: 20px;
 }
 
-.training-examples-compact h4 {
+.training-examples-horizontal h4 {
   margin: 0 0 15px 0;
   color: #495057;
   font-size: 16px;
   text-align: center;
 }
 
-.training-pair-compact {
-  margin-bottom: 20px;
+/* Horizontal scroll container */
+.examples-scroll-container {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 10px 5px 20px 5px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: #0074D9 #e9ecef;
+}
+
+.examples-scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.examples-scroll-container::-webkit-scrollbar-track {
+  background: #e9ecef;
+  border-radius: 4px;
+}
+
+.examples-scroll-container::-webkit-scrollbar-thumb {
+  background: #0074D9;
+  border-radius: 4px;
+}
+
+.examples-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #0056b3;
+}
+
+/* Individual example card */
+.training-pair-card {
+  flex: 0 0 auto;
+  min-width: 300px;
   padding: 15px;
   background-color: white;
   border-radius: 8px;
   border: 1px solid #dee2e6;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+}
+
+.training-pair-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
 }
 
 .pair-label {
@@ -170,7 +211,7 @@
   text-align: center;
 }
 
-/* Side-by-Side Grid Layout */
+/* Grids side-by-side within each card */
 .pair-grids {
   display: flex;
   align-items: center;
@@ -194,17 +235,21 @@
   text-align: center;
 }
 
-/* Slightly smaller cells for compact view */
-.pair-grids .arc-cell {
-  width: 24px;
-  height: 24px;
-}
-
 .arrow {
   font-size: 28px;
   color: #0074D9;
   font-weight: bold;
   flex: 0 0 auto;
+}
+
+/* Scroll hint */
+.scroll-hint {
+  text-align: center;
+  font-size: 13px;
+  color: #6c757d;
+  margin-top: 10px;
+  font-style: italic;
+  opacity: 0.8;
 }
 
 /* User Solution Display */
@@ -247,7 +292,7 @@
   border: 2px solid #f5c6cb;
 }
 
-/* Responsive - Stack on Small Screens */
+/* Responsive - Mobile Optimizations */
 @media (max-width: 768px) {
   .task-reference-toggle {
     min-height: 70px;
@@ -263,7 +308,12 @@
     display: none;
   }
 
-  /* Stack grids vertically on mobile */
+  /* Smaller cards on mobile */
+  .training-pair-card {
+    min-width: 280px;
+  }
+
+  /* Stack grids vertically within each card on mobile */
   .pair-grids {
     flex-direction: column;
     gap: 10px;
@@ -274,13 +324,36 @@
     font-size: 24px;
   }
 
-  .pair-grids .arc-cell {
-    width: 22px;
-    height: 22px;
+  /* More prominent scroll hint on mobile */
+  .scroll-hint {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0074D9;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
   }
 }
 
-/* Medium screens - Show fewer miniatures */
+/* Very small phones */
+@media (max-width: 400px) {
+  .training-pair-card {
+    min-width: 260px;
+  }
+
+  .examples-scroll-container {
+    gap: 15px;
+  }
+}
+
+/* Medium screens */
 @media (max-width: 1024px) and (min-width: 769px) {
   .mini-cell {
     width: 2.5px;
@@ -291,16 +364,48 @@
     gap: 3px;
     padding: 3px 6px;
   }
+
+  .training-pair-card {
+    min-width: 320px;
+  }
 }
 
-/* Large screens - Full layout */
+/* Large screens */
 @media (min-width: 1200px) {
-  .pair-grids .arc-cell {
-    width: 28px;
-    height: 28px;
+  .training-pair-card {
+    min-width: 350px;
   }
 
-  .training-pair-compact {
+  .training-pair-card {
     padding: 20px;
   }
+
+  /* Hide scroll hint on large screens */
+  .scroll-hint {
+    display: none;
+  }
 }
+
+/* Desktop hover scrolling hint */
+/* @media (min-width: 1025px) {
+  .examples-scroll-container {
+    position: relative;
+  }
+
+  .examples-scroll-container::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 20px;
+    width: 60px;
+    background: linear-gradient(to left, #f8f9fa, transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .examples-scroll-container:hover::after {
+    opacity: 1;
+  }
+} */
