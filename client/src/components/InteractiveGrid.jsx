@@ -1,15 +1,53 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './InteractiveGrid.css';
 
-const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, maxSize = 400 }) => {
+const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) => {
   const [grid, setGrid] = useState(currentGrid || initialGrid);
   const [selectedColor, setSelectedColor] = useState(1);
-  const [mode, setMode] = useState('edit'); // 'edit', 'select', 'fill'
+  const [mode, setMode] = useState('edit');
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionStart, setSelectionStart] = useState(null);
   const [selectionEnd, setSelectionEnd] = useState(null);
   
+  // NEW: Calculate responsive maxSize based on screen width
+  const [maxSize, setMaxSize] = useState(400);
+  
   const gridRef = useRef(null);
+
+  // NEW: Update maxSize based on viewport width
+  useEffect(() => {
+    const calculateMaxSize = () => {
+      const viewportWidth = window.innerWidth;
+      
+      // Account for container padding (20px) + display area padding (20px) + some safety margin (20px)
+      const totalPadding = 60;
+      
+      if (viewportWidth < 400) {
+        // Very small phones (Samsung S21: ~360px)
+        return Math.min(300, viewportWidth - totalPadding);
+      } else if (viewportWidth < 768) {
+        // Small phones and larger
+        return 320;
+      } else if (viewportWidth < 1024) {
+        // Tablets
+        return 400;
+      } else {
+        // Desktop
+        return 450;
+      }
+    };
+
+    const updateMaxSize = () => {
+      setMaxSize(calculateMaxSize());
+    };
+
+    // Set initial size
+    updateMaxSize();
+
+    // Update on resize
+    window.addEventListener('resize', updateMaxSize);
+    return () => window.removeEventListener('resize', updateMaxSize);
+  }, []);
 
   // Official ARC color palette
   const colors = {
@@ -39,7 +77,7 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, max
     9: 'Maroon'
   };
 
-  // Calculate dynamic cell size based on grid dimensions
+  // Calculate dynamic cell size based on grid dimensions and responsive maxSize
   const rows = grid.length;
   const cols = grid[0]?.length || 0;
   const maxDimension = Math.max(rows, cols);
@@ -57,14 +95,14 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, max
     }
   }, [currentGrid]);
 
-  // NEW: Add native touch event listeners with {passive: false}
+  // Add native touch event listeners with {passive: false}
   useEffect(() => {
     const gridElement = gridRef.current;
     if (!gridElement) return;
 
     const handleTouchStart = (e) => {
       if (mode === 'select') {
-        e.preventDefault(); // This now works without warning!
+        e.preventDefault();
         const touch = e.touches[0];
         const cellCoords = getCellFromPosition(touch.clientX, touch.clientY);
         if (cellCoords) {
@@ -77,7 +115,7 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, max
 
     const handleTouchMove = (e) => {
       if (mode === 'select' && isSelecting) {
-        e.preventDefault(); // This now works without warning!
+        e.preventDefault();
         const touch = e.touches[0];
         const cellCoords = getCellFromPosition(touch.clientX, touch.clientY);
         if (cellCoords) {
@@ -88,7 +126,7 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, max
 
     const handleTouchEnd = (e) => {
       if (mode === 'select' && isSelecting && selectionStart && selectionEnd) {
-        e.preventDefault(); // This now works without warning!
+        e.preventDefault();
         applySelection();
         setIsSelecting(false);
         setSelectionStart(null);
@@ -96,20 +134,18 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, max
       }
     };
 
-    // Add listeners with {passive: false} - this is the key!
     gridElement.addEventListener('touchstart', handleTouchStart, { passive: false });
     gridElement.addEventListener('touchmove', handleTouchMove, { passive: false });
     gridElement.addEventListener('touchend', handleTouchEnd, { passive: false });
     gridElement.addEventListener('touchcancel', handleTouchEnd, { passive: false });
 
-    // Cleanup
     return () => {
       gridElement.removeEventListener('touchstart', handleTouchStart);
       gridElement.removeEventListener('touchmove', handleTouchMove);
       gridElement.removeEventListener('touchend', handleTouchEnd);
       gridElement.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [mode, isSelecting, selectionStart, selectionEnd]); // Re-attach when these change
+  }, [mode, isSelecting, selectionStart, selectionEnd]);
 
   const updateGrid = (newGrid) => {
     setGrid(newGrid);
@@ -118,7 +154,6 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, max
     }
   };
 
-  // Helper: Deep compare two grids
   const gridsAreEqual = (grid1, grid2) => {
     if (grid1.length !== grid2.length) return false;
     if (grid1[0]?.length !== grid2[0]?.length) return false;
@@ -131,7 +166,6 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, max
     return true;
   };
 
-  // Helper: Check if grid is all zeros
   const isGridAllZeros = (grid) => {
     for (let i = 0; i < grid.length; i++) {
       for (let j = 0; j < grid[0].length; j++) {
@@ -141,7 +175,6 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, max
     return true;
   };
 
-  // Helper to get cell coordinates from touch/mouse position
   const getCellFromPosition = (clientX, clientY) => {
     if (!gridRef.current) return null;
     
@@ -167,7 +200,6 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, max
     return null;
   };
 
-  // Apply color to selected region
   const applySelection = () => {
     if (!selectionStart || !selectionEnd) return;
 
@@ -201,7 +233,6 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, max
     }
   };
 
-  // EDIT MODE: Click individual cells
   const handleCellClick = (rowIndex, colIndex) => {
     if (mode === 'edit') {
       const oldValue = grid[rowIndex][colIndex];
@@ -234,7 +265,6 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, max
     }
   };
 
-  // Mouse event handlers (for desktop)
   const handleMouseDown = (rowIndex, colIndex) => {
     if (mode === 'select') {
       setIsSelecting(true);
@@ -258,7 +288,6 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, max
     }
   };
 
-  // FILL MODE: Fill entire grid
   const handleFillAll = () => {
     const allSameColor = grid.every(row => row.every(cell => cell === selectedColor));
     if (allSameColor) {
@@ -278,7 +307,6 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, max
     }
   };
 
-  // Check if cell is in selection
   const isCellSelected = (rowIndex, colIndex) => {
     if (!isSelecting || !selectionStart || !selectionEnd) return false;
     
@@ -433,7 +461,7 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction, max
           </p>
         </div>
 
-        {/* The Grid - Touch events handled via native listeners */}
+        {/* The Grid - Responsive sizing */}
         <div className="grid-display-area">
           <div 
             className="interactive-grid"
