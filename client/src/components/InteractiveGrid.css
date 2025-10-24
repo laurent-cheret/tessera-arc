@@ -1,302 +1,597 @@
-.interactive-grid-container {
-  margin: 20px 0;
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 10px;
+/* ============================================================
+   INTERACTIVE GRID - ONLY EDITABLE GRID SCROLLS
+   Everything else (buttons, color picker, read-only grids) stays centered
+   ============================================================ */
+
+   .interactive-grid-container {
+    margin: 20px 0;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible; /* Allow internal scrolling only */
+  }
+  
+  .interactive-grid-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  /* Color Picker - ALWAYS CENTERED, NO SCROLL */
+  .color-picker {
+    text-align: center;
+    padding: 15px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .color-picker h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+  }
+  
+  .color-options {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+  
+  .color-option-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  
+  .color-option {
+    width: 40px;
+    height: 40px;
+    border: 3px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  
+  .color-option:hover {
+    transform: scale(1.1);
+    border-color: #666;
+  }
+  
+  .color-option.selected {
+    border-color: #0074D9;
+    border-width: 4px;
+    box-shadow: 0 0 10px rgba(0, 116, 217, 0.5);
+  }
+  
+  .color-name {
+    font-size: 11px;
+    color: #666;
+    font-weight: 500;
+    text-align: center;
+    min-width: 50px;
+  }
+  
+  .selected-color-label {
+    margin: 10px 0 0 0;
+    font-size: 14px;
+    color: #333;
+    font-weight: 600;
+    text-align: center;
+  }
+  
+  /* Mode Selector - ALWAYS CENTERED, NO SCROLL */
+  .mode-selector {
+    text-align: center;
+    padding: 15px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 15px;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .mode-selector h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+  }
+  
+  .mode-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  
+  .mode-btn {
+    padding: 10px 20px;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    background-color: white;
+    color: #495057;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+  }
+  
+  .mode-btn:hover {
+    background-color: #f8f9fa;
+    border-color: #adb5bd;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  
+  .mode-btn.active {
+    background-color: #0074D9;
+    color: white;
+    border-color: #0074D9;
+    box-shadow: 0 4px 12px rgba(0, 116, 217, 0.3);
+  }
+  
+  .mode-btn.active:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+  }
+  
+  .mode-description {
+    margin: 8px 0 0 0;
+    font-size: 13px;
+    color: #6c757d;
+    font-weight: 500;
+    min-height: 20px;
+  }
+  
+  /* CRITICAL: Grid Scroll Wrapper - ONLY THIS PART SCROLLS */
+  .interactive-grid-scroll-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow: auto; /* THIS is the only scrolling element */
+    -webkit-overflow-scrolling: touch;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    background-color: white;
+    padding: 10px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center; /* Center grid if it's small */
+  }
+  
+  /* The actual grid - centered when small, scrolls when large */
+  .interactive-grid {
+    display: inline-block;
+    border: 2px solid #333;
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    box-sizing: border-box;
+  }
+  
+  .interactive-row {
+    display: flex;
+  }
+  
+  .interactive-cell {
+    width: 35px;
+    height: 35px;
+    border: 1px solid #999;
+    flex-shrink: 0;
+    transition: opacity 0.1s;
+    min-width: 35px;
+    min-height: 35px;
+  }
+  
+  .interactive-cell:hover {
+    opacity: 0.8;
+    border-color: #333;
+    border-width: 2px;
+  }
+  
+  .interactive-cell:active {
+    opacity: 0.6;
+  }
+  
+  /* Selection Overlay */
+  .interactive-cell.selected {
+    box-shadow: inset 0 0 0 3px rgba(0, 116, 217, 0.6);
+    position: relative;
+    z-index: 10;
+  }
+  
+  .interactive-cell.selected::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 116, 217, 0.2);
+    pointer-events: none;
+  }
+  
+  /* Cursor styles for different modes */
+  .interactive-grid[data-mode="edit"] .interactive-cell {
+    cursor: pointer;
+  }
+  
+  .interactive-grid[data-mode="select"] .interactive-cell {
+    cursor: crosshair;
+  }
+  
+  .interactive-grid[data-mode="fill"] .interactive-cell {
+    cursor: copy;
+  }
+  
+  /* Prevent text selection during drag */
+  .interactive-grid {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+  
+  /* Tool Buttons - ALWAYS CENTERED, NO SCROLL */
+  .grid-tools {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .tool-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: #6c757d;
+    color: white;
+    box-sizing: border-box;
+  }
+  
+  .tool-btn:hover {
+    background-color: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  
+  .tool-btn:active {
+    transform: translateY(0);
+  }
+  
+  .reset-btn {
+    background-color: #dc3545;
+  }
+  
+  .reset-btn:hover {
+    background-color: #c82333;
+  }
+  
+  .resize-btn {
+    background-color: #17a2b8;
+  }
+  
+  .resize-btn:hover {
+    background-color: #138496;
+  }
+  
+  .grid-info {
+    text-align: center;
+    margin-top: 10px;
+  }
+  
+  .grid-info p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  /* Scroll hint */
+  .scroll-hint {
+    text-align: center;
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 8px;
+    font-style: italic;
+  }
+  
+  /* ============================================
+     MOBILE OPTIMIZATIONS
+     ============================================ */
+  
+  @media (max-width: 768px) {
+    .interactive-grid-container {
+      padding: 12px;
+      margin: 15px 0;
+    }
+  
+    .interactive-grid-wrapper {
+      gap: 15px;
+    }
+  
+    /* Color Picker - Smaller on mobile but STAYS CENTERED */
+    .color-picker {
+      padding: 12px;
+    }
+  
+    .color-options {
+      gap: 8px;
+    }
+  
+    .color-option {
+      width: 36px;
+      height: 36px;
+    }
+  
+    .color-name {
+      font-size: 10px;
+      min-width: 36px;
+    }
+  
+    .selected-color-label {
+      font-size: 13px;
+    }
+  
+    /* Mode Selector - Vertical stack but STAYS CENTERED */
+    .mode-selector {
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+  
+    .mode-buttons {
+      flex-direction: column;
+      width: 100%;
+      gap: 8px;
+    }
+    
+    .mode-btn {
+      width: 100%;
+      justify-content: center;
+      padding: 14px 16px;
+      font-size: 15px;
+    }
+  
+    .mode-description {
+      font-size: 12px;
+    }
+  
+    /* CRITICAL: Grid cells maintain touch-friendly size, scroll wrapper handles overflow */
+    .interactive-grid-scroll-wrapper {
+      padding: 8px;
+      /* If grid is larger than screen, it will scroll */
+    }
+  
+    .interactive-cell {
+      width: 32px; /* Touch-friendly minimum */
+      height: 32px;
+      min-width: 32px;
+      min-height: 32px;
+    }
+  
+    /* Tool buttons - Wrap nicely but STAY CENTERED */
+    .grid-tools {
+      gap: 8px;
+    }
+  
+    .tool-btn {
+      padding: 12px 16px;
+      font-size: 13px;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+  
+    .grid-info p {
+      font-size: 12px;
+    }
+  }
+  
+  /* Very small phones */
+  @media (max-width: 400px) {
+    .interactive-grid-container {
+      padding: 10px;
+      margin: 10px 0;
+    }
+  
+    .color-option {
+      width: 32px;
+      height: 32px;
+    }
+  
+    .color-options {
+      gap: 6px;
+    }
+  
+    .color-name {
+      font-size: 9px;
+      min-width: 32px;
+    }
+  
+    /* Maintain minimum touch target */
+    .interactive-cell {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      min-height: 28px;
+    }
+  
+    .tool-btn {
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+  
+    .mode-btn {
+      font-size: 14px;
+      padding: 12px 14px;
+    }
+  }
+  
+  /* Desktop - larger for comfort */
+  @media (min-width: 1200px) {
+    .interactive-cell {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      min-height: 40px;
+    }
+  
+    .color-option {
+      width: 44px;
+      height: 44px;
+    }
+  }
+
+  /* MOBILE TOUCH FIX: Prevent page scroll during drag selection */
+
+.interactive-grid[data-mode="select"] {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-.interactive-grid-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
+.interactive-grid-scroll-wrapper[data-select-mode="true"] {
+  touch-action: none;
+  overflow: hidden;
 }
 
-/* Color Picker */
-.color-picker {
-  text-align: center;
-  padding: 15px;
-  background-color: white;
+.interactive-grid-scroll-wrapper[data-select-mode="false"] {
+  touch-action: auto;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.interactive-cell {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .interactive-cell:active {
+    opacity: 0.7;
+    transition: all 0.05s ease;
+  }
+}
+
+/* ============================================================
+   ADD THESE TO YOUR InteractiveGrid.css
+   Fixes scroll position and adds zoom support
+   ============================================================ */
+
+/* FIX: Grid always starts scrolled to the left (not centered) */
+.interactive-grid-scroll-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 2px solid #dee2e6;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.color-picker h4 {
-  margin: 0 0 10px 0;
-  color: #333;
-}
-
-.color-options {
+  background-color: white;
+  padding: 10px;
+  box-sizing: border-box;
   display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
+  justify-content: flex-start; /* CHANGED FROM center to flex-start */
+  align-items: flex-start;
 }
 
-.color-option {
-  width: 40px;
-  height: 40px;
-  border: 3px solid transparent;
+/* NEW: Zoom info display */
+.zoom-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background-color: #e8f4f8;
   border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0074D9;
+}
+
+.zoom-reset-btn {
+  padding: 6px 14px;
+  background-color: #0074D9;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.color-option:hover {
-  transform: scale(1.1);
-  border-color: #666;
+.zoom-reset-btn:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
 }
 
-.color-option.selected {
-  border-color: #0074D9;
-  border-width: 4px;
-  box-shadow: 0 0 10px rgba(0, 116, 217, 0.5);
+.zoom-reset-btn:active {
+  transform: translateY(0);
 }
 
-.selected-color-label {
-  margin: 10px 0 0 0;
-  font-size: 14px;
-  color: #666;
-  font-weight: 500;
+/* NEW: Zoom hint text */
+.zoom-hint {
+  margin: 5px 0 0 0;
+  font-size: 12px;
+  color: #6c757d;
+  font-style: italic;
 }
 
-/* Interactive Grid */
+/* Hide zoom hint on desktop */
+@media (min-width: 769px) {
+  .zoom-hint {
+    display: none;
+  }
+}
+
+/* Ensure grid scales properly when zoomed */
 .interactive-grid {
   display: inline-block;
   border: 2px solid #333;
   background-color: white;
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  box-sizing: border-box;
+  /* Remove any max-width constraints that might interfere with zoom */
 }
 
-.interactive-row {
-  display: flex;
-}
-
-.interactive-cell {
-  width: 35px;
-  height: 35px;
-  border: 1px solid #999;
-  flex-shrink: 0;
-  transition: opacity 0.1s;
-}
-
-.interactive-cell:hover {
-  opacity: 0.8;
-  border-color: #333;
-  border-width: 2px;
-}
-
-.interactive-cell:active {
-  opacity: 0.6;
-}
-
-/* Tools */
-.grid-tools {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-
-.tool-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  background-color: #6c757d;
-  color: white;
-}
-
-.tool-btn:hover {
-  background-color: #5a6268;
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
-.tool-btn:active {
-  transform: translateY(0);
-}
-
-.reset-btn {
-  background-color: #dc3545;
-}
-
-.reset-btn:hover {
-  background-color: #c82333;
-}
-
-.resize-btn {
-  background-color: #17a2b8;
-}
-
-.resize-btn:hover {
-  background-color: #138496;
-}
-
-.grid-info {
-  text-align: center;
-  margin-top: 10px;
-}
-
-.grid-info p {
-  margin: 0;
-  color: #666;
-  font-size: 14px;
-  font-weight: 500;
-}
-
+/* Mobile: Better zoom control hints */
 @media (max-width: 768px) {
-  .interactive-cell {
-    width: 30px;
-    height: 30px;
+  .zoom-info {
+    font-size: 13px;
+    padding: 6px 12px;
   }
   
-  .color-option {
-    width: 35px;
-    height: 35px;
-  }
-}
-
-
-/* Mode Selector */
-.mode-selector {
-  text-align: center;
-  padding: 15px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-bottom: 15px;
-}
-
-.mode-selector h4 {
-  margin: 0 0 10px 0;
-  color: #333;
-}
-
-.mode-buttons {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-bottom: 10px;
-}
-
-.mode-btn {
-  padding: 10px 20px;
-  border: 2px solid #dee2e6;
-  border-radius: 6px;
-  background-color: white;
-  color: #495057;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.mode-btn:hover {
-  background-color: #f8f9fa;
-  border-color: #adb5bd;
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-.mode-btn.active {
-  background-color: #0074D9;
-  color: white;
-  border-color: #0074D9;
-  box-shadow: 0 4px 12px rgba(0, 116, 217, 0.3);
-}
-
-.mode-btn.active:hover {
-  background-color: #0056b3;
-  border-color: #0056b3;
-}
-
-.mode-description {
-  margin: 8px 0 0 0;
-  font-size: 13px;
-  color: #6c757d;
-  font-weight: 500;
-  min-height: 20px;
-}
-
-/* Selection Overlay */
-.interactive-cell.selected {
-  box-shadow: inset 0 0 0 3px rgba(0, 116, 217, 0.6);
-  position: relative;
-  z-index: 10;
-}
-
-.interactive-cell.selected::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 116, 217, 0.2);
-  pointer-events: none;
-}
-
-/* Cursor styles for different modes */
-.interactive-grid[data-mode="edit"] .interactive-cell {
-  cursor: pointer;
-}
-
-.interactive-grid[data-mode="select"] .interactive-cell {
-  cursor: crosshair;
-}
-
-.interactive-grid[data-mode="fill"] .interactive-cell {
-  cursor: copy;
-}
-
-/* Prevent text selection during drag */
-.interactive-grid {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-/* Mobile responsive */
-@media (max-width: 768px) {
-  .mode-buttons {
-    flex-direction: column;
-    width: 100%;
+  .zoom-reset-btn {
+    font-size: 11px;
+    padding: 5px 12px;
   }
   
-  .mode-btn {
-    width: 100%;
-    justify-content: center;
+  .zoom-hint {
+    font-size: 11px;
   }
-}
-
-
-
-.color-option-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.color-name {
-  font-size: 11px;
-  color: #666;
-  font-weight: 500;
-  text-align: center;
-  min-width: 50px;
-}
-
-.selected-color-label {
-  margin: 10px 0 0 0;
-  font-size: 14px;
-  color: #333;
-  font-weight: 600;
-  text-align: center;
 }

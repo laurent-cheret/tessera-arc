@@ -9,7 +9,13 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
   const [selectionStart, setSelectionStart] = useState(null);
   const [selectionEnd, setSelectionEnd] = useState(null);
   
+  // NEW: Pinch-to-zoom state
+  const [scale, setScale] = useState(1);
+  const [isPinching, setIsPinching] = useState(false);
+  
   const gridRef = useRef(null);
+  const scrollWrapperRef = useRef(null);
+  const lastTouchDistance = useRef(null);
 
   // Official ARC color palette
   const colors = {
@@ -46,6 +52,54 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
     }
   }, [currentGrid]);
 
+  // NEW: Reset scroll position to top-left when grid changes
+  useEffect(() => {
+    if (scrollWrapperRef.current) {
+      scrollWrapperRef.current.scrollLeft = 0;
+      scrollWrapperRef.current.scrollTop = 0;
+    }
+  }, [grid]);
+
+  // NEW: Calculate distance between two touch points (for pinch-to-zoom)
+  const getTouchDistance = (touches) => {
+    if (touches.length < 2) return 0;
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  // NEW: Handle pinch-to-zoom start
+  const handleTouchStartZoom = (event) => {
+    if (event.touches.length === 2) {
+      setIsPinching(true);
+      lastTouchDistance.current = getTouchDistance(event.touches);
+    }
+  };
+
+  // NEW: Handle pinch-to-zoom move
+  const handleTouchMoveZoom = (event) => {
+    if (event.touches.length === 2 && isPinching) {
+      event.preventDefault();
+      
+      const currentDistance = getTouchDistance(event.touches);
+      const previousDistance = lastTouchDistance.current;
+      
+      if (previousDistance > 0) {
+        const scaleChange = currentDistance / previousDistance;
+        const newScale = Math.min(Math.max(scale * scaleChange, 0.5), 3);
+        setScale(newScale);
+      }
+      
+      lastTouchDistance.current = currentDistance;
+    }
+  };
+
+  // NEW: Handle pinch-to-zoom end
+  const handleTouchEndZoom = () => {
+    setIsPinching(false);
+    lastTouchDistance.current = null;
+  };
+
   const updateGrid = (newGrid) => {
     setGrid(newGrid);
     if (onGridChange) {
@@ -76,12 +130,37 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
     return true;
   };
 
+  // Helper to get cell coordinates from touch/mouse position
+  const getCellFromPosition = (clientX, clientY) => {
+    if (!gridRef.current) return null;
+    
+    const gridElement = gridRef.current;
+    const cells = gridElement.querySelectorAll('.interactive-cell');
+    
+    for (let i = 0; i < cells.length; i++) {
+      const cell = cells[i];
+      const rect = cell.getBoundingClientRect();
+      
+      if (
+        clientX >= rect.left &&
+        clientX <= rect.right &&
+        clientY >= rect.top &&
+        clientY <= rect.bottom
+      ) {
+        const rowIndex = Math.floor(i / grid[0].length);
+        const colIndex = i % grid[0].length;
+        return { row: rowIndex, col: colIndex };
+      }
+    }
+    
+    return null;
+  };
+
   // EDIT MODE: Click individual cells
   const handleCellClick = (rowIndex, colIndex) => {
     if (mode === 'edit') {
       const oldValue = grid[rowIndex][colIndex];
       
-      // Only proceed if the cell value is actually changing
       if (oldValue === selectedColor) {
         console.log('Skipped redundant cell click: cell already has this color');
         return;
@@ -106,30 +185,69 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
         });
       }
     } else if (mode === 'fill') {
-      // FILL MODE: Fill entire grid with selected color
       handleFillAll();
     }
   };
 
-  // SELECT MODE: Mouse down to start selection
-  const handleMouseDown = (rowIndex, colIndex) => {
+  // UNIFIED POINTER DOWN: Handle both mouse and touch events
+  const handlePointerDown = (rowIndex, colIndex, event) => {
     if (mode === 'select') {
+      if (event.type === 'touchstart') {
+        event.preventDefault();
+      }
+      
       setIsSelecting(true);
       setSelectionStart({ row: rowIndex, col: colIndex });
       setSelectionEnd({ row: rowIndex, col: colIndex });
     }
   };
 
-  // SELECT MODE: Mouse move to update selection
-  const handleMouseMove = (rowIndex, colIndex) => {
+  // UNIFIED POINTER MOVE: Handle both mouse and touch events
+  const handlePointerMove = (rowIndex, colIndex, event) => {
     if (mode === 'select' && isSelecting) {
-      setSelectionEnd({ row: rowIndex, col: colIndex });
+      if (event.type === 'touchmove') {
+        event.preventDefault();
+        
+        const touch = event.touches[0];
+        const cellCoords = getCellFromPosition(touch.clientX, touch.clientY);
+        
+        if (cellCoords) {
+          setSelectionEnd({ row: cellCoords.row, col: cellCoords.col });
+        }
+      } else {
+        setSelectionEnd({ row: rowIndex, col: colIndex });
+      }
     }
   };
 
-  // SELECT MODE: Mouse up to apply selection
-  const handleMouseUp = () => {
+  // Handle touch move on the grid container
+  const handleGridTouchMove = (event) => {
+    // Handle pinch-to-zoom if two fingers
+    if (event.touches.length === 2) {
+      handleTouchMoveZoom(event);
+      return;
+    }
+    
+    // Handle selection if in select mode
+    if (mode === 'select' && isSelecting) {
+      event.preventDefault();
+      
+      const touch = event.touches[0];
+      const cellCoords = getCellFromPosition(touch.clientX, touch.clientY);
+      
+      if (cellCoords) {
+        setSelectionEnd({ row: cellCoords.row, col: cellCoords.col });
+      }
+    }
+  };
+
+  // UNIFIED POINTER UP: Handle both mouse and touch events
+  const handlePointerUp = (event) => {
     if (mode === 'select' && isSelecting && selectionStart && selectionEnd) {
+      if (event && (event.type === 'touchend' || event.type === 'touchcancel')) {
+        event.preventDefault();
+      }
+      
       applySelection();
       setIsSelecting(false);
       setSelectionStart(null);
@@ -173,7 +291,6 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
 
   // FILL MODE: Fill entire grid
   const handleFillAll = () => {
-    // Check if grid already all has this color
     const allSameColor = grid.every(row => row.every(cell => cell === selectedColor));
     if (allSameColor) {
       console.log('Skipped redundant fill: grid already has this color');
@@ -287,6 +404,11 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
     resizeGrid(rows, cols);
   };
 
+  // NEW: Reset zoom
+  const resetZoom = () => {
+    setScale(1);
+  };
+
   return (
     <div className="interactive-grid-container">
       <div className="interactive-grid-wrapper">
@@ -323,55 +445,83 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
               onClick={() => setMode('edit')}
               title="Click individual cells to change color"
             >
-              ✏️ Edit
+              💧 Edit
             </button>
             <button 
               className={`mode-btn ${mode === 'select' ? 'active' : ''}`}
               onClick={() => setMode('select')}
               title="Click and drag to select a region, then apply color"
             >
-              ⬚ Select
+              🖌️ Select
             </button>
             <button 
               className={`mode-btn ${mode === 'fill' ? 'active' : ''}`}
               onClick={() => setMode('fill')}
               title="Click anywhere to fill entire grid with selected color"
             >
-              🪣 Fill
+              🌊 Fill
             </button>
           </div>
           <p className="mode-description">
-            {mode === 'edit' && '✏️ Click cells to paint them'}
-            {mode === 'select' && '⬚ Drag to select a region, then paint'}
-            {mode === 'fill' && '🪣 Click anywhere to fill entire grid'}
+            {mode === 'edit' && '💧 Click cells to paint them'}
+            {mode === 'select' && '🖌️ Drag to select a region, then paint'}
+            {mode === 'fill' && '🌊 Click anywhere to fill entire grid'}
           </p>
         </div>
 
+        {/* NEW: Zoom controls for mobile */}
+        {scale !== 1 && (
+          <div className="zoom-info">
+            <span>Zoom: {Math.round(scale * 100)}%</span>
+            <button className="zoom-reset-btn" onClick={resetZoom}>
+              Reset Zoom
+            </button>
+          </div>
+        )}
+
         {/* The Grid */}
         <div 
-          className="interactive-grid"
-          ref={gridRef}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+          className="interactive-grid-scroll-wrapper"
+          ref={scrollWrapperRef}
+          data-select-mode={mode === 'select'}
+          onTouchStart={handleTouchStartZoom}
+          onTouchEnd={handleTouchEndZoom}
         >
-          {grid.map((row, rowIndex) => (
-            <div key={rowIndex} className="interactive-row">
-              {row.map((cell, colIndex) => (
-                <div
-                  key={`${rowIndex}-${colIndex}`}
-                  className={`interactive-cell ${isCellSelected(rowIndex, colIndex) ? 'selected' : ''}`}
-                  style={{
-                    backgroundColor: colors[cell],
-                    cursor: mode === 'edit' ? 'pointer' : mode === 'select' ? 'crosshair' : 'copy'
-                  }}
-                  onClick={() => handleCellClick(rowIndex, colIndex)}
-                  onMouseDown={() => handleMouseDown(rowIndex, colIndex)}
-                  onMouseMove={() => handleMouseMove(rowIndex, colIndex)}
-                  title={`Cell (${rowIndex}, ${colIndex}): ${cell}`}
-                />
-              ))}
-            </div>
-          ))}
+          <div 
+            className="interactive-grid"
+            ref={gridRef}
+            data-mode={mode}
+            style={{
+              transform: `scale(${scale})`,
+              transformOrigin: 'top left',
+              transition: isPinching ? 'none' : 'transform 0.1s ease-out'
+            }}
+            onMouseUp={(e) => handlePointerUp(e)}
+            onMouseLeave={(e) => handlePointerUp(e)}
+            onTouchEnd={(e) => handlePointerUp(e)}
+            onTouchCancel={(e) => handlePointerUp(e)}
+            onTouchMove={(e) => handleGridTouchMove(e)}
+          >
+            {grid.map((row, rowIndex) => (
+              <div key={rowIndex} className="interactive-row">
+                {row.map((cell, colIndex) => (
+                  <div
+                    key={`${rowIndex}-${colIndex}`}
+                    className={`interactive-cell ${isCellSelected(rowIndex, colIndex) ? 'selected' : ''}`}
+                    style={{
+                      backgroundColor: colors[cell],
+                      cursor: mode === 'edit' ? 'pointer' : mode === 'select' ? 'crosshair' : 'copy'
+                    }}
+                    onClick={() => handleCellClick(rowIndex, colIndex)}
+                    onMouseDown={(e) => handlePointerDown(rowIndex, colIndex, e)}
+                    onMouseMove={(e) => handlePointerMove(rowIndex, colIndex, e)}
+                    onTouchStart={(e) => handlePointerDown(rowIndex, colIndex, e)}
+                    title={`Cell (${rowIndex}, ${colIndex}): ${cell}`}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Tools */}
@@ -389,6 +539,7 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
         
         <div className="grid-info">
           <p>Grid size: {grid.length} × {grid[0]?.length || 0}</p>
+          <p className="zoom-hint">💡 Pinch to zoom on mobile</p>
         </div>
       </div>
     </div>

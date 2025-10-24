@@ -78,8 +78,8 @@ const Phase1QuestionsHierarchical = ({ onComplete, initialData }) => {
     ],
     structure_connections: [
       { value: 'containment', label: 'Containment or enclosure' },
-      { value: 'touching_connected', label: 'In contact or connected' },
-      { value: 'paths_lines', label: 'Paths' },
+      { value: 'touching_connected', label: 'Contact or connections' },
+      { value: 'paths_lines', label: 'Paths or lines' },
       { value: 'holes_gaps', label: 'Holes or gaps' },
       { value: 'grid_structure', label: 'Grid divided in distinct areas' },
       { value: 'structure_other', label: 'Something else about structure', needsText: true }
