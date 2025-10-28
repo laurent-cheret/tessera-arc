@@ -46,8 +46,8 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
     }
     
     const wordCount = testCaseDescription.trim().split(/\s+/).filter(w => w.length > 0).length;
-    if (wordCount < 10) {
-      newErrors.testCaseDescription = 'Please write at least 10 words (2-3 sentences).';
+    if (wordCount < 5) {
+      newErrors.testCaseDescription = 'Please write at least 15 words (2-3 sentences).';
     }
     if (wordCount > 150) {
       newErrors.testCaseDescription = 'Please keep your description under 150 words.';
@@ -159,7 +159,7 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
           
           <div className="word-counter">
             {testCaseDescription.trim().split(/\s+/).filter(w => w.length > 0).length} / 150 words
-            (minimum 10 words)
+            (minimum 15 words)
           </div>
         </div>
 
