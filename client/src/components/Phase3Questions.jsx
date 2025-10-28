@@ -4,13 +4,11 @@ import './Phase3Questions.css';
 import ColorAutocompleteTextarea from './ColorAutocompleteTextarea';
 
 const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isCorrect }) => {
-  const [whatYouTried, setWhatYouTried] = useState(initialData?.whatYouTried || '');
   const [hypothesisRevised, setHypothesisRevised] = useState(initialData?.hypothesisRevised || null);
   const [revisionReason, setRevisionReason] = useState(initialData?.revisionReason || '');
-  const [strategy, setStrategy] = useState(initialData?.strategy || ''); // REMOVED: Q5 strategy not needed
+  const [testCaseDescription, setTestCaseDescription] = useState(initialData?.testCaseDescription || '');
+  const [strategy, setStrategy] = useState(initialData?.strategy || '');
   const [errors, setErrors] = useState({});
-
-  // REMOVED: Q5 strategy options array - not adding sufficient value to dataset
   
   const strategies = [
     {
@@ -34,27 +32,11 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
       when: 'The rule wasn\'t clear so you used the interactive grid to experiment, and learned from seeing what worked and what didn\'t.',
       example: 'You tried rotating the pattern, saw it was wrong, then tried reflecting it instead, gradually refining your approach.'
     }
-    // {
-    //   value: 'reverse_engineering',
-    //   emoji: '⏪',
-    //   label: 'Reverse Engineering',
-    //   when: 'You started by analyzing what the output needs to be, then determined which transformations would create that result.',
-    //   example: 'You thought "The output needs to be symmetric, so I need to mirror this half onto the other side"—starting with the end goal in mind.'
-    // }
   ];
   
-
   const validate = () => {
     const newErrors = {};
     
-    const wordCount = whatYouTried.trim().split(/\s+/).filter(w => w.length > 0).length;
-    if (wordCount < 15) {
-      newErrors.whatYouTried = 'Please write at least 15 words describing what you tried.';
-    }
-    if (wordCount > 500) {
-      newErrors.whatYouTried = 'Please keep your description under 500 words.';
-    }
-
     if (hypothesisRevised === null) {
       newErrors.hypothesisRevised = 'Please indicate whether you changed your approach.';
     }
@@ -63,10 +45,17 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
       newErrors.revisionReason = 'Please explain what made you change your approach.';
     }
     
+    const wordCount = testCaseDescription.trim().split(/\s+/).filter(w => w.length > 0).length;
+    if (wordCount < 10) {
+      newErrors.testCaseDescription = 'Please write at least 10 words (2-3 sentences).';
+    }
+    if (wordCount > 150) {
+      newErrors.testCaseDescription = 'Please keep your description under 150 words.';
+    }
+    
     if (!strategy) {
       newErrors.strategy = 'Please select the strategy that best describes your approach.';
     }
-    
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -75,10 +64,10 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
   const handleSubmit = () => {
     if (validate()) {
       const data = {
-        q3_what_you_tried: whatYouTried.trim(),
-        q3_word_count: whatYouTried.trim().split(/\s+/).filter(w => w.length > 0).length,
         q9_hypothesis_revised: hypothesisRevised,
         q9_revision_reason: hypothesisRevised ? revisionReason.trim() : null,
+        q3_what_you_tried: testCaseDescription.trim(), // KEPT ORIGINAL DATABASE KEY
+        q3_word_count: testCaseDescription.trim().split(/\s+/).filter(w => w.length > 0).length,
         q5_strategy_used: strategy, 
         phase3_timestamp: new Date().toISOString()
       };
@@ -104,35 +93,7 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
           Whether you solved it correctly or not, we want to hear about your approach!
         </p>
 
-        {/* Q3: What You Tried */}
-        <div className="question-block">
-          <h3>What did you try to solve this puzzle?</h3>
-          <p className="question-hint">
-            Try to include:
-          </p>
-          <ul className="hint-list">
-            <li><strong>What</strong> you focused on (objects, colors, positions, patterns)</li>
-            <li><strong>How</strong> you attempted to transform the input (what operations or changes you tried)</li>
-            <li><strong>When/Why</strong> certain approaches seemed right or wrong</li>
-          </ul>
-          
-          {errors.whatYouTried && <div className="error-message">{errors.whatYouTried}</div>}
-          
-          <ColorAutocompleteTextarea
-          value={whatYouTried}
-          onChange={(e) => setWhatYouTried(e.target.value)}
-          placeholder="Example: 'I tried moving all the red objects to the right side of the grid. When that didn't look right, I attempted to rotate them 90 degrees instead. I noticed the pattern seemed to involve mirroring across the center line...'"
-          rows={6}
-          className="response-textarea"
-        />
-          
-          <div className="word-counter">
-            {whatYouTried.trim().split(/\s+/).filter(w => w.length > 0).length} / 500 words
-            (minimum 15 words)
-          </div>
-        </div>
-
-        {/* Q9: Strategy Revision (moved here from Phase 4) */}
+        {/* Q9: Strategy Revision (NOW FIRST) */}
         <div className="question-block">
           <h3>Did you change your mind about the pattern while solving?</h3>
           
@@ -176,7 +137,33 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
           )}
         </div>
 
-        
+        {/* Q3: Test Case Description (NEW REFORMULATED VERSION) */}
+        <div className="question-block">
+        <h3>Describe the <strong>TEST</strong> puzzle you just solved</h3>
+
+        <ul className="hint-list">
+          <li><strong>What</strong> is in your test (colors, objects, sizes, positions)</li>
+          <li><strong>How</strong> does it compare to the training examples (same rule? different features?)</li>
+          <li><strong>What</strong> makes this test case unique or challenging</li>
+        </ul>
+          
+          {errors.testCaseDescription && <div className="error-message">{errors.testCaseDescription}</div>}
+          
+          <ColorAutocompleteTextarea
+            value={testCaseDescription}
+            onChange={(e) => setTestCaseDescription(e.target.value)}
+            placeholder="Example: 'My test has 7 blue shapes instead of the 3 red ones in examples. Same rotation rule, but I'm applying it to more objects in different positions.'"
+            rows={4}
+            className="response-textarea"
+          />
+          
+          <div className="word-counter">
+            {testCaseDescription.trim().split(/\s+/).filter(w => w.length > 0).length} / 150 words
+            (minimum 10 words)
+          </div>
+        </div>
+
+        {/* Q5: Strategy Selection */}
         <div className="question-block">
           <h3>Which strategy best describes how you solved this puzzle?</h3>
           <p className="question-hint">Select the ONE that fits best:</p>
@@ -204,7 +191,6 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
             ))}
           </div>
         </div>
-        
 
         <div className="continue-section">
           <button 
