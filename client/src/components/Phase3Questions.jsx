@@ -129,7 +129,7 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
               <ColorAutocompleteTextarea
                 value={revisionReason}
                 onChange={(e) => setRevisionReason(e.target.value)}
-                placeholder="Example: 'At first I thought shapes were just rotating, but example 3 showed some shapes staying still. I realized only shapes touching the border rotate.'"
+                placeholder="Example: 'At first I thought shapes were just rotating, but one of the examples showed some shapes staying still. I realized only shapes touching the border rotate.'"
                 rows={3}
                 className="response-textarea small"
               />
@@ -139,12 +139,14 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
 
         {/* Q3: Test Case Description (NEW REFORMULATED VERSION) */}
         <div className="question-block">
-        <h3>Describe the <strong>TEST</strong> puzzle you just solved</h3>
-
+        <h3>What did you try to solve this test?</h3>
+        <p className="question-hint">
+          Even if the pattern was the same as the examples, your test might have had different challenges. Tell us what you noticed:
+        </p>
         <ul className="hint-list">
-          <li><strong>What</strong> is in your test (colors, objects, sizes, positions)</li>
-          <li><strong>How</strong> does it compare to the training examples (same rule? different features?)</li>
-          <li><strong>What</strong> makes this test case unique or challenging</li>
+          <li><strong>What</strong> you saw in your test (objects, colors, sizes, positions)</li>
+          <li><strong>How</strong> your test was similar or different from the examples</li>
+          <li><strong>How</strong> you applied the pattern to your specific test</li>
         </ul>
           
           {errors.testCaseDescription && <div className="error-message">{errors.testCaseDescription}</div>}
@@ -152,7 +154,7 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
           <ColorAutocompleteTextarea
             value={testCaseDescription}
             onChange={(e) => setTestCaseDescription(e.target.value)}
-            placeholder="Example: 'My test has 7 blue shapes instead of the 3 red ones in examples. Same rotation rule, but I'm applying it to more objects in different positions.'"
+            placeholder="Example: 'My test had 7 blue shapes instead of the 3 red ones in the examples. Only the top-left and bottom-right shapes touched the border, so only those two rotated 90 degrees.'"
             rows={4}
             className="response-textarea"
           />
