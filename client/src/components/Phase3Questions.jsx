@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import SolutionSummary from './SolutionSummary';
 import './Phase3Questions.css';
 import ColorAutocompleteTextarea from './ColorAutocompleteTextarea';
 
@@ -17,6 +16,12 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
   
   const [errors, setErrors] = useState({});
   
+  // Official ARC color palette
+  const colors = {
+    0: '#000000', 1: '#0074D9', 2: '#FF4136', 3: '#2ECC40', 4: '#FFDC00',
+    5: '#AAAAAA', 6: '#F012BE', 7: '#FF851B', 8: '#7FDBFF', 9: '#870C25'
+  };
+  
   const getWordCount = (text) => {
     return text.trim().split(/\s+/).filter(w => w.length > 0).length;
   };
@@ -26,7 +31,6 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
     if (wordCount <= maxWords) {
       return text;
     } else if (text.length < currentText.length) {
-      // Allow deletion
       return text;
     }
     return currentText;
@@ -35,7 +39,6 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
   const validate = () => {
     const newErrors = {};
     
-    // Q9: Hypothesis revision
     if (hypothesisRevised === null) {
       newErrors.hypothesisRevised = 'Please indicate whether you changed your approach.';
     }
@@ -45,32 +48,30 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
     }
     
     if (isCorrect) {
-      // Validate teaching questions (10-50 words each)
       const lookForWordCount = getWordCount(whatToLookFor);
       if (lookForWordCount < 10) {
         newErrors.whatToLookFor = 'Please write at least 10 words.';
       }
-      if (lookForWordCount > 50) {
-        newErrors.whatToLookFor = 'Please keep your answer under 50 words.';
+      if (lookForWordCount > 40) {
+        newErrors.whatToLookFor = 'Please keep your answer under 40 words.';
       }
       
       const transformWordCount = getWordCount(howToTransform);
       if (transformWordCount < 10) {
         newErrors.howToTransform = 'Please write at least 10 words.';
       }
-      if (transformWordCount > 50) {
-        newErrors.howToTransform = 'Please keep your answer under 50 words.';
+      if (transformWordCount > 40) {
+        newErrors.howToTransform = 'Please keep your answer under 40 words.';
       }
       
       const verifyWordCount = getWordCount(howToVerify);
       if (verifyWordCount < 10) {
         newErrors.howToVerify = 'Please write at least 10 words.';
       }
-      if (verifyWordCount > 50) {
-        newErrors.howToVerify = 'Please keep your answer under 50 words.';
+      if (verifyWordCount > 40) {
+        newErrors.howToVerify = 'Please keep your answer under 40 words.';
       }
     } else {
-      // Validate single attempt question (10-60 words)
       const attemptWordCount = getWordCount(whatYouTried);
       if (attemptWordCount < 10) {
         newErrors.whatYouTried = 'Please write at least 10 words.';
@@ -119,183 +120,223 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
     return <div className={className}>{text}</div>;
   };
 
+  // Render mini grid inline
+  const renderMiniGrid = (grid, title) => {
+    const maxDim = Math.max(grid.length, grid[0]?.length || 0);
+    const cellSize = Math.min(20, Math.floor(180 / maxDim));
+
+    return (
+      <div className="inline-grid-container">
+        <div className="inline-grid-title">{title}</div>
+        <div className="inline-grid">
+          {grid.map((row, rowIndex) => (
+            <div key={rowIndex} className="inline-row">
+              {row.map((cell, colIndex) => (
+                <div
+                  key={`${rowIndex}-${colIndex}`}
+                  className="inline-cell"
+                  style={{
+                    backgroundColor: colors[cell],
+                    width: `${cellSize}px`,
+                    height: `${cellSize}px`,
+                    border: '1px solid rgba(255,255,255,0.3)'
+                  }}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="phase3-container">
-      {/* Side panel with solution summary */}
-      <div className="phase3-sidebar">
-        <SolutionSummary 
-          testInput={testInput}
-          userSolution={userSolution}
-          isCorrect={isCorrect}
-        />
+    <div className="phase3-questions">
+      <h2>{isCorrect ? '👨‍🏫 Teaching Someone to Solve This' : '🤔 About Your Attempt'}</h2>
+      <p className="phase-intro">
+        {isCorrect 
+          ? "Great job! Now help others learn from your success."
+          : "Let's understand your reasoning. Even incorrect attempts help us learn about human problem-solving."
+        }
+      </p>
+
+      {/* Q9: Strategy Revision (ALWAYS SHOWN) */}
+      <div className="question-block">
+        <h3>Did you change your mind about the pattern while solving?</h3>
+        
+        {errors.hypothesisRevised && <div className="error-message">{errors.hypothesisRevised}</div>}
+        
+        <div className="revision-options">
+          <div
+            className={`revision-option ${hypothesisRevised === false ? 'selected' : ''}`}
+            onClick={() => {
+              setHypothesisRevised(false);
+              setRevisionReason('');
+            }}
+          >
+            <div className="revision-icon">✓</div>
+            <div className="revision-label">No, I stuck with my original idea</div>
+          </div>
+
+          <div
+            className={`revision-option ${hypothesisRevised === true ? 'selected' : ''}`}
+            onClick={() => setHypothesisRevised(true)}
+          >
+            <div className="revision-icon">🔄</div>
+            <div className="revision-label">Yes, I changed my approach</div>
+          </div>
+        </div>
+
+        {hypothesisRevised && (
+          <div className="revision-reason-section">
+            <p className="question-hint">What made you change your approach?</p>
+            
+            {errors.revisionReason && <div className="error-message">{errors.revisionReason}</div>}
+            
+            <ColorAutocompleteTextarea
+              value={revisionReason}
+              onChange={(e) => setRevisionReason(e.target.value)}
+              placeholder="Example: 'At first I thought shapes were just rotating, but one of the examples showed some shapes staying still. I realized only shapes touching the border rotate.'"
+              rows={3}
+              className="response-textarea small"
+            />
+          </div>
+        )}
       </div>
 
-      {/* Main questions area */}
-      <div className="phase3-questions">
-        <h2>{isCorrect ? '👨‍🏫 Teaching Someone to Solve This' : '🤔 About Your Attempt'}</h2>
-        <p className="phase-intro">
-          {isCorrect 
-            ? "Great job! Now imagine teaching a friend who can only see the test input (not the examples). How would you guide them?"
-            : "Let's understand your reasoning. Even incorrect attempts help us learn about human problem-solving."
-          }
-        </p>
-
-        {/* Q9: Strategy Revision (ALWAYS SHOWN) */}
-        <div className="question-block">
-          <h3>Did you change your mind about the pattern while solving?</h3>
-          
-          {errors.hypothesisRevised && <div className="error-message">{errors.hypothesisRevised}</div>}
-          
-          <div className="revision-options">
-            <div
-              className={`revision-option ${hypothesisRevised === false ? 'selected' : ''}`}
-              onClick={() => {
-                setHypothesisRevised(false);
-                setRevisionReason('');
-              }}
-            >
-              <div className="revision-icon">✓</div>
-              <div className="revision-label">No, I stuck with my original idea</div>
+      {/* CONDITIONAL: Teaching questions (if correct) OR Single attempt question (if incorrect) */}
+      {isCorrect ? (
+        <>
+          {/* Teaching Context Box with Integrated Grids */}
+          <div className="teaching-context-box">
+            <div className="context-header">
+              <span className="context-emoji">👥</span>
+              <h3>Imagine Teaching a Friend</h3>
+            </div>
+            
+            <div className="context-explanation">
+              <p>
+                Your friend <strong>can ONLY see this specific test input</strong> below. 
+                They don't have access to the training examples you studied.
+              </p>
+              <p className="context-hint">
+                Guide them step-by-step to create <strong>this exact output</strong> from <strong>this specific input</strong>:
+              </p>
             </div>
 
-            <div
-              className={`revision-option ${hypothesisRevised === true ? 'selected' : ''}`}
-              onClick={() => setHypothesisRevised(true)}
-            >
-              <div className="revision-icon">🔄</div>
-              <div className="revision-label">Yes, I changed my approach</div>
+            {/* Embedded grids showing what the friend sees */}
+            <div className="context-grids">
+              {renderMiniGrid(testInput, "What your friend sees")}
+              <div className="context-arrow">→</div>
+              {renderMiniGrid(userSolution, "What they need to create")}
+            </div>
+
+            <div className="context-footer">
+              <span className="context-icon">💡</span>
+              <p>Your instructions should work specifically for <strong>these grids</strong>, not just the general pattern.</p>
             </div>
           </div>
 
-          {hypothesisRevised && (
-            <div className="revision-reason-section">
-              <p className="question-hint">What made you change your approach?</p>
-              
-              {errors.revisionReason && <div className="error-message">{errors.revisionReason}</div>}
-              
-              <ColorAutocompleteTextarea
-                value={revisionReason}
-                onChange={(e) => setRevisionReason(e.target.value)}
-                placeholder="Example: 'At first I thought shapes were just rotating, but one of the examples showed some shapes staying still. I realized only shapes touching the border rotate.'"
-                rows={3}
-                className="response-textarea small"
-              />
+          {/* Q3a: What to Look For */}
+          <div className="question-block teaching-question">
+            <div className="step-header">
+              <span className="step-number">1</span>
+              <h3>👀 What should they look for first?</h3>
             </div>
-          )}
-        </div>
+            <p className="question-hint">
+              What features should they notice in <strong>this specific test input</strong>? (objects, colors, positions, relationships)
+            </p>
+            
+            {errors.whatToLookFor && <div className="error-message">{errors.whatToLookFor}</div>}
+            
+            <ColorAutocompleteTextarea
+              value={whatToLookFor}
+              onChange={(e) => setWhatToLookFor(enforceWordLimit(e.target.value, whatToLookFor, 40))}
+              placeholder="Example: 'Look for the three blue rectangles in the top-left corner. Notice how they form an L-shape.'"
+              rows={3}
+              className="response-textarea small"
+            />
+            
+            {renderWordCounter(getWordCount(whatToLookFor), 40, 10)}
+          </div>
 
-        {/* CONDITIONAL: Teaching questions (if correct) OR Single attempt question (if incorrect) */}
-        {isCorrect ? (
-          <>
-            <div className="teaching-intro">
-              <p>
-                <span className="emoji">👥</span> 
-                <strong>Imagine your friend can ONLY see this test input</strong> (they don't have access to the training examples). 
-                Guide them through solving it in 3 simple steps:
-              </p>
+          {/* Q3b: How to Transform */}
+          <div className="question-block teaching-question">
+            <div className="step-header">
+              <span className="step-number">2</span>
+              <h3>🔧 What steps should they follow?</h3>
             </div>
+            <p className="question-hint">
+              Describe the specific transformation needed for <strong>this test case</strong>.
+            </p>
+            
+            {errors.howToTransform && <div className="error-message">{errors.howToTransform}</div>}
+            
+            <ColorAutocompleteTextarea
+              value={howToTransform}
+              onChange={(e) => setHowToTransform(enforceWordLimit(e.target.value, howToTransform, 40))}
+              placeholder="Example: 'Take each blue rectangle and rotate it 90 degrees clockwise. Then move them to the bottom-right corner.'"
+              rows={3}
+              className="response-textarea small"
+            />
+            
+            {renderWordCounter(getWordCount(howToTransform), 40, 10)}
+          </div>
 
-            {/* Q3a: What to Look For */}
-            <div className="question-block teaching-question">
-              <div className="step-header">
-                <span className="step-number">1</span>
-                <h3>👀 What should they look for first?</h3>
-              </div>
-              <p className="question-hint">
-                What features or patterns should they notice? (objects, colors, positions, relationships)
-              </p>
-              
-              {errors.whatToLookFor && <div className="error-message">{errors.whatToLookFor}</div>}
-              
-              <ColorAutocompleteTextarea
-                value={whatToLookFor}
-                onChange={(e) => setWhatToLookFor(enforceWordLimit(e.target.value, whatToLookFor, 50))}
-                placeholder="Example: 'Look for any blue shapes that are touching the grid border. Those are the ones that will rotate.'"
-                rows={3}
-                className="response-textarea small"
-              />
-              
-              {renderWordCounter(getWordCount(whatToLookFor), 50, 10)}
+          {/* Q3c: How to Verify */}
+          <div className="question-block teaching-question">
+            <div className="step-header">
+              <span className="step-number">3</span>
+              <h3>✅ How can they check if it's correct?</h3>
             </div>
+            <p className="question-hint">
+              What should <strong>the final output</strong> look like? What checks should they perform?
+            </p>
+            
+            {errors.howToVerify && <div className="error-message">{errors.howToVerify}</div>}
+            
+            <ColorAutocompleteTextarea
+              value={howToVerify}
+              onChange={(e) => setHowToVerify(enforceWordLimit(e.target.value, howToVerify, 40))}
+              placeholder="Example: 'You should end up with three blue rectangles forming an L-shape in the bottom-right. The grid should be the same size as the input.'"
+              rows={3}
+              className="response-textarea small"
+            />
+            
+            {renderWordCounter(getWordCount(howToVerify), 40, 10)}
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Q3: What You Tried (single question for incorrect) */}
+          <div className="question-block">
+            <h3>What did you try to solve this test?</h3>
+            <p className="question-hint">
+              Describe your approach and what you attempted to do.
+            </p>
+            
+            {errors.whatYouTried && <div className="error-message">{errors.whatYouTried}</div>}
+            
+            <ColorAutocompleteTextarea
+              value={whatYouTried}
+              onChange={(e) => setWhatYouTried(enforceWordLimit(e.target.value, whatYouTried, 60))}
+              placeholder="Example: 'I thought all shapes should rotate, so I rotated every shape 90 degrees clockwise.'"
+              rows={4}
+              className="response-textarea"
+            />
+            
+            {renderWordCounter(getWordCount(whatYouTried), 60, 10)}
+          </div>
+        </>
+      )}
 
-            {/* Q3b: How to Transform */}
-            <div className="question-block teaching-question">
-              <div className="step-header">
-                <span className="step-number">2</span>
-                <h3>🔧 What steps should they follow?</h3>
-              </div>
-              <p className="question-hint">
-                Describe the transformation process clearly and concisely.
-              </p>
-              
-              {errors.howToTransform && <div className="error-message">{errors.howToTransform}</div>}
-              
-              <ColorAutocompleteTextarea
-                value={howToTransform}
-                onChange={(e) => setHowToTransform(enforceWordLimit(e.target.value, howToTransform, 50))}
-                placeholder="Example: 'Rotate each blue shape touching the border 90 degrees clockwise. Keep all other shapes in their original positions.'"
-                rows={3}
-                className="response-textarea small"
-              />
-              
-              {renderWordCounter(getWordCount(howToTransform), 50, 10)}
-            </div>
-
-            {/* Q3c: How to Verify */}
-            <div className="question-block teaching-question">
-              <div className="step-header">
-                <span className="step-number">3</span>
-                <h3>✅ How can they check if it's correct?</h3>
-              </div>
-              <p className="question-hint">
-                What should the final output look like? What checks should they perform?
-              </p>
-              
-              {errors.howToVerify && <div className="error-message">{errors.howToVerify}</div>}
-              
-              <ColorAutocompleteTextarea
-                value={howToVerify}
-                onChange={(e) => setHowToVerify(enforceWordLimit(e.target.value, howToVerify, 50))}
-                placeholder="Example: 'You should end up with all blue boxes touching each other. The grid stays the same size as the input.'"
-                rows={3}
-                className="response-textarea small"
-              />
-              
-              {renderWordCounter(getWordCount(howToVerify), 50, 10)}
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Q3: What You Tried (single question for incorrect) */}
-            <div className="question-block">
-              <h3>What did you try to solve this test?</h3>
-              <p className="question-hint">
-                Describe your approach and what you attempted to do.
-              </p>
-              
-              {errors.whatYouTried && <div className="error-message">{errors.whatYouTried}</div>}
-              
-              <ColorAutocompleteTextarea
-                value={whatYouTried}
-                onChange={(e) => setWhatYouTried(enforceWordLimit(e.target.value, whatYouTried, 60))}
-                placeholder="Example: 'I thought all shapes should rotate, so I rotated every shape 90 degrees clockwise.'"
-                rows={4}
-                className="response-textarea"
-              />
-              
-              {renderWordCounter(getWordCount(whatYouTried), 60, 10)}
-            </div>
-          </>
-        )}
-
-        <div className="continue-section">
-          <button 
-            className="continue-btn"
-            onClick={handleSubmit}
-          >
-            Continue to Final Question →
-          </button>
-        </div>
+      <div className="continue-section">
+        <button 
+          className="continue-btn"
+          onClick={handleSubmit}
+        >
+          Continue to Final Question →
+        </button>
       </div>
     </div>
   );
