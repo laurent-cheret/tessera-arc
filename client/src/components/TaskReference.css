@@ -252,46 +252,6 @@
   opacity: 0.8;
 }
 
-/* User Solution Display */
-.user-solution-display {
-  padding-top: 20px;
-  border-top: 2px solid #dee2e6;
-  margin-top: 20px;
-}
-
-.user-solution-display h4 {
-  margin: 0 0 15px 0;
-  color: #495057;
-  font-size: 16px;
-  text-align: center;
-}
-
-.solution-with-status {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-}
-
-.solution-badge {
-  padding: 8px 20px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.solution-badge.correct {
-  background-color: #d4edda;
-  color: #155724;
-  border: 2px solid #c3e6cb;
-}
-
-.solution-badge.incorrect {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 2px solid #f5c6cb;
-}
-
 /* Responsive - Mobile Optimizations */
 @media (max-width: 768px) {
   .task-reference-toggle {
@@ -385,27 +345,3 @@
     display: none;
   }
 }
-
-/* Desktop hover scrolling hint */
-/* @media (min-width: 1025px) {
-  .examples-scroll-container {
-    position: relative;
-  }
-
-  .examples-scroll-container::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 20px;
-    width: 60px;
-    background: linear-gradient(to left, #f8f9fa, transparent);
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .examples-scroll-container:hover::after {
-    opacity: 1;
-  }
-} */

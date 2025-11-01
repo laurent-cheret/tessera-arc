@@ -28,9 +28,6 @@ const MiniGrid = ({ grid }) => {
 
 const TaskReference = ({ 
   trainingExamples, 
-  userSolution, 
-  isCorrect, 
-  showUserSolution,
   defaultExpanded = true
 }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
@@ -86,20 +83,6 @@ const TaskReference = ({
               ← Swipe to see more examples →
             </div>
           </div>
-
-          {showUserSolution && userSolution && (
-            <div className="user-solution-display">
-              <h4>Your Solution:</h4>
-              <div className="solution-with-status">
-                <ARCGrid grid={userSolution} title="Your Output" maxSize={300} />
-                {isCorrect !== null && (
-                  <div className={`solution-badge ${isCorrect ? 'correct' : 'incorrect'}`}>
-                    {isCorrect ? '✓ Correct' : '✗ Incorrect'}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
