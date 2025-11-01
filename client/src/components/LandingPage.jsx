@@ -16,13 +16,13 @@ const LandingPage = ({ onStartParticipation }) => {
     "All red cells seem to become blue while the...",
   ];
 
-  // Phrases for describe phase  
-  const describePhrases = [
-    "I realized that the most present color was green...",
-    "I started by looking at the output and...",
-    "My first attempt didn't work because ...",
-    "The key insight was noticing that the largest shapes...",
-    "I saw that the objects were falling...",
+  // Phrases for TEACHING phase (updated)
+  const teachPhrases = [
+    "Look for the three blue rectangles in the top-left corner...",
+    "Take each shape and rotate it 90 degrees clockwise...",
+    "You should end up with all shapes touching each other...",
+    "First, identify which objects are touching the border...",
+    "The final output should have the same grid size as the input...",
   ];
 
   return (
@@ -208,96 +208,46 @@ const LandingPage = ({ onStartParticipation }) => {
                 Humans leverage one bit of information to reconsider their entire approach and succeed. GPT-4o improves by only 9.1% with the same feedback—<strong>humans are nearly 3× more effective</strong> at self-correction.
               </p>
 
-              {/* Case Studies */}
-              <h3>Recent AI Approaches and Their Limitations</h3>
+              {/* NEW: The Language Gap Section */}
+              <h3>The Language Gap: Why Human Communication Works</h3>
               <p>
-                The promising but flawed <a href="https://arxiv.org/abs/2506.21734" target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none' }}>Hierarchical Reasoning Model (HRM)</a> study provides crucial lessons. Initially claiming high performance with a custom "brain-inspired" 27-million parameter architecture, <a href="https://arcprize.org/blog/hrm-analysis" target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none' }}>independent verification</a> revealed:
+                But there's another profound mystery: <strong>why can humans successfully communicate these solutions to each other in plain English, while AI struggles to understand the same instructions?</strong>
               </p>
-              <ul>
-                <li><strong>Architecture was irrelevant:</strong> Replacing the specialized design with a standard transformer reduced performance by only ~5 percentage points.</li>
-                <li><strong>Iterative refinement was everything:</strong> Performance jumped by 13 percentage points going from one to two outer loops (self-correction rounds).</li>
-                <li><strong>Limited cross-task transfer:</strong> ~31% of the score came from encoding task-specific solutions rather than genuine generalization.</li>
-              </ul>
-
               <p>
-                The <a href="https://arxiv.org/abs/2411.08706" target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none' }}>Latent Program Network (LPN)</a> experiments demonstrated similar patterns. When tested on out-of-distribution tasks—training on sparse patterns covering 50% of grids, then testing on dense patterns covering 100%:
+                The groundbreaking <a href="https://arxiv.org/abs/2106.07824" target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none', fontWeight: '600' }}>Language-complete Abstraction and Reasoning Corpus (L-ARC)</a> study revealed something unexpected: when humans write instructions for solving ARC tasks in natural language, other humans achieve an <strong>88% success rate</strong> following those instructions—without ever seeing the training examples!
               </p>
-              <ul>
-                <li><strong>Initial intuition failed completely:</strong> The encoder's first prediction had nearly 0% accuracy</li>
-                <li><strong>Search rescued performance:</strong> Running 100 steps of gradient ascent recovered accuracy up to 88%</li>
-              </ul>
-
-              {/* What We're Collecting */}
-              <h3 style={{ paddingTop: '20px', borderTop: '2px solid #e9ecef' }}>What We're Collecting and Why</h3>
-
-              <div className="collection-box collection-1">
-                <h4>1. First Impressions & Initial Hypothesis</h4>
-                <p className="collection-timing">
-                  <strong>Collected:</strong> Immediately upon viewing the task, before any solving attempts
-                </p>
+              
+              <div className="larc-insight-box">
+                <h4>🔑 The Key Discovery: Meta-Information</h4>
                 <p>
-                  We ask you to describe your initial reaction and the transformation rule you think applies—in your own words, before testing whether you're correct. This captures the raw intuition and "aha moment" when you first grasp the pattern—the raw ingredient that synthetic program generators miss when the original seed set of 160 concepts didn't include that specific prior.
+                  L-ARC found that successful human instructions contain roughly <strong>equal parts</strong> of three components:
+                </p>
+                <ul>
+                  <li><strong>Framing (~33%):</strong> Context-setting statements that establish what to focus on ("Look for the largest object", "Ignore the background colors")</li>
+                  <li><strong>Procedure (~33%):</strong> The actual executable steps ("Rotate each shape 90 degrees", "Fill the center with blue")</li>
+                  <li><strong>Validation (~33%):</strong> Checks to verify correctness ("You should end up with exactly 5 red cells", "The grid size stays the same")</li>
+                </ul>
+                <p className="insight-emphasis">
+                  This means <strong>two-thirds of human communication</strong> is dedicated to non-executable "meta-information"—the context and verification that makes ambiguous natural language work reliably.
                 </p>
               </div>
 
-              <div className="collection-box collection-2">
-                <h4>2. Step-by-Step Solution Actions</h4>
-                <p className="collection-timing">
-                  <strong>Collected:</strong> Automatically logged throughout your solving process
-                </p>
-                <p>
-                  Every click, tool selection, and color change is recorded with timestamps. This reveals your exploration phase, when you commit to a hypothesis, and your execution sequence. If we can identify which strategies humans try first, we can train systems to minimize wasteful exploration—teaching them <em>where to look first</em> rather than brute-forcing the action space.
-                </p>
-              </div>
-
-              <div className="collection-box collection-3">
-                <h4>3. Solution Attempts & Revisions</h4>
-                <p className="collection-timing">
-                  <strong>Collected:</strong> All submissions and whether you changed your approach
-                </p>
-                <p>
-                  We track each submission and whether your hypothesis needed revision after feedback. This maps the self-correction mechanism—that dramatic 25.9 percentage point improvement. By capturing the before/after hypothesis change, we're documenting the cognitive flexibility that current AI fundamentally lacks.
-                </p>
-              </div>
-
-              <div className="collection-box collection-4">
-                <h4>4. Perceived Difficulty</h4>
-                <p className="collection-timing">
-                  <strong>Collected:</strong> After task completion
-                </p>
-                <p>
-                  Tasks you find trivially easy but AI finds hard reveal missing perceptual priors. The difficulty inversion tells us that perceptually obvious patterns—the ones you solve with effortless intuition—are precisely what's missing from the synthetic training data.
-                </p>
-              </div>
-
-              {/* Expected Impact */}
-              <h3>Expected Impact</h3>
               <p>
-                Your data directly addresses the Pareto frontier problem in AI: achieving high accuracy <em>and</em> high efficiency simultaneously. The $600,000 ARC Prize isn't just about reaching 85% accuracy; it's about achieving it with human-like efficiency—your approximately 97 seconds of concentrated thought using minimal actions.
+                AI systems trained on traditional program synthesis assume instructions are like computer code: precise, minimal, purely procedural. They fail because they can't interpret the rich contextual framework and validation checks that humans naturally provide. 
               </p>
               <p>
-                The dataset we're building will:
-              </p>
-              <ul>
-                <li><strong>Train efficient program search:</strong> Reduce the 20,000-program search space by orders of magnitude</li>
-                <li><strong>Enable better hypothesis generation:</strong> Teach AI systems which hypothesis types humans generate for specific visual patterns</li>
-                <li><strong>Identify missing conceptual priors:</strong> Reveal which fundamental concepts need to be added to seed sets</li>
-                <li><strong>Quantify self-correction mechanisms:</strong> Map the cognitive process AI fundamentally lacks</li>
-                <li><strong>Establish action efficiency baselines:</strong> Set benchmarks for future interactive reasoning systems</li>
-              </ul>
-              <p>
-                The ARC-AGI benchmark has survived five years of intense effort from the world's best-funded labs. By making your problem-solving process explicit and measurable, you're providing the unprecedented leverage point that could finally bridge the human-machine intelligence gap.
+                When you write "find the largest shape," another human instantly understands you mean the shape with the most cells, not the tallest or widest. AI systems struggle with this implied shared understanding—the massive "DSL-open" conceptual space that humans navigate effortlessly.
               </p>
 
             </div>
           )}
         </div>
 
-        {/* How You Can Contribute */}
+        {/* How You Can Contribute - UPDATED */}
         <div className="content-card highlight">
           <h2>📝 How You Can Contribute</h2>
           <p>
-            Your participation involves three simple steps:
+            Inspired by the L-ARC study's finding that humans communicate solutions through structured teaching, we've designed a process that captures how you would explain your solution to a friend:
           </p>
           <div className="steps-grid-animated">
             
@@ -326,14 +276,14 @@ const LandingPage = ({ onStartParticipation }) => {
               </div>
             </div>
 
-            {/* Step 3: Describe */}
+            {/* Step 3: Teach - UPDATED */}
             <div className="step-animated">
               <span className="step-number">3</span>
               <div className="step-content">
-                <h3>💭 Describe</h3>
-                <p>Share your thought process, strategy, and reasoning in your own words</p>
+                <h3>👨‍🏫 Teach</h3>
+                <p>Imagine teaching a friend who can only see the test input—guide them step-by-step to your solution</p>
                 <TypewriterAnimation 
-                  phrases={describePhrases}
+                  phrases={teachPhrases}
                   speed={50}
                   pauseDuration={2000}
                   isItalic={true}
@@ -342,6 +292,46 @@ const LandingPage = ({ onStartParticipation }) => {
             </div>
 
           </div>
+
+          {/* NEW: Teaching Explanation Box */}
+          <div style={{ 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            padding: '25px',
+            borderRadius: '12px',
+            marginTop: '30px',
+            color: 'white'
+          }}>
+            <h4 style={{ 
+              color: 'white',
+              marginTop: '0',
+              marginBottom: '15px',
+              fontSize: '20px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <span style={{ fontSize: '28px' }}>💡</span>
+              Why the Teaching Approach?
+            </h4>
+            <p style={{ 
+              fontSize: '16px',
+              lineHeight: '1.7',
+              marginBottom: '15px',
+              color: 'rgba(255,255,255,0.95)'
+            }}>
+              The L-ARC study showed that when humans teach each other how to solve ARC tasks, they naturally provide three essential components: <strong style={{ color: '#ffd700' }}>framing</strong> (what to look for), <strong style={{ color: '#ffd700' }}>procedure</strong> (how to transform), and <strong style={{ color: '#ffd700' }}>validation</strong> (how to verify). This structured approach achieved 88% communication success.
+            </p>
+            <p style={{ 
+              fontSize: '16px',
+              lineHeight: '1.7',
+              marginBottom: '0',
+              color: 'rgba(255,255,255,0.95)'
+            }}>
+              By asking you to teach rather than just describe, we capture the rich contextual information and verification strategies that make human reasoning so robust—the same information current AI systems are missing.
+            </p>
+          </div>
+
           <div className="time-commitment">
             <span className="time-icon">⏱️</span>
             <div>
@@ -369,7 +359,7 @@ const LandingPage = ({ onStartParticipation }) => {
           </div>
         </div>
 
-        {/* Footer Info */}
+        {/* Footer Info - UPDATED */}
         <div className="content-card footer-info">
           <h3>About This Research</h3>
           <h4 style={{ color: '#282c34', fontSize: '20px', fontWeight: '600', marginBottom: '15px' }}>
@@ -390,15 +380,18 @@ const LandingPage = ({ onStartParticipation }) => {
 
           <div style={{ background: '#f8f9fa', padding: '20px', borderRadius: '10px', marginBottom: '20px' }}>
             <h4 style={{ color: '#282c34', fontSize: '18px', fontWeight: '600', marginTop: '0', marginBottom: '10px' }}>
-              Reasoning: Breaking Down Complexity
+              Communication: Beyond Pure Procedures
             </h4>
+            <p style={{ fontSize: '16px', lineHeight: '1.7', color: '#495057', marginBottom: '12px' }}>
+              Research shows that successful human-to-human communication about ARC tasks requires much more than just describing the transformation steps. The <a href="https://arxiv.org/abs/2106.07824" target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none' }}>L-ARC study</a> revealed that approximately two-thirds of effective instructions consist of framing (setting context) and validation (providing checks)—not just the procedure itself.
+            </p>
             <p style={{ fontSize: '16px', lineHeight: '1.7', color: '#495057', marginBottom: '0' }}>
-              Beyond abstraction, we need to understand how humans decompose complex tasks into smaller, manageable parts—and how we sequence these parts to move from problem to solution. This step-by-step reasoning process is what transforms an initial insight into a concrete answer.
+              This is why we ask you to <strong>teach</strong> rather than just describe. Teaching naturally elicits the complete cognitive framework: what to focus on, how to transform it, and how to verify correctness. This structured communication captures the rich, ambiguous, yet remarkably effective way humans share complex reasoning.
             </p>
           </div>
 
           <p style={{ fontSize: '16px', lineHeight: '1.7', color: '#495057' }}>
-            <strong>Tessera-ARC isn't a solution to the ARC competition itself.</strong> Instead, it's a tool—a dataset that captures the rich diversity of human problem-solving paths. The quality and impact of this contribution depends entirely on the <strong>quantity and richness</strong> of the approaches you share with us.
+            <strong>Tessera-ARC isn't a solution to the ARC competition itself.</strong> Instead, it's a tool—a dataset that captures the rich diversity of human problem-solving paths, including the crucial meta-information (framing and validation) that AI systems currently miss. The quality and impact of this contribution depends entirely on the <strong>quantity and richness</strong> of the teaching approaches you share with us.
           </p>
 
           <div style={{ background: '#fff3cd', padding: '15px', borderRadius: '8px', borderLeft: '4px solid #ffc107', margin: '20px 0' }}>
@@ -406,15 +399,22 @@ const LandingPage = ({ onStartParticipation }) => {
               <strong>📊 Dataset Status:</strong> We are currently in the initial development phase of this dataset. Once we gather a significant number of submissions for each task, we will begin sharing the data publicly with the research community.
             </p>
           </div>
+          
           <p className="research-citation">
             Based on François Chollet's <em>On the Measure of Intelligence</em> (2019)<br />
             <a href="https://arxiv.org/abs/1911.01547" target="_blank" rel="noopener noreferrer">
               arXiv:1911.01547
             </a>
           </p>
+          <p className="research-citation">
+            Teaching methodology inspired by Acquaviva et al.'s <em>Communicating Natural Programs to Humans and Machines</em> (2021)<br />
+            <a href="https://arxiv.org/abs/2106.07824" target="_blank" rel="noopener noreferrer">
+              arXiv:2106.07824
+            </a>
+          </p>
         </div>
 
-        {/* About Us Section - MOVED TO END */}
+        {/* About Us Section */}
         <div className="content-card" style={{ marginTop: '40px' }}>
           <h2>👥 About Us</h2>
           <div style={{ marginBottom: '20px' }}>
