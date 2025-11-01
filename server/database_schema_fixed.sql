@@ -1,6 +1,6 @@
 -- ARC Crowdsourcing Platform Database Schema
--- PostgreSQL Version - Updated Oct 4, 2025
--- Reflects Q1-Q8 column reorganization
+-- PostgreSQL Version - Updated Oct 31, 2025
+-- Phase 3 Conditional Questions (Teaching vs Reflection)
 
 -- =====================================================
 -- Core Tables
@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS task_attempts (
     CONSTRAINT unique_participant_task_attempt UNIQUE(participant_id, task_id, attempt_number)
 );
 
--- 4. RESPONSES Table (UPDATED - Q1-Q8 Structure)
+-- 4. RESPONSES Table (UPDATED - Conditional Phase 3 Questions)
 CREATE TABLE IF NOT EXISTS responses (
     -- Primary Key
     response_id                 VARCHAR(50) PRIMARY KEY,
@@ -145,32 +145,34 @@ CREATE TABLE IF NOT EXISTS responses (
     -- Foreign Key
     attempt_id                  VARCHAR(50) REFERENCES task_attempts(attempt_id) ON DELETE CASCADE,
     
-    -- Phase 1: Pre-Solving Questions
-    -- Q1: Hierarchical First Impressions
-    q1_primary_impression       VARCHAR(50),
-    q1_primary_features         JSON,
-    q1_primary_other_text       TEXT,
-    q1_secondary_impressions    JSON,
+    -- =====================================================
+    -- Phase 1: Initial Hypothesis (BEFORE solving)
+    -- =====================================================
     
-    -- Q2: Initial Pattern Hypothesis
-    q2_initial_hypothesis       TEXT,
+    -- Q1: Main Idea
+    q1_main_idea                TEXT,
     
-    -- Q3: Confidence Level (moved to Phase 1)
-    q3_confidence_level         INTEGER,
+    -- =====================================================
+    -- Phase 3: Post-Solving Questions (AFTER solving)
+    -- CONDITIONAL based on correctness (is_correct in task_attempts)
+    -- =====================================================
     
-    -- Phase 3: Post-Solving Questions
-    -- Q4: What You Tried
-    q4_what_you_tried           TEXT,
-    q4_word_count               INTEGER,
+    -- Q9: Hypothesis Revision (ALWAYS present)
+    q9_hypothesis_revised       BOOLEAN,
+    q9_revision_reason          TEXT,
     
-    -- Q5: Strategy Revision (moved from Phase 4)
-    q5_hypothesis_revised       BOOLEAN,
-    q5_revision_reason          TEXT,
+    -- Q3 - FOR INCORRECT SOLUTIONS (single question)
+    q3_what_you_tried           TEXT,
     
-    -- Q6: Strategy Used
-    q6_strategy_used            VARCHAR(50),
+    -- Q3a, Q3b, Q3c - FOR CORRECT SOLUTIONS (teaching questions)
+    q3a_what_to_look_for        TEXT,
+    q3b_how_to_transform        TEXT,
+    q3c_how_to_verify           TEXT,
     
-    -- Phase 4: Reflection Questions
+    -- =====================================================
+    -- Phase 4: Final Reflection
+    -- =====================================================
+    
     -- Q7: Difficulty Rating
     q7_difficulty_rating        INTEGER,
     
@@ -178,19 +180,22 @@ CREATE TABLE IF NOT EXISTS responses (
     q8_challenge_factors        JSON,
     q8_challenge_other          TEXT,
     
+    -- =====================================================
     -- Constraints
-    CONSTRAINT valid_q3_confidence CHECK (q3_confidence_level BETWEEN 1 AND 5),
-    CONSTRAINT valid_q7_difficulty CHECK (q7_difficulty_rating BETWEEN 1 AND 5),
-    CONSTRAINT valid_q1_primary_impression CHECK (q1_primary_impression IS NULL OR q1_primary_impression IN (
-        'visual_appearance',
-        'spatial_arrangement',
-        'structure_connections',
-        'quantities_sizes',
-        'changes_movement',
-        'organization_grouping',
-        'rules_patterns'
-    ))
+    -- =====================================================
+    
+    CONSTRAINT valid_q7_difficulty CHECK (q7_difficulty_rating BETWEEN 1 AND 5)
 );
+
+-- Add table comments
+COMMENT ON TABLE responses IS 'Questionnaire responses. Updated Oct 31, 2025: Conditional Phase 3 questions based on correctness.';
+COMMENT ON COLUMN responses.q1_main_idea IS 'Phase 1 Q1: What is the main idea of this puzzle? (15-40 words)';
+COMMENT ON COLUMN responses.q9_hypothesis_revised IS 'Phase 3 Q9: Did you change your mind while solving? (always present)';
+COMMENT ON COLUMN responses.q9_revision_reason IS 'Phase 3 Q9 followup: Why did you change? (conditional on q9_hypothesis_revised=true)';
+COMMENT ON COLUMN responses.q3_what_you_tried IS 'Phase 3 Q3: What did you try? (only for INCORRECT solutions, 10-60 words)';
+COMMENT ON COLUMN responses.q3a_what_to_look_for IS 'Phase 3 Q3a: What to look for? (only for CORRECT solutions, 10-40 words)';
+COMMENT ON COLUMN responses.q3b_how_to_transform IS 'Phase 3 Q3b: How to transform? (only for CORRECT solutions, 10-40 words)';
+COMMENT ON COLUMN responses.q3c_how_to_verify IS 'Phase 3 Q3c: How to verify? (only for CORRECT solutions, 10-40 words)';
 
 -- 5. ACTION_TRACES Table
 CREATE TABLE IF NOT EXISTS action_traces (
@@ -250,11 +255,10 @@ CREATE INDEX IF NOT EXISTS idx_attempts_correct ON task_attempts(is_correct);
 CREATE INDEX IF NOT EXISTS idx_attempts_start_time ON task_attempts(attempt_start_time);
 CREATE INDEX IF NOT EXISTS idx_attempts_status ON task_attempts(attempt_status);
 
--- Responses (UPDATED - Q1-Q8 indexes)
+-- Responses
 CREATE INDEX IF NOT EXISTS idx_responses_attempt ON responses(attempt_id);
-CREATE INDEX IF NOT EXISTS idx_responses_q3_confidence ON responses(q3_confidence_level);
-CREATE INDEX IF NOT EXISTS idx_responses_q6_strategy ON responses(q6_strategy_used);
 CREATE INDEX IF NOT EXISTS idx_responses_q7_difficulty ON responses(q7_difficulty_rating);
+CREATE INDEX IF NOT EXISTS idx_responses_q9_revised ON responses(q9_hypothesis_revised);
 
 -- Action Traces
 CREATE INDEX IF NOT EXISTS idx_actions_attempt ON action_traces(attempt_id);
@@ -274,7 +278,6 @@ SELECT
     p.total_tasks_completed,
     p.average_task_duration_sec,
     COALESCE(AVG(CASE WHEN ta.is_correct THEN 1.0 ELSE 0.0 END), 0) as accuracy_rate,
-    COALESCE(AVG(r.q3_confidence_level), 0) as avg_confidence,
     COALESCE(AVG(r.q7_difficulty_rating), 0) as avg_perceived_difficulty,
     COUNT(ta.attempt_id) as total_attempts
 FROM participants p
@@ -291,10 +294,29 @@ SELECT
     COUNT(ta.attempt_id) as attempt_count,
     COALESCE(AVG(CASE WHEN ta.is_correct THEN 1.0 ELSE 0.0 END), 0) as actual_accuracy,
     COALESCE(AVG(r.q7_difficulty_rating), 0) as perceived_difficulty,
-    COALESCE(AVG(ta.duration_seconds), 0) as avg_solve_time,
-    COALESCE(AVG(r.q3_confidence_level), 0) as avg_confidence
+    COALESCE(AVG(ta.duration_seconds), 0) as avg_solve_time
 FROM tasks t
 LEFT JOIN task_attempts ta ON t.task_id = ta.task_id
 LEFT JOIN responses r ON ta.attempt_id = r.attempt_id
 WHERE ta.attempt_status = 'completed'
 GROUP BY t.task_id, t.task_set, t.estimated_difficulty;
+
+-- View: Phase 3 response types (teaching vs reflection)
+CREATE OR REPLACE VIEW phase3_response_types AS
+SELECT 
+    r.response_id,
+    r.attempt_id,
+    ta.is_correct,
+    CASE 
+        WHEN ta.is_correct THEN 'teaching'
+        ELSE 'reflection'
+    END as response_type,
+    r.q9_hypothesis_revised,
+    r.q3_what_you_tried,
+    r.q3a_what_to_look_for,
+    r.q3b_how_to_transform,
+    r.q3c_how_to_verify
+FROM responses r
+JOIN task_attempts ta ON r.attempt_id = ta.attempt_id;
+
+COMMENT ON VIEW phase3_response_types IS 'Shows which Phase 3 question type was answered based on correctness';

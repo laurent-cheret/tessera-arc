@@ -351,7 +351,7 @@ app.post('/api/submissions',
   body('participantId').notEmpty().isLength({ min: 5, max: 100 }),
   body('taskId').notEmpty().isLength({ min: 5, max: 50 }),
   body('verificationSessionId').notEmpty().isString(),
-  body('phase1_initial_observations').isObject(),
+  body('phase1_main_idea').isString().isLength({ min: 15, max: 1000 }),
   body('phase2_solving_process').isObject(),
   body('phase3_post_solving').isObject(),
   body('phase4_reflection').isObject(),
@@ -363,7 +363,7 @@ app.post('/api/submissions',
         taskId,
         taskType,
         verificationSessionId,
-        phase1_initial_observations,
+        phase1_main_idea,
         phase2_solving_process,
         phase3_post_solving,
         phase4_reflection,
@@ -401,6 +401,31 @@ app.post('/api/submissions',
       console.log('✅ Turnstile session validated:', verificationSessionId);
       console.log('   Session age:', Math.floor((Date.now() - sessionTimestamp) / 60000), 'minutes');
       
+      // ========================================
+      // PHASE 3 VALIDATION: Conditional based on correctness
+      // ========================================
+      if (typeof phase3_post_solving.q9_hypothesis_revised !== 'boolean') {
+        return res.status(400).json({ error: 'q9_hypothesis_revised is required and must be boolean' });
+      }
+      
+      if (phase2_solving_process.isCorrect) {
+        // If correct - require teaching questions
+        if (!phase3_post_solving.q3a_what_to_look_for || typeof phase3_post_solving.q3a_what_to_look_for !== 'string') {
+          return res.status(400).json({ error: 'q3a_what_to_look_for is required for correct solutions' });
+        }
+        if (!phase3_post_solving.q3b_how_to_transform || typeof phase3_post_solving.q3b_how_to_transform !== 'string') {
+          return res.status(400).json({ error: 'q3b_how_to_transform is required for correct solutions' });
+        }
+        if (!phase3_post_solving.q3c_how_to_verify || typeof phase3_post_solving.q3c_how_to_verify !== 'string') {
+          return res.status(400).json({ error: 'q3c_how_to_verify is required for correct solutions' });
+        }
+      } else {
+        // If incorrect - require single attempt question
+        if (!phase3_post_solving.q3_what_you_tried || typeof phase3_post_solving.q3_what_you_tried !== 'string') {
+          return res.status(400).json({ error: 'q3_what_you_tried is required for incorrect solutions' });
+        }
+      }
+      
       await db.transaction(async (client) => {
         // 1. Create task attempt
         const attemptId = db.generateId('attempt');
@@ -435,53 +460,38 @@ app.post('/api/submissions',
           'completed'
         ]);
         
-        // 2. Create response record
+        // 2. Create response record (UPDATED FOR CONDITIONAL PHASE 3)
         const responseId = db.generateId('response');
 
-        // ⚠️ REMOVED: q6_strategy_used field (Q5 removed from questionnaire)
-        // The column still exists in the database but will be NULL for new submissions
         await client.query(`
           INSERT INTO responses (
             response_id,
             attempt_id,
-            q1_primary_impression,
-            q1_primary_features,
-            q1_primary_other_text,
-            q1_secondary_impressions,
-            q2_initial_hypothesis,
-            q3_confidence_level,
-            q4_what_you_tried,
-            q4_word_count,
-            q5_hypothesis_revised,
-            q5_revision_reason,
-            q6_strategy_used,
+            q1_main_idea,
+            q9_hypothesis_revised,
+            q9_revision_reason,
+            q3a_what_to_look_for,
+            q3b_how_to_transform,
+            q3c_how_to_verify,
+            q3_what_you_tried,
             q7_difficulty_rating,
             q8_challenge_factors,
             q8_challenge_other
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         `, [
           responseId,
           attemptId,
-          // Q1 hierarchical
-          phase1_initial_observations.primaryImpression || null,
-          phase1_initial_observations.primaryFeatures ? JSON.stringify(phase1_initial_observations.primaryFeatures) : null,
-          phase1_initial_observations.primaryOtherText || null,
-          phase1_initial_observations.secondaryImpressions ? JSON.stringify(phase1_initial_observations.secondaryImpressions) : null,
-          // Q2
-          phase1_initial_observations.initialHypothesis || null,
-          // Q4 (confidence - moved to Phase 1)
-          phase1_initial_observations.hypothesisConfidence || null,
-          // Phase 3 - Q3 (what you tried)
-          phase3_post_solving.q3_what_you_tried || null,
-          phase3_post_solving.q3_word_count || null,
-          // Phase 3 - Q9 (revision - moved from Phase 4)
-          phase3_post_solving.q9_hypothesis_revised || null,
+          // Phase 1: Main Idea
+          phase1_main_idea,
+          // Phase 3: Post-solving (conditional based on correctness)
+          phase3_post_solving.q9_hypothesis_revised,
           phase3_post_solving.q9_revision_reason || null,
-          // Phase 3 - Q5 (strategy)
-          phase3_post_solving.q5_strategy_used || null,
-          // Phase 4 - Q7 (difficulty)
+          phase3_post_solving.q3a_what_to_look_for || null,  // If correct
+          phase3_post_solving.q3b_how_to_transform || null,  // If correct
+          phase3_post_solving.q3c_how_to_verify || null,     // If correct
+          phase3_post_solving.q3_what_you_tried || null,     // If incorrect
+          // Phase 4: Reflection
           phase4_reflection.q7_difficulty_rating || null,
-          // Phase 4 - Q8 (challenges)
           phase4_reflection.q8_challenge_factors ? JSON.stringify(phase4_reflection.q8_challenge_factors) : null,
           phase4_reflection.q8_challenge_other || null
         ]);
@@ -615,11 +625,8 @@ app.get('/api/stats', async (req, res) => {
         (SELECT AVG(CASE WHEN is_correct THEN 1.0 ELSE 0.0 END) FROM task_attempts WHERE is_correct IS NOT NULL) as overall_accuracy
     `);
     
-    const qualityCheck = await db.query('SELECT * FROM check_data_quality()');
-    
     res.json({
       summary: stats.rows[0],
-      quality_checks: qualityCheck.rows,
       last_updated: new Date().toISOString()
     });
   } catch (error) {
@@ -634,7 +641,24 @@ app.get('/api/export/training-data', async (req, res) => {
     const { format = 'json', limit = 1000 } = req.query;
     
     const result = await db.query(`
-      SELECT * FROM export_training_data()
+      SELECT 
+        r.response_id,
+        r.attempt_id,
+        r.q1_main_idea,
+        r.q3_what_you_tried,
+        r.q3a_what_to_look_for,
+        r.q3b_how_to_transform,
+        r.q3c_how_to_verify,
+        r.q9_hypothesis_revised,
+        r.q9_revision_reason,
+        r.q7_difficulty_rating,
+        r.q8_challenge_factors,
+        ta.task_id,
+        ta.is_correct,
+        ta.duration_seconds
+      FROM responses r
+      JOIN task_attempts ta ON r.attempt_id = ta.attempt_id
+      WHERE ta.attempt_status = 'completed'
       LIMIT $1
     `, [limit]);
     
@@ -692,8 +716,8 @@ app.get('/api/admin/recent-submissions', async (req, res) => {
         ta.attempt_start_time,
         ta.duration_seconds,
         ta.is_correct,
-        r.q3_confidence_level,
-        r.q7_difficulty_rating
+        r.q7_difficulty_rating,
+        r.q1_main_idea
       FROM task_attempts ta
       LEFT JOIN responses r ON ta.attempt_id = r.attempt_id
       WHERE ta.attempt_status = 'completed'

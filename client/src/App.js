@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ARCGrid from './components/ARCGrid';
 import InteractiveGrid from './components/InteractiveGrid';
-import Phase1QuestionsHierarchical from './components/Phase1QuestionsHierarchical';
+import Phase1Questions from './components/Phase1Questions';
 import Phase3Questions from './components/Phase3Questions';
 import Phase4Questions from './components/Phase4Questions';
 import TaskReference from './components/TaskReference';
@@ -289,7 +289,7 @@ function App() {
         // Include verification session for backend validation
         verificationSessionId: verificationSessionId,
         
-        phase1_initial_observations: phase1Data,
+        phase1_main_idea: phase1Data.mainIdea,
         phase2_solving_process: {
           actionLog: actionLog,
           testAttempts: testAttempts,
@@ -298,7 +298,19 @@ function App() {
           isCorrect: solutionCorrect,
           reachedActionLimit: actionLog.length >= ACTION_LIMIT
         },
-        phase3_post_solving: phase3Data,
+        phase3_post_solving: {
+          q9_hypothesis_revised: phase3Data.q9_hypothesis_revised,
+          q9_revision_reason: phase3Data.q9_revision_reason,
+          // Conditional fields based on correctness
+          ...(solutionCorrect && {
+            q3a_what_to_look_for: phase3Data.q3a_what_to_look_for,
+            q3b_how_to_transform: phase3Data.q3b_how_to_transform,
+            q3c_how_to_verify: phase3Data.q3c_how_to_verify,
+          }),
+          ...(!solutionCorrect && {
+            q3_what_you_tried: phase3Data.q3_what_you_tried,
+          }),
+        },
         phase4_reflection: phase4Data,
         
         submissionTimestamp: new Date().toISOString(),
@@ -624,7 +636,7 @@ function App() {
 
         {currentPhase === 'phase1' && (
           <div>
-            <Phase1QuestionsHierarchical onComplete={handlePhase1Complete} initialData={phase1Data} />
+            <Phase1Questions onComplete={handlePhase1Complete} initialData={phase1Data} />
             <HoneypotField value={honeypot1} onChange={setHoneypot1} />
           </div>
         )}

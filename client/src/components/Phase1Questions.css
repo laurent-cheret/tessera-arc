@@ -1,0 +1,228 @@
+.phase1-questions {
+  padding: 30px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.phase1-questions h2 {
+  color: #282c34;
+  margin-bottom: 10px;
+  text-align: center;
+  font-size: 28px;
+}
+
+.question-container {
+  margin-top: 30px;
+  padding: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.question-container h3 {
+  color: white;
+  margin-bottom: 15px;
+  font-size: 24px;
+  text-align: center;
+}
+
+.instruction {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 25px;
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.main-idea-textarea {
+  width: 100%;
+  padding: 15px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  resize: vertical;
+  min-height: 150px;
+  box-sizing: border-box;
+  background-color: white;
+  transition: all 0.3s ease;
+}
+
+.main-idea-textarea:focus {
+  border-color: #ffd700;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.3);
+}
+
+/* Word Counter Styles */
+.word-counter {
+  text-align: right;
+  font-size: 15px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  color: white;
+  background: none;
+  border: none;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.word-counter-low {
+  color: white;
+}
+
+.word-counter-good {
+  color: white;
+}
+
+.word-counter-high {
+  color: white;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.helpful-hints {
+  background-color: rgba(255, 255, 255, 0.15);
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.helpful-hints p {
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.helpful-hints ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.helpful-hints li {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 14px;
+  line-height: 1.8;
+  padding-left: 25px;
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.helpful-hints li:before {
+  content: "💡";
+  position: absolute;
+  left: 0;
+  font-size: 16px;
+}
+
+.helpful-hints strong {
+  color: #ffd700;
+  font-weight: 600;
+}
+
+.error-message {
+  color: #ff4444;
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 2px solid #ff4444;
+  padding: 12px 18px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.button-section {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.continue-btn {
+  background-color: #ffd700;
+  color: #282c34;
+  border: none;
+  padding: 16px 50px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+}
+
+.continue-btn:hover:not(:disabled) {
+  background-color: #ffed4e;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+}
+
+.continue-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .phase1-questions {
+    padding: 20px;
+  }
+
+  .question-container {
+    padding: 20px;
+  }
+
+  .question-container h3 {
+    font-size: 20px;
+  }
+
+  .instruction {
+    font-size: 14px;
+  }
+
+  .main-idea-textarea {
+    font-size: 15px;
+    min-height: 120px;
+  }
+
+  .word-counter {
+    font-size: 13px;
+  }
+
+  .helpful-hints {
+    padding: 15px;
+  }
+
+  .helpful-hints li {
+    font-size: 13px;
+  }
+}
