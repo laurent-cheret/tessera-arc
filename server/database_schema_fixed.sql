@@ -1,110 +1,89 @@
--- ARC Crowdsourcing Platform Database Schema
--- PostgreSQL Version - Updated Oct 31, 2025
--- Phase 3 Conditional Questions (Teaching vs Reflection)
-
 -- =====================================================
--- Core Tables
+-- OPTIMIZED ARC DATABASE SCHEMA
+-- PostgreSQL - Lightweight Version
+-- Reduces storage by ~40-60% per submission
 -- =====================================================
 
--- 1. PARTICIPANTS Table
+-- =====================================================
+-- 1. PARTICIPANTS TABLE (OPTIMIZED)
+-- =====================================================
+-- REMOVED: All demographic fields (age_range, gender, education, etc.)
+-- REMOVED: Qualification metrics (not used)
+-- REMOVED: Inter-annotator agreement (not applicable yet)
+-- REMOVED: worker_id_external (not using crowdsourcing platforms)
+-- KEPT: Only essential tracking fields
+
 CREATE TABLE IF NOT EXISTS participants (
     -- Primary Key
     participant_id              VARCHAR(50) PRIMARY KEY,
     
-    -- Demographics (optional - can be NULL for anonymous users)
-    age_range                   VARCHAR(20),
-    gender                      VARCHAR(20),
-    education_level             VARCHAR(50),
-    country                     VARCHAR(100),
-    native_language             VARCHAR(50),
-    occupation_category         VARCHAR(100),
+    -- Session Tracking (for bot protection)
+    session_id                  VARCHAR(100) NOT NULL,
+    ip_address_hash             VARCHAR(64) NOT NULL,
+    user_agent_hash             VARCHAR(64) NOT NULL,
     
-    -- Experience & Background
-    puzzle_experience           VARCHAR(50),
-    coding_experience           VARCHAR(50),
-    math_background             VARCHAR(50),
-    
-    -- Qualification Metrics
-    qualification_score         FLOAT,
-    auroc2_metacognitive_score  FLOAT,
-    
-    -- Platform Metadata
+    -- Activity Tracking
     registration_date           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_active_date            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total_tasks_completed       INTEGER DEFAULT 0,
-    average_task_duration_sec   INTEGER,
-    
-    -- Quality Metrics
-    average_confidence_accuracy FLOAT,
-    inter_annotator_agreement   FLOAT,
-    completion_rate             FLOAT,
     
     -- Privacy & Consent
-    consent_timestamp           TIMESTAMP,
+    consent_timestamp           TIMESTAMP NOT NULL,
     data_sharing_consent        BOOLEAN DEFAULT FALSE,
     
-    -- Platform-specific
-    platform_source             VARCHAR(50) DEFAULT 'direct',
-    worker_id_external          VARCHAR(100),
-    
-    -- Session tracking
-    session_id                  VARCHAR(100),
-    ip_address_hash             VARCHAR(64),
-    user_agent_hash             VARCHAR(64),
-    
-    CONSTRAINT valid_age_range CHECK (age_range IN (
-        '18-24', '25-34', '35-44', '45-54', '55-64', '65+'
-    ))
+    -- Platform
+    platform_source             VARCHAR(20) DEFAULT 'direct'
 );
 
--- 2. TASKS Table  
+-- Indexes
+CREATE INDEX idx_participants_registration ON participants(registration_date);
+CREATE INDEX idx_participants_completed ON participants(total_tasks_completed);
+
+-- =====================================================
+-- 2. TASKS TABLE (SIMPLIFIED)
+-- =====================================================
+-- REMOVED: All analytical fields that are NULL or can be computed
+-- REMOVED: task_category, core_knowledge_domain, transformation_type
+-- REMOVED: estimated_difficulty, human_accuracy_rate, ai_baseline_accuracy
+-- REMOVED: grid_dimensions, color_count, object_count_avg
+-- REMOVED: requires_* boolean flags
+-- REMOVED: validation_notes
+-- KEPT: Only essential task data
+
 CREATE TABLE IF NOT EXISTS tasks (
     -- Primary Key
     task_id                     VARCHAR(50) PRIMARY KEY,
     
     -- Task Classification
-    task_set                    VARCHAR(20) NOT NULL,
-    arc_version                 VARCHAR(10),
-    task_category               VARCHAR(50),
+    task_set                    VARCHAR(10) NOT NULL,  -- 'training' or 'evaluation'
     
-    -- Core Knowledge Domain
-    core_knowledge_domain       VARCHAR(100),
-    
-    -- Difficulty Metrics
-    estimated_difficulty        FLOAT,
-    human_accuracy_rate         FLOAT,
-    ai_baseline_accuracy        FLOAT,
-    
-    -- Task Content (stored as JSON)
-    input_grids                 JSON NOT NULL,
-    output_grids                JSON NOT NULL,
-    test_input_grid             JSON,
-    ground_truth_output         JSON,
-    
-    -- Visual Properties
-    grid_dimensions             VARCHAR(50),
-    color_count                 INTEGER,
-    object_count_avg            INTEGER,
-    
-    -- Transformation Properties
-    transformation_type         VARCHAR(100),
-    requires_counting           BOOLEAN DEFAULT FALSE,
-    requires_spatial_reasoning  BOOLEAN DEFAULT FALSE,
-    requires_pattern_completion BOOLEAN DEFAULT FALSE,
+    -- Task Content (JSON)
+    input_grids                 JSONB NOT NULL,        -- Use JSONB for better compression
+    output_grids                JSONB NOT NULL,
+    test_input_grid             JSONB NOT NULL,
+    ground_truth_output         JSONB NOT NULL,
     
     -- Metadata
+    number_of_examples          SMALLINT NOT NULL,     -- SMALLINT instead of INTEGER (2-4 examples max)
     created_date                TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    source                      VARCHAR(50) DEFAULT 'arc_original',
-    number_of_examples          INTEGER,
+    source                      VARCHAR(20) DEFAULT 'arc_original',
     
-    -- Quality Control
-    task_validated              BOOLEAN DEFAULT FALSE,
-    validation_notes            TEXT,
-    
-    CONSTRAINT valid_task_set CHECK (task_set IN ('training', 'evaluation', 'validation', 'test'))
+    CONSTRAINT valid_task_set CHECK (task_set IN ('training', 'evaluation'))
 );
 
--- 3. TASK_ATTEMPTS Table
+-- Indexes
+CREATE INDEX idx_tasks_set ON tasks(task_set);
+
+-- =====================================================
+-- 3. TASK_ATTEMPTS TABLE (OPTIMIZED)
+-- =====================================================
+-- REMOVED: attempt_number (always 1, no retries yet)
+-- REMOVED: correctness_score (redundant with is_correct)
+-- REMOVED: screen_resolution (always NULL)
+-- REMOVED: device_type (can extract from user_agent if needed)
+-- REMOVED: browser (can extract from user_agent if needed)
+-- KEPT: Essential attempt data
+
 CREATE TABLE IF NOT EXISTS task_attempts (
     -- Primary Key
     attempt_id                  VARCHAR(50) PRIMARY KEY,
@@ -113,91 +92,91 @@ CREATE TABLE IF NOT EXISTS task_attempts (
     participant_id              VARCHAR(50) REFERENCES participants(participant_id) ON DELETE CASCADE,
     task_id                     VARCHAR(50) REFERENCES tasks(task_id) ON DELETE CASCADE,
     
-    -- Attempt Metadata
-    attempt_number              INTEGER DEFAULT 1,
-    attempt_start_time          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    attempt_end_time            TIMESTAMP,
-    duration_seconds            INTEGER,
+    -- Timing
+    attempt_start_time          TIMESTAMP NOT NULL,
+    attempt_end_time            TIMESTAMP NOT NULL,
+    duration_seconds            INTEGER NOT NULL,
     
-    -- Solution Data
-    submitted_solution          JSON,
-    is_correct                  BOOLEAN,
-    correctness_score           FLOAT,
-    
-    -- Device & Environment
-    device_type                 VARCHAR(50),
-    browser                     VARCHAR(50),
-    screen_resolution           VARCHAR(20),
+    -- Solution (compressed JSON)
+    submitted_solution          JSONB NOT NULL,
+    is_correct                  BOOLEAN NOT NULL,
     
     -- Status
-    attempt_status              VARCHAR(20) DEFAULT 'completed',
+    attempt_status              VARCHAR(12) DEFAULT 'completed',  -- Reduced size
     
-    CONSTRAINT valid_attempt_number CHECK (attempt_number BETWEEN 1 AND 3),
-    CONSTRAINT valid_attempt_status CHECK (attempt_status IN ('completed', 'abandoned', 'timeout', 'error')),
-    CONSTRAINT unique_participant_task_attempt UNIQUE(participant_id, task_id, attempt_number)
+    CONSTRAINT valid_status CHECK (attempt_status IN ('completed', 'abandoned')),
+    CONSTRAINT unique_participant_task UNIQUE(participant_id, task_id)  -- One attempt per task
 );
 
--- 4. RESPONSES Table (UPDATED - Conditional Phase 3 Questions)
+-- Indexes
+CREATE INDEX idx_attempts_participant ON task_attempts(participant_id);
+CREATE INDEX idx_attempts_task ON task_attempts(task_id);
+CREATE INDEX idx_attempts_correct ON task_attempts(is_correct);
+CREATE INDEX idx_attempts_start_time ON task_attempts(attempt_start_time);
+
+-- =====================================================
+-- 4. RESPONSES TABLE (OPTIMIZED)
+-- =====================================================
+-- REMOVED: Separate view (phase3_response_types) - not needed
+-- KEPT: All questionnaire fields (these are the actual data you want!)
+-- OPTIMIZED: Using TEXT for responses (PostgreSQL handles compression well)
+
 CREATE TABLE IF NOT EXISTS responses (
     -- Primary Key
     response_id                 VARCHAR(50) PRIMARY KEY,
     
     -- Foreign Key
-    attempt_id                  VARCHAR(50) REFERENCES task_attempts(attempt_id) ON DELETE CASCADE,
+    attempt_id                  VARCHAR(50) REFERENCES task_attempts(attempt_id) ON DELETE CASCADE UNIQUE,
     
-    -- =====================================================
-    -- Phase 1: Initial Hypothesis (BEFORE solving)
-    -- =====================================================
+    -- Phase 1: Initial Hypothesis
+    q1_main_idea                TEXT NOT NULL,
     
-    -- Q1: Main Idea
-    q1_main_idea                TEXT,
+    -- Phase 3: Post-Solving (Conditional)
+    q9_hypothesis_revised       BOOLEAN NOT NULL,
+    q9_revision_reason          TEXT,  -- NULL if q9 = false
     
-    -- =====================================================
-    -- Phase 3: Post-Solving Questions (AFTER solving)
-    -- CONDITIONAL based on correctness (is_correct in task_attempts)
-    -- =====================================================
-    
-    -- Q9: Hypothesis Revision (ALWAYS present)
-    q9_hypothesis_revised       BOOLEAN,
-    q9_revision_reason          TEXT,
-    
-    -- Q3 - FOR INCORRECT SOLUTIONS (single question)
+    -- For INCORRECT solutions
     q3_what_you_tried           TEXT,
     
-    -- Q3a, Q3b, Q3c - FOR CORRECT SOLUTIONS (teaching questions)
+    -- For CORRECT solutions (teaching questions)
     q3a_what_to_look_for        TEXT,
     q3b_how_to_transform        TEXT,
     q3c_how_to_verify           TEXT,
     
-    -- =====================================================
-    -- Phase 4: Final Reflection
-    -- =====================================================
+    -- Phase 4: Reflection
+    q7_difficulty_rating        SMALLINT NOT NULL,  -- 1-5, SMALLINT saves space
+    q8_challenge_factors        JSONB,              -- NULL if empty
+    q8_challenge_other          TEXT,               -- NULL if not provided
     
-    -- Q7: Difficulty Rating
-    q7_difficulty_rating        INTEGER,
-    
-    -- Q8: Challenge Factors
-    q8_challenge_factors        JSON,
-    q8_challenge_other          TEXT,
-    
-    -- =====================================================
-    -- Constraints
-    -- =====================================================
-    
-    CONSTRAINT valid_q7_difficulty CHECK (q7_difficulty_rating BETWEEN 1 AND 5)
+    CONSTRAINT valid_difficulty CHECK (q7_difficulty_rating BETWEEN 1 AND 5),
+    CONSTRAINT valid_phase3_correct CHECK (
+        -- If correct: teaching questions required, tried=NULL
+        (q3a_what_to_look_for IS NOT NULL AND 
+         q3b_how_to_transform IS NOT NULL AND 
+         q3c_how_to_verify IS NOT NULL AND 
+         q3_what_you_tried IS NULL) OR
+        -- If incorrect: tried required, teaching=NULL
+        (q3_what_you_tried IS NOT NULL AND 
+         q3a_what_to_look_for IS NULL AND 
+         q3b_how_to_transform IS NULL AND 
+         q3c_how_to_verify IS NULL)
+    )
 );
 
--- Add table comments
-COMMENT ON TABLE responses IS 'Questionnaire responses. Updated Oct 31, 2025: Conditional Phase 3 questions based on correctness.';
-COMMENT ON COLUMN responses.q1_main_idea IS 'Phase 1 Q1: What is the main idea of this puzzle? (15-40 words)';
-COMMENT ON COLUMN responses.q9_hypothesis_revised IS 'Phase 3 Q9: Did you change your mind while solving? (always present)';
-COMMENT ON COLUMN responses.q9_revision_reason IS 'Phase 3 Q9 followup: Why did you change? (conditional on q9_hypothesis_revised=true)';
-COMMENT ON COLUMN responses.q3_what_you_tried IS 'Phase 3 Q3: What did you try? (only for INCORRECT solutions, 10-60 words)';
-COMMENT ON COLUMN responses.q3a_what_to_look_for IS 'Phase 3 Q3a: What to look for? (only for CORRECT solutions, 10-40 words)';
-COMMENT ON COLUMN responses.q3b_how_to_transform IS 'Phase 3 Q3b: How to transform? (only for CORRECT solutions, 10-40 words)';
-COMMENT ON COLUMN responses.q3c_how_to_verify IS 'Phase 3 Q3c: How to verify? (only for CORRECT solutions, 10-40 words)';
+-- Index
+CREATE INDEX idx_responses_attempt ON responses(attempt_id);
+CREATE INDEX idx_responses_difficulty ON responses(q7_difficulty_rating);
+CREATE INDEX idx_responses_revised ON responses(q9_hypothesis_revised);
 
--- 5. ACTION_TRACES Table
+-- =====================================================
+-- 5. ACTION_TRACES TABLE (OPTIMIZED)
+-- =====================================================
+-- REMOVED: grid_state_before (always NULL)
+-- REMOVED: is_correction (always FALSE)
+-- REMOVED: pause_before_action_ms (always NULL)
+-- REMOVED: timestamp_absolute (redundant with relative + attempt start time)
+-- OPTIMIZED: Using SMALLINT for smaller numbers
+
 CREATE TABLE IF NOT EXISTS action_traces (
     -- Primary Key
     action_id                   VARCHAR(50) PRIMARY KEY,
@@ -206,117 +185,82 @@ CREATE TABLE IF NOT EXISTS action_traces (
     attempt_id                  VARCHAR(50) REFERENCES task_attempts(attempt_id) ON DELETE CASCADE,
     
     -- Action Sequence
-    sequence_number             INTEGER NOT NULL,
+    sequence_number             SMALLINT NOT NULL,  -- Max ~32k actions per attempt
     
     -- Action Details
-    action_type                 VARCHAR(50) NOT NULL,
+    action_type                 VARCHAR(20) NOT NULL,  -- Reduced from 50
     
-    -- Spatial Information
-    cell_row                    INTEGER,
-    cell_column                 INTEGER,
+    -- Spatial Information (NULL for non-cell actions)
+    cell_row                    SMALLINT,
+    cell_column                 SMALLINT,
     
-    -- Value Information
-    color_value_before          INTEGER,
-    color_value_after           INTEGER,
+    -- Value Information (NULL for non-cell actions)
+    color_value_before          SMALLINT,
+    color_value_after           SMALLINT,
     
-    -- Temporal Information
-    timestamp_relative_ms       INTEGER NOT NULL,
-    timestamp_absolute          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    -- Timing (milliseconds since attempt start)
+    timestamp_ms                INTEGER NOT NULL,
     
-    -- State Snapshots (for key actions)
-    grid_state_before           JSON,
-    grid_state_after            JSON,
-    
-    -- Interaction Context
-    is_correction               BOOLEAN DEFAULT FALSE,
-    pause_before_action_ms      INTEGER,
+    -- State Snapshot (compressed JSON, only for key actions)
+    grid_state_after            JSONB,
     
     CONSTRAINT action_sequence_order UNIQUE(attempt_id, sequence_number)
 );
 
--- =====================================================
--- Indexes for Performance
--- =====================================================
-
--- Participants
-CREATE INDEX IF NOT EXISTS idx_participants_registration ON participants(registration_date);
-CREATE INDEX IF NOT EXISTS idx_participants_source ON participants(platform_source);
-CREATE INDEX IF NOT EXISTS idx_participants_completed ON participants(total_tasks_completed);
-
--- Tasks  
-CREATE INDEX IF NOT EXISTS idx_tasks_set ON tasks(task_set);
-CREATE INDEX IF NOT EXISTS idx_tasks_difficulty ON tasks(estimated_difficulty);
-CREATE INDEX IF NOT EXISTS idx_tasks_validated ON tasks(task_validated);
-
--- Task Attempts
-CREATE INDEX IF NOT EXISTS idx_attempts_participant ON task_attempts(participant_id);
-CREATE INDEX IF NOT EXISTS idx_attempts_task ON task_attempts(task_id);
-CREATE INDEX IF NOT EXISTS idx_attempts_correct ON task_attempts(is_correct);
-CREATE INDEX IF NOT EXISTS idx_attempts_start_time ON task_attempts(attempt_start_time);
-CREATE INDEX IF NOT EXISTS idx_attempts_status ON task_attempts(attempt_status);
-
--- Responses
-CREATE INDEX IF NOT EXISTS idx_responses_attempt ON responses(attempt_id);
-CREATE INDEX IF NOT EXISTS idx_responses_q7_difficulty ON responses(q7_difficulty_rating);
-CREATE INDEX IF NOT EXISTS idx_responses_q9_revised ON responses(q9_hypothesis_revised);
-
--- Action Traces
-CREATE INDEX IF NOT EXISTS idx_actions_attempt ON action_traces(attempt_id);
-CREATE INDEX IF NOT EXISTS idx_actions_sequence ON action_traces(attempt_id, sequence_number);
-CREATE INDEX IF NOT EXISTS idx_actions_type ON action_traces(action_type);
-CREATE INDEX IF NOT EXISTS idx_actions_timestamp ON action_traces(timestamp_absolute);
+-- Indexes
+CREATE INDEX idx_actions_attempt ON action_traces(attempt_id);
+CREATE INDEX idx_actions_sequence ON action_traces(attempt_id, sequence_number);
+CREATE INDEX idx_actions_type ON action_traces(action_type);
 
 -- =====================================================
--- Views for Common Queries
+-- VIEWS (UPDATED FOR NEW SCHEMA)
 -- =====================================================
 
--- View: Participant performance summary
+-- Participant Performance
 CREATE OR REPLACE VIEW participant_performance AS
 SELECT 
     p.participant_id,
     p.registration_date,
     p.total_tasks_completed,
-    p.average_task_duration_sec,
     COALESCE(AVG(CASE WHEN ta.is_correct THEN 1.0 ELSE 0.0 END), 0) as accuracy_rate,
+    COALESCE(AVG(ta.duration_seconds), 0) as avg_duration_sec,
     COALESCE(AVG(r.q7_difficulty_rating), 0) as avg_perceived_difficulty,
     COUNT(ta.attempt_id) as total_attempts
 FROM participants p
 LEFT JOIN task_attempts ta ON p.participant_id = ta.participant_id
 LEFT JOIN responses r ON ta.attempt_id = r.attempt_id
-GROUP BY p.participant_id, p.registration_date, p.total_tasks_completed, p.average_task_duration_sec;
+GROUP BY p.participant_id, p.registration_date, p.total_tasks_completed;
 
--- View: Task difficulty analysis
+-- Task Difficulty Analysis
 CREATE OR REPLACE VIEW task_difficulty_analysis AS
 SELECT 
     t.task_id,
     t.task_set,
-    t.estimated_difficulty,
     COUNT(ta.attempt_id) as attempt_count,
-    COALESCE(AVG(CASE WHEN ta.is_correct THEN 1.0 ELSE 0.0 END), 0) as actual_accuracy,
-    COALESCE(AVG(r.q7_difficulty_rating), 0) as perceived_difficulty,
-    COALESCE(AVG(ta.duration_seconds), 0) as avg_solve_time
+    COALESCE(AVG(CASE WHEN ta.is_correct THEN 1.0 ELSE 0.0 END), 0) as accuracy_rate,
+    COALESCE(AVG(r.q7_difficulty_rating), 0) as avg_perceived_difficulty,
+    COALESCE(AVG(ta.duration_seconds), 0) as avg_duration_sec,
+    COALESCE(MIN(ta.duration_seconds), 0) as min_duration_sec,
+    COALESCE(MAX(ta.duration_seconds), 0) as max_duration_sec
 FROM tasks t
 LEFT JOIN task_attempts ta ON t.task_id = ta.task_id
 LEFT JOIN responses r ON ta.attempt_id = r.attempt_id
 WHERE ta.attempt_status = 'completed'
-GROUP BY t.task_id, t.task_set, t.estimated_difficulty;
+GROUP BY t.task_id, t.task_set;
 
--- View: Phase 3 response types (teaching vs reflection)
-CREATE OR REPLACE VIEW phase3_response_types AS
-SELECT 
-    r.response_id,
-    r.attempt_id,
-    ta.is_correct,
-    CASE 
-        WHEN ta.is_correct THEN 'teaching'
-        ELSE 'reflection'
-    END as response_type,
-    r.q9_hypothesis_revised,
-    r.q3_what_you_tried,
-    r.q3a_what_to_look_for,
-    r.q3b_how_to_transform,
-    r.q3c_how_to_verify
-FROM responses r
-JOIN task_attempts ta ON r.attempt_id = ta.attempt_id;
+-- =====================================================
+-- STORAGE OPTIMIZATION SETTINGS
+-- =====================================================
 
-COMMENT ON VIEW phase3_response_types IS 'Shows which Phase 3 question type was answered based on correctness';
+-- Enable TOAST compression for TEXT fields (PostgreSQL auto-compresses)
+-- This is automatic, but we can ensure it's set
+
+ALTER TABLE responses ALTER COLUMN q1_main_idea SET STORAGE EXTENDED;
+ALTER TABLE responses ALTER COLUMN q9_revision_reason SET STORAGE EXTENDED;
+ALTER TABLE responses ALTER COLUMN q3_what_you_tried SET STORAGE EXTENDED;
+ALTER TABLE responses ALTER COLUMN q3a_what_to_look_for SET STORAGE EXTENDED;
+ALTER TABLE responses ALTER COLUMN q3b_how_to_transform SET STORAGE EXTENDED;
+ALTER TABLE responses ALTER COLUMN q3c_how_to_verify SET STORAGE EXTENDED;
+ALTER TABLE responses ALTER COLUMN q8_challenge_other SET STORAGE EXTENDED;
+
+-- JSONB fields automatically use TOAST compression

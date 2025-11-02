@@ -184,18 +184,17 @@ app.post('/api/verify-turnstile', async (req, res) => {
 });
 
 // =====================================================
-// Participant Management
+// Participant Management (OPTIMIZED)
 // =====================================================
 
 // Create or get participant
 app.post('/api/participants', 
   body('sessionId').optional().isLength({ min: 10, max: 100 }),
-  body('demographics').optional().isObject(),
   handleValidationErrors,
   async (req, res) => {
     try {
       const participantId = req.body.participantId || generateParticipantId(req);
-      const { sessionId, demographics = {} } = req.body;
+      const { sessionId } = req.body;
       
       // Check if participant exists
       const existingParticipant = await db.query(
@@ -217,7 +216,7 @@ app.post('/api/participants',
         });
       }
       
-      // Create new participant
+      // OPTIMIZED: Removed demographic fields
       const ipHash = hashData(req.ip || 'unknown');
       const userAgentHash = hashData(req.headers['user-agent'] || 'unknown');
       
@@ -227,25 +226,17 @@ app.post('/api/participants',
           session_id,
           ip_address_hash,
           user_agent_hash,
-          age_range,
-          gender,
-          education_level,
-          country,
-          platform_source,
           registration_date,
           last_active_date,
-          consent_timestamp
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          consent_timestamp,
+          data_sharing_consent,
+          platform_source
+        ) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, FALSE, 'direct')
       `, [
         participantId,
         sessionId,
         ipHash,
-        userAgentHash,
-        demographics.age_range || null,
-        demographics.gender || null,
-        demographics.education_level || null,
-        demographics.country || null,
-        'direct'
+        userAgentHash
       ]);
       
       res.json({
@@ -262,7 +253,7 @@ app.post('/api/participants',
 );
 
 // =====================================================
-// Task Management
+// Task Management (OPTIMIZED)
 // =====================================================
 
 // Get random task (updated to save to database)
@@ -300,7 +291,7 @@ app.get('/api/arc-tasks/:taskId', async (req, res) => {
   }
 });
 
-// Helper function to ensure task exists in database
+// Helper function to ensure task exists in database (OPTIMIZED)
 async function ensureTaskInDatabase(taskData) {
   try {
     const existing = await db.query(
@@ -309,7 +300,7 @@ async function ensureTaskInDatabase(taskData) {
     );
     
     if (existing.rows.length === 0) {
-      // Insert task into database
+      // OPTIMIZED: Removed analytical fields
       await db.query(`
         INSERT INTO tasks (
           task_id,
@@ -320,19 +311,17 @@ async function ensureTaskInDatabase(taskData) {
           ground_truth_output,
           number_of_examples,
           created_date,
-          source,
-          task_validated
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, $8, TRUE)
+          source
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, 'arc_original')
         ON CONFLICT (task_id) DO NOTHING
       `, [
         taskData.id,
         taskData.type,
-        JSON.stringify(taskData.input),
+        JSON.stringify(taskData.input),   // PostgreSQL converts to JSONB automatically
         JSON.stringify(taskData.output),
         JSON.stringify(taskData.test[0]?.input || null),
         JSON.stringify(taskData.test[0]?.output || null),
-        taskData.train.length,
-        'arc_original'
+        taskData.train.length
       ]);
     }
   } catch (error) {
@@ -342,7 +331,7 @@ async function ensureTaskInDatabase(taskData) {
 }
 
 // =====================================================
-// Data Submission (WITH BOT PROTECTION)
+// Data Submission (OPTIMIZED)
 // =====================================================
 
 // Submit complete questionnaire response
@@ -361,13 +350,11 @@ app.post('/api/submissions',
       const {
         participantId,
         taskId,
-        taskType,
         verificationSessionId,
         phase1_main_idea,
         phase2_solving_process,
         phase3_post_solving,
         phase4_reflection,
-        submissionTimestamp,
         totalTimeSeconds
       } = req.body;
 
@@ -427,7 +414,7 @@ app.post('/api/submissions',
       }
       
       await db.transaction(async (client) => {
-        // 1. Create task attempt
+        // 1. Create task attempt (OPTIMIZED)
         const attemptId = db.generateId('attempt');
         
         await client.query(`
@@ -440,11 +427,8 @@ app.post('/api/submissions',
             duration_seconds,
             submitted_solution,
             is_correct,
-            correctness_score,
-            device_type,
-            browser,
             attempt_status
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'completed')
         `, [
           attemptId,
           participantId,
@@ -452,15 +436,12 @@ app.post('/api/submissions',
           new Date(Date.now() - (totalTimeSeconds * 1000)),
           new Date(),
           totalTimeSeconds,
-          JSON.stringify(phase2_solving_process.solutionGrid),
-          phase2_solving_process.isCorrect,
-          phase2_solving_process.isCorrect ? 1.0 : 0.0,
-          'desktop', // TODO: Detect from user agent
-          req.headers['user-agent']?.split(' ')[0] || 'unknown',
-          'completed'
+          JSON.stringify(phase2_solving_process.solutionGrid),  // PostgreSQL converts to JSONB
+          phase2_solving_process.isCorrect
+          // OPTIMIZED: Removed attempt_number, correctness_score, device_type, browser, screen_resolution
         ]);
         
-        // 2. Create response record (UPDATED FOR CONDITIONAL PHASE 3)
+        // 2. Create response record
         const responseId = db.generateId('response');
 
         await client.query(`
@@ -497,7 +478,7 @@ app.post('/api/submissions',
         ]);
         
 
-        // 3. Insert action traces (HANDLES ALL ACTION TYPES)
+        // 3. Insert action traces (OPTIMIZED)
         if (phase2_solving_process.actionLog && phase2_solving_process.actionLog.length > 0) {
           for (const action of phase2_solving_process.actionLog) {
             const actionId = db.generateId('action');
@@ -541,7 +522,6 @@ app.post('/api/submissions',
               });
               
             } else if (action.type === 'select_region') {
-              // Handle select region action
               gridStateAfter = JSON.stringify({
                 actionType: 'select_region',
                 startRow: action.startRow,
@@ -553,13 +533,14 @@ app.post('/api/submissions',
               });
               
             } else if (action.type === 'fill_all') {
-              // Handle fill all action
               gridStateAfter = JSON.stringify({
                 actionType: 'fill_all',
                 color: action.color
               });
             }
             
+            // OPTIMIZED: Removed grid_state_before, is_correction, pause_before_action_ms, timestamp_absolute
+            // RENAMED: timestamp_relative_ms → timestamp_ms
             await client.query(`
               INSERT INTO action_traces (
                 action_id,
@@ -570,21 +551,19 @@ app.post('/api/submissions',
                 cell_column,
                 color_value_before,
                 color_value_after,
-                timestamp_relative_ms,
-                timestamp_absolute,
+                timestamp_ms,
                 grid_state_after
-              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             `, [
               actionId,
               attemptId,
               action.actionNumber,
               action.type,
-              cellRow,           
-              cellColumn,        
-              oldValue,          
-              newValue,          
-              action.timestamp - Date.now() + (totalTimeSeconds * 1000),
-              new Date(action.timestamp),
+              cellRow,
+              cellColumn,
+              oldValue,
+              newValue,
+              action.timestamp - Date.now() + (totalTimeSeconds * 1000),  // Milliseconds since attempt start
               gridStateAfter
             ]);
           }
@@ -663,7 +642,6 @@ app.get('/api/export/training-data', async (req, res) => {
     `, [limit]);
     
     if (format === 'csv') {
-      // Convert to CSV format (simplified)
       const csv = convertToCSV(result.rows);
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', 'attachment; filename=arc_training_data.csv');
