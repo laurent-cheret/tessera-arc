@@ -478,11 +478,9 @@ app.post('/api/submissions',
         ]);
         
 
-        // 3. Insert action traces (OPTIMIZED)
+        // 3. Insert action traces (OPTIMIZED - NO action_id)
         if (phase2_solving_process.actionLog && phase2_solving_process.actionLog.length > 0) {
           for (const action of phase2_solving_process.actionLog) {
-            const actionId = db.generateId('action');
-            
             let cellRow = null;
             let cellColumn = null;
             let oldValue = null;
@@ -539,11 +537,9 @@ app.post('/api/submissions',
               });
             }
             
-            // OPTIMIZED: Removed grid_state_before, is_correction, pause_before_action_ms, timestamp_absolute
-            // RENAMED: timestamp_relative_ms → timestamp_ms
+            // OPTIMIZED: No action_id - using composite primary key (attempt_id + sequence_number)
             await client.query(`
               INSERT INTO action_traces (
-                action_id,
                 attempt_id,
                 sequence_number,
                 action_type,
@@ -553,9 +549,8 @@ app.post('/api/submissions',
                 color_value_after,
                 timestamp_ms,
                 grid_state_after
-              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             `, [
-              actionId,
               attemptId,
               action.actionNumber,
               action.type,

@@ -178,17 +178,12 @@ CREATE INDEX idx_responses_revised ON responses(q9_hypothesis_revised);
 -- OPTIMIZED: Using SMALLINT for smaller numbers
 
 CREATE TABLE IF NOT EXISTS action_traces (
-    -- Primary Key
-    action_id                   VARCHAR(50) PRIMARY KEY,
-    
-    -- Foreign Key
-    attempt_id                  VARCHAR(50) REFERENCES task_attempts(attempt_id) ON DELETE CASCADE,
-    
-    -- Action Sequence
+    -- Composite Primary Key (saves ~50 bytes per row by removing action_id!)
+    attempt_id                  VARCHAR(50) NOT NULL REFERENCES task_attempts(attempt_id) ON DELETE CASCADE,
     sequence_number             SMALLINT NOT NULL,  -- Max ~32k actions per attempt
     
     -- Action Details
-    action_type                 VARCHAR(20) NOT NULL,  -- Reduced from 50
+    action_type                 VARCHAR(20) NOT NULL,
     
     -- Spatial Information (NULL for non-cell actions)
     cell_row                    SMALLINT,
@@ -204,12 +199,11 @@ CREATE TABLE IF NOT EXISTS action_traces (
     -- State Snapshot (compressed JSON, only for key actions)
     grid_state_after            JSONB,
     
-    CONSTRAINT action_sequence_order UNIQUE(attempt_id, sequence_number)
+    -- Define composite primary key
+    PRIMARY KEY (attempt_id, sequence_number)
 );
 
 -- Indexes
-CREATE INDEX idx_actions_attempt ON action_traces(attempt_id);
-CREATE INDEX idx_actions_sequence ON action_traces(attempt_id, sequence_number);
 CREATE INDEX idx_actions_type ON action_traces(action_type);
 
 -- =====================================================
