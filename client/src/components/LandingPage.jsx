@@ -309,7 +309,7 @@ const LandingPage = ({ onStartParticipation }) => {
               gap: '10px'
             }}>
               <span style={{ fontSize: '28px' }}>💡</span>
-              Why the Teaching Approach?
+              Why the Instructing Approach?
             </h4>
             <p style={{ 
               fontSize: '16px',
@@ -317,7 +317,7 @@ const LandingPage = ({ onStartParticipation }) => {
               marginBottom: '15px',
               color: 'rgba(255,255,255,0.95)'
             }}>
-              The L-ARC study showed that when humans teach each other how to solve ARC tasks, they naturally provide three essential components: <strong style={{ color: '#ffd700' }}>framing</strong> (what to look for), <strong style={{ color: '#ffd700' }}>procedure</strong> (how to transform), and <strong style={{ color: '#ffd700' }}>validation</strong> (how to verify). This structured approach achieved 88% communication success.
+              The L-ARC study showed that when humans instruct each other how to solve ARC tasks, they naturally provide three essential components: <strong style={{ color: '#ffd700' }}>framing</strong> (what to look for), <strong style={{ color: '#ffd700' }}>procedure</strong> (how to transform), and <strong style={{ color: '#ffd700' }}>validation</strong> (how to verify). This structured approach achieved 88% communication success.
             </p>
             <p style={{ 
               fontSize: '16px',

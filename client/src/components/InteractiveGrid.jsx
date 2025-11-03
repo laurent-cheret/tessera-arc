@@ -208,6 +208,35 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
     const minCol = Math.min(selectionStart.col, selectionEnd.col);
     const maxCol = Math.max(selectionStart.col, selectionEnd.col);
 
+    // Check if this is a single cell selection (1x1)
+    const isSingleCell = (minRow === maxRow) && (minCol === maxCol);
+
+    // For single cell: check if it's redundant
+    if (isSingleCell) {
+      const oldValue = grid[minRow][minCol];
+      if (oldValue === selectedColor) {
+        console.log('Skipped redundant single cell selection: cell already has this color');
+        return;
+      }
+    } else {
+      // For multi-cell selection: check if all cells already have the selected color
+      let allAlreadySelectedColor = true;
+      for (let rIdx = minRow; rIdx <= maxRow; rIdx++) {
+        for (let cIdx = minCol; cIdx <= maxCol; cIdx++) {
+          if (grid[rIdx][cIdx] !== selectedColor) {
+            allAlreadySelectedColor = false;
+            break;
+          }
+        }
+        if (!allAlreadySelectedColor) break;
+      }
+      
+      if (allAlreadySelectedColor) {
+        console.log('Skipped redundant selection: all cells in region already have this color');
+        return;
+      }
+    }
+
     const newGrid = grid.map((row, rIdx) =>
       row.map((cell, cIdx) => {
         if (rIdx >= minRow && rIdx <= maxRow && cIdx >= minCol && cIdx <= maxCol) {
@@ -220,16 +249,30 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
     updateGrid(newGrid);
 
     if (onAction) {
-      onAction({
-        type: 'select_region',
-        startRow: minRow,
-        startCol: minCol,
-        endRow: maxRow,
-        endCol: maxCol,
-        color: selectedColor,
-        cellsAffected: (maxRow - minRow + 1) * (maxCol - minCol + 1),
-        timestamp: Date.now()
-      });
+      if (isSingleCell) {
+        // Use the same format as Edit tool for single cell
+        const oldValue = grid[minRow][minCol];
+        onAction({
+          type: 'cell_change',
+          row: minRow,
+          col: minCol,
+          oldValue,
+          newValue: selectedColor,
+          timestamp: Date.now()
+        });
+      } else {
+        // Use select_region format for multi-cell selections
+        onAction({
+          type: 'select_region',
+          startRow: minRow,
+          startCol: minCol,
+          endRow: maxRow,
+          endCol: maxCol,
+          color: selectedColor,
+          cellsAffected: (maxRow - minRow + 1) * (maxCol - minCol + 1),
+          timestamp: Date.now()
+        });
+      }
     }
   };
 
