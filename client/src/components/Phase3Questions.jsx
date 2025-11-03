@@ -152,7 +152,7 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
 
   return (
     <div className="phase3-questions">
-      <h2>{isCorrect ? '👨‍🏫 Teaching Someone to Solve This' : '🤔 About Your Attempt'}</h2>
+      <h2>{isCorrect ? '👨‍🏫 Instructing Someone to Solve This' : '🤔 About Your Attempt'}</h2>
       <p className="phase-intro">
         {isCorrect 
           ? "Great job! Now help others learn from your success."
@@ -162,7 +162,7 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
 
       {/* Q9: Strategy Revision (ALWAYS SHOWN) */}
       <div className="question-block">
-        <h3>Did you change your mind about the pattern while solving?</h3>
+        <h3>Did you change your mind about the main idea of the puzzle?</h3>
         
         {errors.hypothesisRevised && <div className="error-message">{errors.hypothesisRevised}</div>}
         
@@ -211,7 +211,7 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
           <div className="teaching-context-box">
             <div className="context-header">
               <span className="context-emoji">👥</span>
-              <h3>Imagine Teaching a Friend</h3>
+              <h3>Imagine Instructing a Friend</h3>
             </div>
             
             <div className="context-explanation">
@@ -244,7 +244,7 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
               <h3>👀 What should they look for first?</h3>
             </div>
             <p className="question-hint">
-              What features should they notice in <strong>this specific test input</strong>? (objects, colors, positions, relationships)
+              What things should they notice in <strong>this specific test input</strong>? (objects, colors, positions, relationships)
             </p>
             
             {errors.whatToLookFor && <div className="error-message">{errors.whatToLookFor}</div>}
