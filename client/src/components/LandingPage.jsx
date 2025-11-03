@@ -246,9 +246,6 @@ const LandingPage = ({ onStartParticipation }) => {
         {/* How You Can Contribute - UPDATED */}
         <div className="content-card highlight">
           <h2>📝 How You Can Contribute</h2>
-          <p>
-            Inspired by the L-ARC study's finding that humans communicate solutions through structured teaching, we've designed a process that captures how you would explain your solution to a friend:
-          </p>
           <div className="steps-grid-animated">
             
             {/* Step 1: Observe */}
@@ -280,8 +277,8 @@ const LandingPage = ({ onStartParticipation }) => {
             <div className="step-animated">
               <span className="step-number">3</span>
               <div className="step-content">
-                <h3>👨‍🏫 Teach</h3>
-                <p>Imagine teaching a friend who can only see the test input—guide them step-by-step to your solution</p>
+                <h3>👨‍🏫 Instruct</h3>
+                <p>Imagine instructing a friend who can only see the test input—guide them step-by-step to produce your exact solution</p>
                 <TypewriterAnimation 
                   phrases={teachPhrases}
                   speed={50}
@@ -335,7 +332,7 @@ const LandingPage = ({ onStartParticipation }) => {
           <div className="time-commitment">
             <span className="time-icon">⏱️</span>
             <div>
-              <strong>Time commitment:</strong> 10-15 minutes per puzzle<br />
+              <strong>Time commitment:</strong> 5-10 minutes per puzzle<br />
               <span className="subtext">Solve as many or as few as you like!</span>
             </div>
           </div>
@@ -386,7 +383,7 @@ const LandingPage = ({ onStartParticipation }) => {
               Research shows that successful human-to-human communication about ARC tasks requires much more than just describing the transformation steps. The <a href="https://arxiv.org/abs/2106.07824" target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none' }}>L-ARC study</a> revealed that approximately two-thirds of effective instructions consist of framing (setting context) and validation (providing checks)—not just the procedure itself.
             </p>
             <p style={{ fontSize: '16px', lineHeight: '1.7', color: '#495057', marginBottom: '0' }}>
-              This is why we ask you to <strong>teach</strong> rather than just describe. Teaching naturally elicits the complete cognitive framework: what to focus on, how to transform it, and how to verify correctness. This structured communication captures the rich, ambiguous, yet remarkably effective way humans share complex reasoning.
+              This is why we ask you to <strong>instruct</strong>. Teaching naturally elicits the complete cognitive framework: what to focus on, how to transform it, and how to verify correctness. This structured communication captures the rich, ambiguous, yet remarkably effective way humans share complex reasoning.
             </p>
           </div>
 
@@ -404,12 +401,6 @@ const LandingPage = ({ onStartParticipation }) => {
             Based on François Chollet's <em>On the Measure of Intelligence</em> (2019)<br />
             <a href="https://arxiv.org/abs/1911.01547" target="_blank" rel="noopener noreferrer">
               arXiv:1911.01547
-            </a>
-          </p>
-          <p className="research-citation">
-            Teaching methodology inspired by Acquaviva et al.'s <em>Communicating Natural Programs to Humans and Machines</em> (2021)<br />
-            <a href="https://arxiv.org/abs/2106.07824" target="_blank" rel="noopener noreferrer">
-              arXiv:2106.07824
             </a>
           </p>
         </div>
