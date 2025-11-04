@@ -312,6 +312,15 @@
     background-color: #138496;
   }
   
+
+  .clear-btn {
+    background-color: #ffc107;
+  }
+  
+  .clear-btn:hover {
+    background-color: #e0a800;
+  }
+  
   .grid-info {
     text-align: center;
     margin-top: 10px;
@@ -323,6 +332,8 @@
     font-size: 14px;
     font-weight: 500;
   }
+
+
   
   /* ============================================
      MOBILE OPTIMIZATIONS

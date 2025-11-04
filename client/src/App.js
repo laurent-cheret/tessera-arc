@@ -163,7 +163,12 @@ function App() {
         if (data.task.test && data.task.test[0]) {
           const testInput = data.task.test[0].input;
           setTestInputGrid(testInput);
-          setUserGrid(testInput.map(row => [...row]));
+          // setUserGrid(testInput.map(row => [...row])); ## START WITH TEST OUTPUT EQUAL TO INPUT
+          setUserGrid([
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+          ]);
         }
         
         // Reset solving state

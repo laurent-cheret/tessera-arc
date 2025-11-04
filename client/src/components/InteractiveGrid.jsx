@@ -362,14 +362,40 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
            colIndex >= minCol && colIndex <= maxCol;
   };
 
-  const resetGrid = () => {
+  // NEW: Clear Grid - Fills current grid with zeros (keeps dimensions)
+  const clearGrid = () => {
     if (isGridAllZeros(grid)) {
-      console.log('Skipped redundant reset: grid is already empty');
+      console.log('Skipped redundant clear: grid is already empty');
       return;
     }
     
     const emptyGrid = grid.map(row => row.map(() => 0));
     updateGrid(emptyGrid);
+
+    if (onAction) {
+      onAction({
+        type: 'clear',
+        timestamp: Date.now()
+      });
+    }
+  };
+
+  // MODIFIED: Reset Grid - Returns to initial 3×3 black grid (global starting state)
+  const resetGrid = () => {
+    // Check if already at the initial 3x3 black state
+    if (grid.length === 3 && grid[0]?.length === 3 && isGridAllZeros(grid)) {
+      console.log('Skipped redundant reset: grid is already at initial 3×3 black state');
+      return;
+    }
+    
+    // Reset to 3x3 black grid (the global initial state)
+    const initialState = [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0]
+    ];
+    
+    updateGrid(initialState);
 
     if (onAction) {
       onAction({
@@ -550,8 +576,11 @@ const InteractiveGrid = ({ initialGrid, currentGrid, onGridChange, onAction }) =
           <button className="tool-btn resize-btn" onClick={handleResize}>
             📐 Resize Grid
           </button>
+          <button className="tool-btn clear-btn" onClick={clearGrid}>
+            🧹 Clear Grid
+          </button>
           <button className="tool-btn reset-btn" onClick={resetGrid}>
-            🔄 Reset Grid
+            🔄 Reset
           </button>
         </div>
         
