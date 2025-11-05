@@ -431,7 +431,7 @@ function App() {
         timestamp: Date.now()
       });
       
-      alert(`Incorrect! Grid size doesn't match.\nYour grid: ${userGrid.length}×${userGrid[0].length}\nExpected: ${correctOutput.length}×${correctOutput[0].length}`);
+      // alert(`Incorrect! Grid size doesn't match.\nYour grid: ${userGrid.length}×${userGrid[0].length}\nExpected: ${correctOutput.length}×${correctOutput[0].length}`);
       return;
     }
 
@@ -478,7 +478,7 @@ function App() {
       }, 2000);
       
     } else {
-      alert(`Not quite right! ${incorrectCells} cell${incorrectCells !== 1 ? 's' : ''} incorrect. Keep trying!`);
+      // alert(`Not quite right! ${incorrectCells} cell${incorrectCells !== 1 ? 's' : ''} incorrect. Keep trying!`);
     }
   };
 

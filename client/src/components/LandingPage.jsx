@@ -161,10 +161,10 @@ const LandingPage = ({ onStartParticipation }) => {
               <div className="weakness-box weakness-2">
                 <h4>2. The Conceptual Ceiling</h4>
                 <p>
-                  State-of-the-art systems are trained on up to <strong>400,000 synthetic ARC-like problems</strong>. Yet these all derive from just <strong>100-160 human-written "seed" programs</strong>—basic concepts manually coded by researchers like "move the largest object down" or "change color to blue."
+                  State-of-the-art systems are trained on up to <strong>400,000 synthetic ARC-like problems</strong>. Yet these all derive from just <strong>100-160 human-written "seed" programs</strong>—basic concepts manually coded by <a href="https://arxiv.org/abs/2411.02272" target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none' }}>researchers</a> like "move the largest object down" or "change color to blue."
                 </p>
                 <p>
-                  The AI becomes a brilliant remix artist using techniques like RRAG (retrieval-augmented generation), combining concepts but unable to invent genuinely new ones. No amount of computational remixing can teach the AI about "yellow" if it was only given "red" and "blue" to start with.
+                  The AI becomes a brilliant remix artist using techniques like RAG (retrieval-augmented generation), combining concepts but unable to invent genuinely new ones. No amount of computational remixing can teach the AI about "yellow" if it was only given "red" and "blue" to start with.
                 </p>
               </div>
 
