@@ -364,7 +364,7 @@ const LandingPage = ({ onStartParticipation }) => {
             The Philosophy Behind Tessera-ARC
           </h4>
           <p style={{ fontSize: '16px', lineHeight: '1.7', color: '#495057' }}>
-            In order to build machines with human-like intelligence, we must teach them the <em>whole process</em>—not just the final answer, but how we get there.
+          In order to build machines that succeed at feats of human intelligence, there's potentially value in the whole process—not just the final answer, but how we get there.
           </p>
           
           <div style={{ background: '#f8f9fa', padding: '20px', borderRadius: '10px', marginBottom: '20px' }}>
