@@ -6,6 +6,7 @@ import './LandingPage.css';
 
 const LandingPage = ({ onStartParticipation }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
 
   // Phrases for observe phase
   const observePhrases = [
@@ -410,7 +411,7 @@ const LandingPage = ({ onStartParticipation }) => {
           <h2>👥 About Us</h2>
           <div style={{ marginBottom: '20px' }}>
             <p style={{ fontSize: '16px', lineHeight: '1.7', color: '#495057' }}>
-              My name is <strong>Laurent Cheret</strong>, and I'm a PhD candidate at the University of Ottawa. My research explores the intersection of deep learning, generative models, and the integration of geometrical and topological knowledge into AI systems.
+              My name is <strong>Laurent Cheret</strong>, and I'm a PhD candidate at the University of Ottawa, supervised by Professors <a href="https://frasermaia.github.io/" target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none' }}>Maia Fraser</a> and <a href="https://www.uottawa.ca/faculty-engineering/school-electrical-engineering-computer-science/directory/hussein-al-osman" target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none' }}>Hussein Al Osman</a>. My research explores the intersection of deep learning, generative models, and the integration of geometrical and topological knowledge into AI systems.
             </p>
           </div>
           
@@ -439,38 +440,64 @@ const LandingPage = ({ onStartParticipation }) => {
             }}>
               Interested in collaborating, contributing, or learning more about the project?
             </p>
-            <a 
-              href="mailto:tesseraarc@gmail.com"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '12px 24px',
-                background: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '600',
-                backdropFilter: 'blur(10px)',
-                border: '2px solid rgba(255,255,255,0.3)',
-                transition: 'all 0.3s'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/>
-              </svg>
-              tesseraarc@gmail.com
-            </a>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText('tesseraarc@gmail.com');
+                  setEmailCopied(true);
+                  setTimeout(() => setEmailCopied(false), 2000);
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '12px 24px',
+                  background: 'rgba(255,255,255,0.2)',
+                  color: 'white',
+                  textDecoration: 'none',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  backdropFilter: 'blur(10px)',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  transition: 'all 0.3s',
+                  cursor: 'pointer'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                tesseraarc@gmail.com
+              </button>
+              
+              {emailCopied && (
+                <div style={{
+                  position: 'absolute',
+                  top: '-40px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: '#4CAF50',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                }}>
+                  ✓ Copied to clipboard!
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
