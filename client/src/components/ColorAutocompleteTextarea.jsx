@@ -214,14 +214,14 @@ const ColorAutocompleteTextarea = ({
     setShowDropdown(false);
     setCurrentWordInfo(null);
     
-    // Move cursor after the inserted color
-    setTimeout(() => {
+    // Move cursor after the inserted color - use requestAnimationFrame for reliability
+    requestAnimationFrame(() => {
       if (textareaRef.current) {
-        const newPos = currentWordInfo.start + colorName.length + 3; // [COLOR] + space
+        const newPos = currentWordInfo.start + colorName.length + 1; // COLOR + space
         textareaRef.current.focus();
         textareaRef.current.setSelectionRange(newPos, newPos);
       }
-    }, 0);
+    });
   };
 
   // Handle text change
@@ -267,7 +267,7 @@ const ColorAutocompleteTextarea = ({
       const matchedColor = findMatchingColor(fullWord);
       
       if (matchedColor) {
-        // Auto-replace with extra space after
+        // Auto-replace with space after
         const before = newValue.substring(0, phraseStart);
         const after = newValue.substring(cursorPos);
         const replaced = before + `${matchedColor} ` + after;
@@ -277,12 +277,14 @@ const ColorAutocompleteTextarea = ({
         
         setShowDropdown(false);
         
-        setTimeout(() => {
+        // Use requestAnimationFrame for more reliable cursor positioning
+        requestAnimationFrame(() => {
           if (textareaRef.current) {
-            const newPos = phraseStart + matchedColor.length + 3; // [COLOR] + space
+            const newPos = phraseStart + matchedColor.length + 1; // COLOR + space
+            textareaRef.current.focus();
             textareaRef.current.setSelectionRange(newPos, newPos);
           }
-        }, 0);
+        });
         return;
       }
     }
