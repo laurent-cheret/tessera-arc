@@ -7,6 +7,8 @@ const Phase4Questions = ({ onComplete, initialData }) => {
   const [challengeOther, setChallengeOther] = useState(initialData?.challengeOther || '');
   const [errors, setErrors] = useState({});
 
+  const MAX_CHARS_OTHER = 200; // NEW: Character limit for "other" field
+
   const challengeOptions = [
     { value: 'object_identification', label: 'Hard to identify what counted as an "object"' },
     { value: 'spatial_complexity', label: 'Confusing spatial relationships' },
@@ -28,6 +30,16 @@ const Phase4Questions = ({ onComplete, initialData }) => {
     }
   };
 
+  // NEW: Character-enforced handler
+  const handleChallengeOtherChange = (e) => {
+    const newValue = e.target.value;
+    
+    // Enforce character limit (but allow deletion)
+    if (newValue.length <= MAX_CHARS_OTHER || newValue.length < challengeOther.length) {
+      setChallengeOther(newValue);
+    }
+  };
+
   const validate = () => {
     const newErrors = {};
     
@@ -41,6 +53,11 @@ const Phase4Questions = ({ onComplete, initialData }) => {
 
     if (challengeFactors.includes('other') && !challengeOther.trim()) {
       newErrors.challengeOther = 'Please describe the other challenge you faced.';
+    }
+    
+    // NEW: Validate character count
+    if (challengeFactors.includes('other') && challengeOther.length > MAX_CHARS_OTHER) {
+      newErrors.challengeOther = `Your response is too long (${challengeOther.length} characters). Please keep it under ${MAX_CHARS_OTHER} characters.`;
     }
     
     setErrors(newErrors);
@@ -57,6 +74,13 @@ const Phase4Questions = ({ onComplete, initialData }) => {
       };
       onComplete(data);
     }
+  };
+
+  // NEW: Character counter class
+  const getCharCounterClass = () => {
+    if (challengeOther.length > MAX_CHARS_OTHER) return 'char-counter-error';
+    if (challengeOther.length >= MAX_CHARS_OTHER - 20) return 'char-counter-warning';
+    return 'char-counter-normal';
   };
 
   return (
@@ -118,9 +142,12 @@ const Phase4Questions = ({ onComplete, initialData }) => {
                       type="text"
                       placeholder="Describe what made it challenging..."
                       value={challengeOther}
-                      onChange={(e) => setChallengeOther(e.target.value)}
-                      maxLength={200}
+                      onChange={handleChallengeOtherChange}
                     />
+                    {/* NEW: Character counter */}
+                    <div className={`char-counter ${getCharCounterClass()}`}>
+                      {challengeOther.length} / {MAX_CHARS_OTHER} characters
+                    </div>
                     {errors.challengeOther && (
                       <div className="error-message-small">{errors.challengeOther}</div>
                     )}

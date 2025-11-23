@@ -8,6 +8,7 @@ const Phase1Questions = ({ onComplete, initialData }) => {
 
   const MAX_WORDS = 40;
   const MIN_WORDS = 10;
+  const MAX_CHARS = 500; // NEW: Character limit
 
   const getWordCount = (text) => {
     return text.trim().split(/\s+/).filter(w => w.length > 0).length;
@@ -16,8 +17,15 @@ const Phase1Questions = ({ onComplete, initialData }) => {
   const handleTextChange = (e) => {
     const newText = e.target.value;
     const wordCount = getWordCount(newText);
+    const charCount = newText.length;
     
-    // Enforce hard limit - prevent typing beyond MAX_WORDS
+    // NEW: Enforce character limit first
+    if (charCount > MAX_CHARS && newText.length > mainIdea.length) {
+      // Prevent typing beyond character limit (but allow deletion)
+      return;
+    }
+    
+    // Then enforce word limit
     if (wordCount <= MAX_WORDS) {
       setMainIdea(newText);
       setError('');
@@ -30,6 +38,13 @@ const Phase1Questions = ({ onComplete, initialData }) => {
 
   const handleSubmit = () => {
     const wordCount = getWordCount(mainIdea);
+    const charCount = mainIdea.length;
+    
+    // NEW: Validate character count
+    if (charCount > MAX_CHARS) {
+      setError(`Your response is too long (${charCount} characters). Please keep it under ${MAX_CHARS} characters.`);
+      return;
+    }
     
     if (wordCount < MIN_WORDS) {
       setError(`Please write at least ${MIN_WORDS} words describing the main idea.`);
@@ -42,6 +57,7 @@ const Phase1Questions = ({ onComplete, initialData }) => {
   };
 
   const wordCount = getWordCount(mainIdea);
+  const charCount = mainIdea.length; // NEW
   
   const getWordCounterClass = () => {
     if (wordCount < MIN_WORDS) return 'word-counter-low';
@@ -60,6 +76,13 @@ const Phase1Questions = ({ onComplete, initialData }) => {
       return `${wordCount} / ${MAX_WORDS} words (${MAX_WORDS - wordCount} remaining)`;
     }
     return `${wordCount} / ${MAX_WORDS} words ✓`;
+  };
+
+  // NEW: Character counter styling
+  const getCharCounterClass = () => {
+    if (charCount > MAX_CHARS) return 'char-counter-error';
+    if (charCount >= MAX_CHARS - 50) return 'char-counter-warning';
+    return 'char-counter-normal';
   };
 
   return (
@@ -84,8 +107,14 @@ const Phase1Questions = ({ onComplete, initialData }) => {
           className="main-idea-textarea"
         />
         
-        <div className={`word-counter ${getWordCounterClass()}`}>
-          {getWordCounterText()}
+        {/* NEW: Combined counter display */}
+        <div className="counter-container">
+          <div className={`word-counter ${getWordCounterClass()}`}>
+            {getWordCounterText()}
+          </div>
+          <div className={`char-counter ${getCharCounterClass()}`}>
+            {charCount} / {MAX_CHARS} characters
+          </div>
         </div>
         
         <div className="helpful-hints">
@@ -104,7 +133,7 @@ const Phase1Questions = ({ onComplete, initialData }) => {
         <button 
           className="continue-btn"
           onClick={handleSubmit}
-          disabled={wordCount < MIN_WORDS}
+          disabled={wordCount < MIN_WORDS || charCount > MAX_CHARS}
         >
           Continue to Solving →
         </button>

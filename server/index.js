@@ -105,6 +105,34 @@ const handleValidationErrors = (req, res, next) => {
 };
 
 // =====================================================
+// NEW: CHARACTER LIMIT VALIDATION
+// =====================================================
+
+function validateTextLengths(data) {
+  const limits = {
+    q1_main_idea: 500,
+    q3_what_you_tried: 600,
+    q3a_what_to_look_for: 400,
+    q3b_how_to_transform: 400,
+    q3c_how_to_verify: 400,
+    q9_revision_reason: 300,
+    q8_challenge_other: 200
+  };
+
+  for (const [field, maxLength] of Object.entries(limits)) {
+    if (data[field] && data[field].length > maxLength) {
+      return {
+        valid: false,
+        field,
+        message: `${field} exceeds maximum length of ${maxLength} characters (got ${data[field].length})`
+      };
+    }
+  }
+
+  return { valid: true };
+}
+
+// =====================================================
 // Basic Routes
 // =====================================================
 
@@ -331,7 +359,7 @@ async function ensureTaskInDatabase(taskData) {
 }
 
 // =====================================================
-// Data Submission (OPTIMIZED)
+// Data Submission (OPTIMIZED + CHARACTER VALIDATION)
 // =====================================================
 
 // Submit complete questionnaire response
@@ -387,6 +415,32 @@ app.post('/api/submissions',
 
       console.log('✅ Turnstile session validated:', verificationSessionId);
       console.log('   Session age:', Math.floor((Date.now() - sessionTimestamp) / 60000), 'minutes');
+      
+      // ========================================
+      // NEW: CHARACTER LIMIT VALIDATION
+      // ========================================
+      const validation = validateTextLengths({
+        q1_main_idea: phase1_main_idea,
+        q3_what_you_tried: phase3_post_solving.q3_what_you_tried,
+        q3a_what_to_look_for: phase3_post_solving.q3a_what_to_look_for,
+        q3b_how_to_transform: phase3_post_solving.q3b_how_to_transform,
+        q3c_how_to_verify: phase3_post_solving.q3c_how_to_verify,
+        q9_revision_reason: phase3_post_solving.q9_revision_reason,
+        q8_challenge_other: phase4_reflection.q8_challenge_other
+      });
+
+      if (!validation.valid) {
+        console.warn('🚫 Submission blocked: Character limit exceeded');
+        console.log('   Field:', validation.field);
+        console.log('   Message:', validation.message);
+        return res.status(400).json({
+          error: 'Text length validation failed',
+          details: validation.message,
+          field: validation.field
+        });
+      }
+
+      console.log('✅ Character limits validated');
       
       // ========================================
       // PHASE 3 VALIDATION: Conditional based on correctness
@@ -743,6 +797,7 @@ const startServer = async () => {
       console.log(`🎯 Tasks loaded: ${taskLoader.getTaskCount()}`);
       console.log(`🛡️  Bot protection: Cloudflare Turnstile + Honeypots ENABLED`);
       console.log(`🔐 Turnstile key configured: ${process.env.TURNSTILE_SECRET_KEY ? 'YES' : 'NO'}`);
+      console.log(`🔒 Character limits: ENFORCED (500-600 chars per field)`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

@@ -16,6 +16,13 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
   
   const [errors, setErrors] = useState({});
   
+  // NEW: Character limits for all fields
+  const MAX_CHARS = {
+    teaching: 400,      // Q3a/b/c (10-40 words)
+    whatYouTried: 600,  // Q3 incorrect (10-60 words)
+    revision: 300       // Q9 revision reason
+  };
+  
   // Official ARC color palette
   const colors = {
     0: '#000000', 1: '#0074D9', 2: '#FF4136', 3: '#2ECC40', 4: '#FFDC00',
@@ -26,12 +33,21 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
     return text.trim().split(/\s+/).filter(w => w.length > 0).length;
   };
 
-  const enforceWordLimit = (text, currentText, maxWords) => {
+  // NEW: Enhanced enforce function with character limit
+  const enforceWordLimit = (text, currentText, maxWords, maxChars) => {
+    const charCount = text.length;
+    
+    // Enforce character limit first
+    if (charCount > maxChars && text.length > currentText.length) {
+      return currentText; // Prevent typing beyond character limit
+    }
+    
+    // Then enforce word limit
     const wordCount = getWordCount(text);
     if (wordCount <= maxWords) {
       return text;
     } else if (text.length < currentText.length) {
-      return text;
+      return text; // Allow deletion
     }
     return currentText;
   };
@@ -47,37 +63,62 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
       newErrors.revisionReason = 'Please explain what made you change your approach.';
     }
     
+    // NEW: Character validation for revision reason
+    if (hypothesisRevised && revisionReason.length > MAX_CHARS.revision) {
+      newErrors.revisionReason = `Your response is too long (${revisionReason.length} characters). Please keep it under ${MAX_CHARS.revision} characters.`;
+    }
+    
     if (isCorrect) {
+      // Q3a validation
       const lookForWordCount = getWordCount(whatToLookFor);
+      const lookForCharCount = whatToLookFor.length;
       if (lookForWordCount < 10) {
         newErrors.whatToLookFor = 'Please write at least 10 words.';
       }
       if (lookForWordCount > 40) {
         newErrors.whatToLookFor = 'Please keep your answer under 40 words.';
       }
+      if (lookForCharCount > MAX_CHARS.teaching) {
+        newErrors.whatToLookFor = `Your response is too long (${lookForCharCount} characters). Please keep it under ${MAX_CHARS.teaching} characters.`;
+      }
       
+      // Q3b validation
       const transformWordCount = getWordCount(howToTransform);
+      const transformCharCount = howToTransform.length;
       if (transformWordCount < 10) {
         newErrors.howToTransform = 'Please write at least 10 words.';
       }
       if (transformWordCount > 40) {
         newErrors.howToTransform = 'Please keep your answer under 40 words.';
       }
+      if (transformCharCount > MAX_CHARS.teaching) {
+        newErrors.howToTransform = `Your response is too long (${transformCharCount} characters). Please keep it under ${MAX_CHARS.teaching} characters.`;
+      }
       
+      // Q3c validation
       const verifyWordCount = getWordCount(howToVerify);
+      const verifyCharCount = howToVerify.length;
       if (verifyWordCount < 10) {
         newErrors.howToVerify = 'Please write at least 10 words.';
       }
       if (verifyWordCount > 40) {
         newErrors.howToVerify = 'Please keep your answer under 40 words.';
       }
+      if (verifyCharCount > MAX_CHARS.teaching) {
+        newErrors.howToVerify = `Your response is too long (${verifyCharCount} characters). Please keep it under ${MAX_CHARS.teaching} characters.`;
+      }
     } else {
+      // Q3 (incorrect) validation
       const attemptWordCount = getWordCount(whatYouTried);
+      const attemptCharCount = whatYouTried.length;
       if (attemptWordCount < 10) {
         newErrors.whatYouTried = 'Please write at least 10 words.';
       }
       if (attemptWordCount > 60) {
         newErrors.whatYouTried = 'Please keep your answer under 60 words.';
+      }
+      if (attemptCharCount > MAX_CHARS.whatYouTried) {
+        newErrors.whatYouTried = `Your response is too long (${attemptCharCount} characters). Please keep it under ${MAX_CHARS.whatYouTried} characters.`;
       }
     }
     
@@ -105,7 +146,8 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
     }
   };
 
-  const renderWordCounter = (count, max, min) => {
+  // NEW: Enhanced word counter with character count
+  const renderWordCounter = (count, max, min, charCount, maxChars) => {
     let className = 'word-counter';
     if (count < min) className += ' word-counter-low';
     else if (count >= max - 3) className += ' word-counter-warning';
@@ -117,7 +159,17 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
     else if (count >= max - 5) text += ` (${max - count} remaining)`;
     else text += ' ✓';
 
-    return <div className={className}>{text}</div>;
+    let charClassName = 'char-counter';
+    if (charCount > maxChars) charClassName += ' char-counter-error';
+    else if (charCount >= maxChars - 50) charClassName += ' char-counter-warning';
+    else charClassName += ' char-counter-normal';
+
+    return (
+      <div className="counter-container">
+        <div className={className}>{text}</div>
+        <div className={charClassName}>{charCount} / {maxChars} characters</div>
+      </div>
+    );
   };
 
   // Render mini grid inline
@@ -195,11 +247,20 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
             
             <ColorAutocompleteTextarea
               value={revisionReason}
-              onChange={(e) => setRevisionReason(e.target.value)}
+              onChange={(e) => setRevisionReason(
+                enforceWordLimit(e.target.value, revisionReason, 100, MAX_CHARS.revision)
+              )}
               placeholder="Example: 'At first I thought shapes were just rotating, but one of the examples showed some shapes staying still. I realized only shapes touching the border rotate.'"
               rows={3}
               className="response-textarea small"
             />
+            
+            {/* NEW: Character counter for revision reason */}
+            <div className="counter-container">
+              <div className={`char-counter ${revisionReason.length > MAX_CHARS.revision ? 'char-counter-error' : 'char-counter-normal'}`}>
+                {revisionReason.length} / {MAX_CHARS.revision} characters
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -251,13 +312,15 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
             
             <ColorAutocompleteTextarea
               value={whatToLookFor}
-              onChange={(e) => setWhatToLookFor(enforceWordLimit(e.target.value, whatToLookFor, 40))}
+              onChange={(e) => setWhatToLookFor(
+                enforceWordLimit(e.target.value, whatToLookFor, 40, MAX_CHARS.teaching)
+              )}
               placeholder="Example: 'Look for the three blue rectangles in the top-left corner. Notice how they form an L-shape.'"
               rows={3}
               className="response-textarea small"
             />
             
-            {renderWordCounter(getWordCount(whatToLookFor), 40, 10)}
+            {renderWordCounter(getWordCount(whatToLookFor), 40, 10, whatToLookFor.length, MAX_CHARS.teaching)}
           </div>
 
           {/* Q3b: How to Transform */}
@@ -274,13 +337,15 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
             
             <ColorAutocompleteTextarea
               value={howToTransform}
-              onChange={(e) => setHowToTransform(enforceWordLimit(e.target.value, howToTransform, 40))}
+              onChange={(e) => setHowToTransform(
+                enforceWordLimit(e.target.value, howToTransform, 40, MAX_CHARS.teaching)
+              )}
               placeholder="Example: 'Take each blue rectangle and rotate it 90 degrees clockwise. Then move them to the bottom-right corner.'"
               rows={3}
               className="response-textarea small"
             />
             
-            {renderWordCounter(getWordCount(howToTransform), 40, 10)}
+            {renderWordCounter(getWordCount(howToTransform), 40, 10, howToTransform.length, MAX_CHARS.teaching)}
           </div>
 
           {/* Q3c: How to Verify */}
@@ -297,13 +362,15 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
             
             <ColorAutocompleteTextarea
               value={howToVerify}
-              onChange={(e) => setHowToVerify(enforceWordLimit(e.target.value, howToVerify, 40))}
+              onChange={(e) => setHowToVerify(
+                enforceWordLimit(e.target.value, howToVerify, 40, MAX_CHARS.teaching)
+              )}
               placeholder="Example: 'You should end up with three blue rectangles forming an L-shape in the bottom-right. The grid should be the same size as the input.'"
               rows={3}
               className="response-textarea small"
             />
             
-            {renderWordCounter(getWordCount(howToVerify), 40, 10)}
+            {renderWordCounter(getWordCount(howToVerify), 40, 10, howToVerify.length, MAX_CHARS.teaching)}
           </div>
         </>
       ) : (
@@ -319,13 +386,15 @@ const Phase3Questions = ({ onComplete, initialData, testInput, userSolution, isC
             
             <ColorAutocompleteTextarea
               value={whatYouTried}
-              onChange={(e) => setWhatYouTried(enforceWordLimit(e.target.value, whatYouTried, 60))}
+              onChange={(e) => setWhatYouTried(
+                enforceWordLimit(e.target.value, whatYouTried, 60, MAX_CHARS.whatYouTried)
+              )}
               placeholder="Example: 'I thought all shapes should rotate, so I rotated every shape 90 degrees clockwise.'"
               rows={4}
               className="response-textarea"
             />
             
-            {renderWordCounter(getWordCount(whatYouTried), 60, 10)}
+            {renderWordCounter(getWordCount(whatYouTried), 60, 10, whatYouTried.length, MAX_CHARS.whatYouTried)}
           </div>
         </>
       )}
