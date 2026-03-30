@@ -763,6 +763,118 @@ app.get('/api/admin/recent-submissions', async (req, res) => {
 });
 
 // =====================================================
+// Analytics — Grid Reconstruction Helpers
+// =====================================================
+
+function cloneGrid(grid) {
+  return grid.map(row => [...row]);
+}
+
+function hashGrid(grid) {
+  return JSON.stringify(grid);
+}
+
+// Reconstruct grid state snapshots from action traces.
+// Returns an array of key moments: start, test_solution, reset, clear, resize, copy_from_input.
+function reconstructGridPath(actions, testInput) {
+  let grid = [[0,0,0],[0,0,0],[0,0,0]]; // App.js always starts with blank 3×3
+  const snapshots = [
+    { event: 'start', grid: cloneGrid(grid), timestamp_ms: 0 }
+  ];
+
+  for (const action of actions) {
+    const meta = action.grid_state_after; // pg driver parses JSONB automatically
+
+    switch (action.action_type) {
+
+      case 'cell_change':
+        if (action.cell_row !== null && action.cell_column !== null) {
+          // Grow grid if needed (shouldn't happen but guard anyway)
+          while (grid.length <= action.cell_row) {
+            grid.push(new Array(grid[0]?.length || 1).fill(0));
+          }
+          while (grid[action.cell_row] && grid[action.cell_row].length <= action.cell_column) {
+            grid[action.cell_row].push(0);
+          }
+          if (grid[action.cell_row]) {
+            grid[action.cell_row][action.cell_column] = action.color_value_after ?? 0;
+          }
+        }
+        break;
+
+      case 'reset':
+        // Back to 3×3 all zeros (the global initial state)
+        grid = [[0,0,0],[0,0,0],[0,0,0]];
+        snapshots.push({ event: 'reset', grid: cloneGrid(grid), timestamp_ms: action.timestamp_ms });
+        break;
+
+      case 'clear':
+        // Zero all cells, keep current dimensions
+        grid = grid.map(row => row.map(() => 0));
+        snapshots.push({ event: 'clear', grid: cloneGrid(grid), timestamp_ms: action.timestamp_ms });
+        break;
+
+      case 'copy_from_input':
+        if (testInput) {
+          grid = testInput.map(row => [...row]);
+          snapshots.push({ event: 'copy_from_input', grid: cloneGrid(grid), timestamp_ms: action.timestamp_ms });
+        }
+        break;
+
+      case 'resize':
+        if (meta && meta.newRows && meta.newCols) {
+          const { newRows, newCols } = meta;
+          const newGrid = Array(newRows).fill(null).map((_, ri) =>
+            Array(newCols).fill(null).map((_, ci) => {
+              if (ri < grid.length && ci < (grid[ri]?.length || 0)) return grid[ri][ci];
+              return 0;
+            })
+          );
+          grid = newGrid;
+          snapshots.push({ event: 'resize', grid: cloneGrid(grid), timestamp_ms: action.timestamp_ms, newRows, newCols });
+        }
+        break;
+
+      case 'select_region':
+        if (meta && meta.color !== undefined) {
+          const { startRow, startCol, endRow, endCol, color } = meta;
+          const minR = Math.min(startRow ?? 0, endRow ?? 0);
+          const maxR = Math.max(startRow ?? 0, endRow ?? 0);
+          const minC = Math.min(startCol ?? 0, endCol ?? 0);
+          const maxC = Math.max(startCol ?? 0, endCol ?? 0);
+          for (let r = minR; r <= maxR; r++) {
+            for (let c = minC; c <= maxC; c++) {
+              if (grid[r] && c < grid[r].length) grid[r][c] = color;
+            }
+          }
+        }
+        break;
+
+      case 'fill_all':
+        if (meta && meta.color !== undefined) {
+          grid = grid.map(row => row.map(() => meta.color));
+        }
+        break;
+
+      case 'test_solution':
+        snapshots.push({
+          event: 'test_solution',
+          grid: cloneGrid(grid),
+          timestamp_ms: action.timestamp_ms,
+          result: meta?.result || 'unknown',
+          incorrect_cells: meta?.incorrectCells ?? null
+        });
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  return snapshots;
+}
+
+// =====================================================
 // Analytics Dashboard Endpoints
 // =====================================================
 
@@ -914,6 +1026,143 @@ app.get('/api/analytics/duration-distribution', async (req, res) => {
   } catch (error) {
     console.error('Error fetching duration distribution:', error);
     res.status(500).json({ error: 'Failed to fetch duration distribution' });
+  }
+});
+
+// List all tasks that have at least one completed attempt (for task selector)
+app.get('/api/analytics/tasks-with-attempts', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        ta.task_id,
+        COUNT(*) as attempt_count,
+        ROUND(AVG(CASE WHEN ta.is_correct THEN 1.0 ELSE 0.0 END) * 100, 1) as accuracy_percent,
+        ROUND(AVG(ta.duration_seconds)) as avg_duration_seconds,
+        MAX(ta.attempt_end_time) as last_attempted
+      FROM task_attempts ta
+      WHERE ta.attempt_status = 'completed'
+      GROUP BY ta.task_id
+      ORDER BY attempt_count DESC, last_attempted DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching tasks with attempts:', error);
+    res.status(500).json({ error: 'Failed to fetch tasks' });
+  }
+});
+
+// Full task explorer: task grids + all attempts with reconstructed grid paths
+app.get('/api/analytics/task-explorer/:taskId', async (req, res) => {
+  try {
+    const { taskId } = req.params;
+
+    // 1. Get task grids
+    const taskResult = await db.query(
+      `SELECT task_id, task_set, input_grids, output_grids, test_input_grid,
+              ground_truth_output, number_of_examples
+       FROM tasks WHERE task_id = $1`,
+      [taskId]
+    );
+    if (taskResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    const task = taskResult.rows[0];
+
+    // 2. Get all completed attempts with responses
+    const attemptsResult = await db.query(`
+      SELECT
+        ta.attempt_id,
+        ta.participant_id,
+        ta.is_correct,
+        ta.duration_seconds,
+        ta.attempt_end_time,
+        ta.submitted_solution,
+        r.q1_main_idea,
+        r.q3a_what_to_look_for,
+        r.q3b_how_to_transform,
+        r.q3c_how_to_verify,
+        r.q3_what_you_tried,
+        r.q7_difficulty_rating,
+        r.q9_hypothesis_revised,
+        r.q9_revision_reason,
+        r.q8_challenge_factors
+      FROM task_attempts ta
+      LEFT JOIN responses r ON ta.attempt_id = r.attempt_id
+      WHERE ta.task_id = $1 AND ta.attempt_status = 'completed'
+      ORDER BY ta.attempt_end_time ASC
+    `, [taskId]);
+
+    if (attemptsResult.rows.length === 0) {
+      return res.json({ task, attempts: [], state_convergence: [] });
+    }
+
+    // 3. Reconstruct path for each attempt
+    const testInput = task.test_input_grid;
+    const attempts = await Promise.all(attemptsResult.rows.map(async (attempt) => {
+      const tracesResult = await db.query(`
+        SELECT action_type, cell_row, cell_column,
+               color_value_before, color_value_after,
+               timestamp_ms, grid_state_after
+        FROM action_traces
+        WHERE attempt_id = $1
+        ORDER BY sequence_number ASC
+      `, [attempt.attempt_id]);
+
+      const actions = tracesResult.rows;
+
+      const actionBreakdown = actions.reduce((acc, a) => {
+        acc[a.action_type] = (acc[a.action_type] || 0) + 1;
+        return acc;
+      }, {});
+
+      const path = reconstructGridPath(actions, testInput);
+
+      return {
+        attempt_id: attempt.attempt_id,
+        participant_id: attempt.participant_id.substring(0, 12) + '…',
+        is_correct: attempt.is_correct,
+        duration_seconds: attempt.duration_seconds,
+        q1_main_idea: attempt.q1_main_idea,
+        q3a_what_to_look_for: attempt.q3a_what_to_look_for,
+        q3b_how_to_transform: attempt.q3b_how_to_transform,
+        q3c_how_to_verify: attempt.q3c_how_to_verify,
+        q3_what_you_tried: attempt.q3_what_you_tried,
+        q7_difficulty_rating: attempt.q7_difficulty_rating,
+        q9_hypothesis_revised: attempt.q9_hypothesis_revised,
+        q9_revision_reason: attempt.q9_revision_reason,
+        q8_challenge_factors: attempt.q8_challenge_factors,
+        action_count: actions.length,
+        action_breakdown: actionBreakdown,
+        path,
+        submitted_solution: attempt.submitted_solution
+      };
+    }));
+
+    // 4. State convergence: find grid states shared across multiple attempts
+    const state_convergence = [];
+    if (attempts.length > 1) {
+      const stateMap = {};
+      attempts.forEach((attempt) => {
+        attempt.path.forEach((snapshot, si) => {
+          if (snapshot.event === 'start') return; // skip — always identical blank grid
+          const hash = hashGrid(snapshot.grid);
+          if (!stateMap[hash]) stateMap[hash] = [];
+          stateMap[hash].push({ attempt_id: attempt.attempt_id, snapshot_index: si, event: snapshot.event });
+        });
+      });
+      Object.entries(stateMap).forEach(([hash, entries]) => {
+        const uniqueAttempts = new Set(entries.map(e => e.attempt_id));
+        if (uniqueAttempts.size > 1) {
+          state_convergence.push({ grid_hash: hash, occurrences: entries });
+        }
+      });
+    }
+
+    res.json({ task, attempts, state_convergence });
+
+  } catch (error) {
+    console.error('Error fetching task explorer:', error);
+    res.status(500).json({ error: 'Failed to fetch task explorer data' });
   }
 });
 

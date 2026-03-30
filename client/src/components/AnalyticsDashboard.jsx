@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import config from '../config';
+import TaskExplorer from './TaskExplorer';
 import './AnalyticsDashboard.css';
 
 // ─── Small chart components ───────────────────────────────────────────────────
@@ -153,6 +154,7 @@ function ResponseDepthChart({ overview }) {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function AnalyticsDashboard() {
+  const [activeTab, setActiveTab] = useState('overview');
   const [overview, setOverview] = useState(null);
   const [submissionsOverTime, setSubmissionsOverTime] = useState(null);
   const [difficultyDist, setDifficultyDist] = useState(null);
@@ -242,8 +244,27 @@ export default function AnalyticsDashboard() {
           </div>
         </div>
 
-        {/* Overview stat cards */}
-        <div className="stats-grid">
+        {/* Tab navigation */}
+        <div className="dash-tabs">
+          <button
+            className={`dash-tab ${activeTab === 'overview' ? 'dash-tab--active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            Overview
+          </button>
+          <button
+            className={`dash-tab ${activeTab === 'explorer' ? 'dash-tab--active' : ''}`}
+            onClick={() => setActiveTab('explorer')}
+          >
+            Task Explorer
+          </button>
+        </div>
+
+        {/* Task Explorer tab */}
+        {activeTab === 'explorer' && <TaskExplorer />}
+
+        {/* Overview tab */}
+        {activeTab === 'overview' && <><div className="stats-grid">
           <StatCard label="Total Submissions" value={overview?.total_submissions} />
           <StatCard label="Participants" value={overview?.total_participants} />
           <StatCard label="Tasks Attempted" value={overview?.unique_tasks_attempted} />
@@ -375,6 +396,7 @@ export default function AnalyticsDashboard() {
             Human accuracy: 76–85% · Best AI (2024): ~55% · This dataset captures <em>how</em> humans reason, not just whether they're correct
           </p>
         </div>
+        </>}
 
       </div>
     </div>

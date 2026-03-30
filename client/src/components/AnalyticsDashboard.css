@@ -73,6 +73,35 @@
   color: #e6edf3;
 }
 
+/* Tabs */
+.dash-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #21262d;
+  margin-bottom: 1.5rem;
+}
+
+.dash-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #8b949e;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition: color 0.15s;
+}
+
+.dash-tab:hover {
+  color: #e6edf3;
+}
+
+.dash-tab--active {
+  color: #58a6ff;
+  border-bottom-color: #58a6ff;
+}
+
 /* Stats grid */
 .stats-grid {
   display: grid;
