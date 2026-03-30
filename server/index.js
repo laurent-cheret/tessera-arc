@@ -763,6 +763,161 @@ app.get('/api/admin/recent-submissions', async (req, res) => {
 });
 
 // =====================================================
+// Analytics Dashboard Endpoints
+// =====================================================
+
+// Overview: rich aggregate stats
+app.get('/api/analytics/overview', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        (SELECT COUNT(*) FROM task_attempts WHERE attempt_status = 'completed') as total_submissions,
+        (SELECT COUNT(DISTINCT participant_id) FROM task_attempts WHERE attempt_status = 'completed') as total_participants,
+        (SELECT COUNT(DISTINCT task_id) FROM task_attempts WHERE attempt_status = 'completed') as unique_tasks_attempted,
+        (SELECT ROUND(AVG(CASE WHEN is_correct THEN 1.0 ELSE 0.0 END) * 100, 1) FROM task_attempts WHERE attempt_status = 'completed' AND is_correct IS NOT NULL) as accuracy_percent,
+        (SELECT ROUND(AVG(duration_seconds)) FROM task_attempts WHERE attempt_status = 'completed' AND duration_seconds IS NOT NULL) as avg_duration_seconds,
+        (SELECT ROUND(AVG(r.q7_difficulty_rating::numeric), 2) FROM responses r JOIN task_attempts ta ON r.attempt_id = ta.attempt_id WHERE ta.attempt_status = 'completed' AND r.q7_difficulty_rating IS NOT NULL) as avg_difficulty,
+        (SELECT ROUND(AVG(CASE WHEN r.q9_hypothesis_revised THEN 1.0 ELSE 0.0 END) * 100, 1) FROM responses r JOIN task_attempts ta ON r.attempt_id = ta.attempt_id WHERE ta.attempt_status = 'completed') as pct_revised_hypothesis,
+        (SELECT COUNT(*) FROM task_attempts WHERE attempt_status = 'completed' AND is_correct = true) as correct_count,
+        (SELECT COUNT(*) FROM task_attempts WHERE attempt_status = 'completed' AND is_correct = false) as incorrect_count,
+        (SELECT ROUND(AVG(LENGTH(r.q1_main_idea))) FROM responses r JOIN task_attempts ta ON r.attempt_id = ta.attempt_id WHERE ta.attempt_status = 'completed' AND r.q1_main_idea IS NOT NULL) as avg_q1_length,
+        (SELECT ROUND(AVG(LENGTH(r.q3a_what_to_look_for))) FROM responses r JOIN task_attempts ta ON r.attempt_id = ta.attempt_id WHERE ta.attempt_status = 'completed' AND r.q3a_what_to_look_for IS NOT NULL) as avg_q3a_length,
+        (SELECT ROUND(AVG(LENGTH(r.q3b_how_to_transform))) FROM responses r JOIN task_attempts ta ON r.attempt_id = ta.attempt_id WHERE ta.attempt_status = 'completed' AND r.q3b_how_to_transform IS NOT NULL) as avg_q3b_length,
+        (SELECT ROUND(AVG(LENGTH(r.q3c_how_to_verify))) FROM responses r JOIN task_attempts ta ON r.attempt_id = ta.attempt_id WHERE ta.attempt_status = 'completed' AND r.q3c_how_to_verify IS NOT NULL) as avg_q3c_length,
+        (SELECT ROUND(AVG(LENGTH(r.q3_what_you_tried))) FROM responses r JOIN task_attempts ta ON r.attempt_id = ta.attempt_id WHERE ta.attempt_status = 'completed' AND r.q3_what_you_tried IS NOT NULL) as avg_q3_incorrect_length
+    `);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching analytics overview:', error);
+    res.status(500).json({ error: 'Failed to fetch analytics overview' });
+  }
+});
+
+// Submissions over time — daily counts, last 90 days
+app.get('/api/analytics/submissions-over-time', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        DATE(attempt_end_time) as date,
+        COUNT(*) as total,
+        SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct
+      FROM task_attempts
+      WHERE attempt_status = 'completed'
+        AND attempt_end_time >= NOW() - INTERVAL '90 days'
+      GROUP BY DATE(attempt_end_time)
+      ORDER BY date ASC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching submissions over time:', error);
+    res.status(500).json({ error: 'Failed to fetch submissions over time' });
+  }
+});
+
+// Difficulty distribution — ratings 1–5
+app.get('/api/analytics/difficulty-distribution', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        r.q7_difficulty_rating as rating,
+        COUNT(*) as count
+      FROM responses r
+      JOIN task_attempts ta ON r.attempt_id = ta.attempt_id
+      WHERE ta.attempt_status = 'completed'
+        AND r.q7_difficulty_rating IS NOT NULL
+      GROUP BY r.q7_difficulty_rating
+      ORDER BY rating ASC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching difficulty distribution:', error);
+    res.status(500).json({ error: 'Failed to fetch difficulty distribution' });
+  }
+});
+
+// Challenge factors — Q8 checkbox counts
+app.get('/api/analytics/challenge-factors', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        factor,
+        COUNT(*) as count
+      FROM responses r
+      JOIN task_attempts ta ON r.attempt_id = ta.attempt_id
+      CROSS JOIN LATERAL jsonb_array_elements_text(r.q8_challenge_factors) AS factor
+      WHERE ta.attempt_status = 'completed'
+        AND r.q8_challenge_factors IS NOT NULL
+        AND jsonb_typeof(r.q8_challenge_factors) = 'array'
+      GROUP BY factor
+      ORDER BY count DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching challenge factors:', error);
+    res.status(500).json({ error: 'Failed to fetch challenge factors' });
+  }
+});
+
+// Top 15 most attempted tasks
+app.get('/api/analytics/top-tasks', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        ta.task_id,
+        COUNT(*) as attempt_count,
+        ROUND(AVG(CASE WHEN ta.is_correct THEN 1.0 ELSE 0.0 END) * 100, 1) as accuracy_percent,
+        ROUND(AVG(ta.duration_seconds)) as avg_duration_seconds,
+        ROUND(AVG(r.q7_difficulty_rating::numeric), 1) as avg_difficulty
+      FROM task_attempts ta
+      LEFT JOIN responses r ON ta.attempt_id = r.attempt_id
+      WHERE ta.attempt_status = 'completed'
+      GROUP BY ta.task_id
+      ORDER BY attempt_count DESC
+      LIMIT 15
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching top tasks:', error);
+    res.status(500).json({ error: 'Failed to fetch top tasks' });
+  }
+});
+
+// Solve time distribution — bucketed
+app.get('/api/analytics/duration-distribution', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        CASE
+          WHEN duration_seconds < 60 THEN '< 1 min'
+          WHEN duration_seconds < 180 THEN '1-3 min'
+          WHEN duration_seconds < 360 THEN '3-6 min'
+          WHEN duration_seconds < 600 THEN '6-10 min'
+          WHEN duration_seconds < 900 THEN '10-15 min'
+          ELSE '> 15 min'
+        END as bucket,
+        CASE
+          WHEN duration_seconds < 60 THEN 1
+          WHEN duration_seconds < 180 THEN 2
+          WHEN duration_seconds < 360 THEN 3
+          WHEN duration_seconds < 600 THEN 4
+          WHEN duration_seconds < 900 THEN 5
+          ELSE 6
+        END as sort_order,
+        COUNT(*) as count
+      FROM task_attempts
+      WHERE attempt_status = 'completed'
+        AND duration_seconds IS NOT NULL
+      GROUP BY bucket, sort_order
+      ORDER BY sort_order ASC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching duration distribution:', error);
+    res.status(500).json({ error: 'Failed to fetch duration distribution' });
+  }
+});
+
+// =====================================================
 // Error Handling
 // =====================================================
 

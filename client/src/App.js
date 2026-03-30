@@ -8,6 +8,7 @@ import TaskReference from './components/TaskReference';
 import LandingPage from './components/LandingPage';
 import TurnstileVerification from './components/TurnstileVerification';
 import HoneypotField from './components/HoneypotField';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
 import './App.css';
 import config from './config';
 
@@ -500,6 +501,11 @@ function App() {
     const endTime = solvingEndTime || Date.now();
     return Math.floor((endTime - startTime) / 1000);
   };
+
+  // Dashboard mode — activated by ?dashboard in URL
+  if (new URLSearchParams(window.location.search).has('dashboard')) {
+    return <AnalyticsDashboard />;
+  }
 
   // Show landing page first
   if (showLanding) {
