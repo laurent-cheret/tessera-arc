@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import config from '../config';
+import StateSpaceGraph from './StateSpaceGraph';
 import './TaskExplorer.css';
 
 // ARC official color palette (from InteractiveGrid.jsx)
@@ -445,6 +446,22 @@ export default function TaskExplorer() {
           <div className="explorer-section">
             <TaskDisplay task={explorerData.task} />
           </div>
+
+          {/* State space graph */}
+          {explorerData.attempts.length > 0 && (
+            <div className="explorer-section">
+              <div className="chart-card">
+                <h3 className="chart-title">
+                  State Space
+                  <span className="chart-sub"> — each point is a unique grid configuration · hover nodes for details</span>
+                </h3>
+                <StateSpaceGraph
+                  attempts={explorerData.attempts}
+                  groundTruth={explorerData.task.ground_truth_output}
+                />
+              </div>
+            </div>
+          )}
 
           {/* State convergence notice */}
           {explorerData.state_convergence.length > 0 && (

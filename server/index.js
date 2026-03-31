@@ -775,7 +775,9 @@ function hashGrid(grid) {
 }
 
 // Reconstruct grid state snapshots from action traces.
-// Returns an array of key moments: start, test_solution, reset, clear, resize, copy_from_input.
+// Every action that changes the grid emits a snapshot.
+// Special events (test, reset, resize, etc.) are tagged with their event type.
+// Cell edits are tagged 'edit'.
 function reconstructGridPath(actions, testInput) {
   let grid = [[0,0,0],[0,0,0],[0,0,0]]; // App.js always starts with blank 3×3
   const snapshots = [
@@ -783,13 +785,12 @@ function reconstructGridPath(actions, testInput) {
   ];
 
   for (const action of actions) {
-    const meta = action.grid_state_after; // pg driver parses JSONB automatically
+    const meta = action.grid_state_after;
 
     switch (action.action_type) {
 
       case 'cell_change':
         if (action.cell_row !== null && action.cell_column !== null) {
-          // Grow grid if needed (shouldn't happen but guard anyway)
           while (grid.length <= action.cell_row) {
             grid.push(new Array(grid[0]?.length || 1).fill(0));
           }
@@ -800,16 +801,38 @@ function reconstructGridPath(actions, testInput) {
             grid[action.cell_row][action.cell_column] = action.color_value_after ?? 0;
           }
         }
+        snapshots.push({ event: 'edit', grid: cloneGrid(grid), timestamp_ms: action.timestamp_ms });
+        break;
+
+      case 'select_region':
+        if (meta && meta.color !== undefined) {
+          const { startRow, startCol, endRow, endCol, color } = meta;
+          const minR = Math.min(startRow ?? 0, endRow ?? 0);
+          const maxR = Math.max(startRow ?? 0, endRow ?? 0);
+          const minC = Math.min(startCol ?? 0, endCol ?? 0);
+          const maxC = Math.max(startCol ?? 0, endCol ?? 0);
+          for (let r = minR; r <= maxR; r++) {
+            for (let c = minC; c <= maxC; c++) {
+              if (grid[r] && c < grid[r].length) grid[r][c] = color;
+            }
+          }
+        }
+        snapshots.push({ event: 'edit', grid: cloneGrid(grid), timestamp_ms: action.timestamp_ms });
+        break;
+
+      case 'fill_all':
+        if (meta && meta.color !== undefined) {
+          grid = grid.map(row => row.map(() => meta.color));
+        }
+        snapshots.push({ event: 'edit', grid: cloneGrid(grid), timestamp_ms: action.timestamp_ms });
         break;
 
       case 'reset':
-        // Back to 3×3 all zeros (the global initial state)
         grid = [[0,0,0],[0,0,0],[0,0,0]];
         snapshots.push({ event: 'reset', grid: cloneGrid(grid), timestamp_ms: action.timestamp_ms });
         break;
 
       case 'clear':
-        // Zero all cells, keep current dimensions
         grid = grid.map(row => row.map(() => 0));
         snapshots.push({ event: 'clear', grid: cloneGrid(grid), timestamp_ms: action.timestamp_ms });
         break;
@@ -832,27 +855,6 @@ function reconstructGridPath(actions, testInput) {
           );
           grid = newGrid;
           snapshots.push({ event: 'resize', grid: cloneGrid(grid), timestamp_ms: action.timestamp_ms, newRows, newCols });
-        }
-        break;
-
-      case 'select_region':
-        if (meta && meta.color !== undefined) {
-          const { startRow, startCol, endRow, endCol, color } = meta;
-          const minR = Math.min(startRow ?? 0, endRow ?? 0);
-          const maxR = Math.max(startRow ?? 0, endRow ?? 0);
-          const minC = Math.min(startCol ?? 0, endCol ?? 0);
-          const maxC = Math.max(startCol ?? 0, endCol ?? 0);
-          for (let r = minR; r <= maxR; r++) {
-            for (let c = minC; c <= maxC; c++) {
-              if (grid[r] && c < grid[r].length) grid[r][c] = color;
-            }
-          }
-        }
-        break;
-
-      case 'fill_all':
-        if (meta && meta.color !== undefined) {
-          grid = grid.map(row => row.map(() => meta.color));
         }
         break;
 
