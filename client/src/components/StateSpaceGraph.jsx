@@ -118,12 +118,13 @@ export default function StateSpaceGraph({ attempts, groundTruth }) {
     const rect = e.target.closest('svg').getBoundingClientRect();
     const relX = e.clientX - rect.left;
     const relY = e.clientY - rect.top;
-    // Flip to left side when cursor is in the right 40% of the container
     const flipLeft = relX > rect.width * 0.6;
+    const flipUp   = relY > rect.height * 0.6;
     setTooltip({
       clientX: relX,
       clientY: relY,
       flipLeft,
+      flipUp,
       node,
       attemptIdx,
     });
@@ -335,10 +336,14 @@ export default function StateSpaceGraph({ attempts, groundTruth }) {
         {tooltip && (
           <div
             className="ssg-tooltip"
-            style={tooltip.flipLeft
-              ? { right: `calc(100% - ${tooltip.clientX - 14}px)`, top: tooltip.clientY - 10 }
-              : { left: tooltip.clientX + 14, top: tooltip.clientY - 10 }
-            }
+            style={{
+              ...(tooltip.flipLeft
+                ? { right: `calc(100% - ${tooltip.clientX - 14}px)` }
+                : { left: tooltip.clientX + 14 }),
+              ...(tooltip.flipUp
+                ? { bottom: `calc(100% - ${tooltip.clientY - 10}px)` }
+                : { top: tooltip.clientY - 10 }),
+            }}
           >
             <div className="ssg-tt-header">
               <span className="ssg-tt-dot"
