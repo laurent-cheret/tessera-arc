@@ -8,12 +8,17 @@ const LandingPage = ({ onStartParticipation }) => {
   const [showResearchModal, setShowResearchModal] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
   const [arcStats, setArcStats] = useState(null);
+  const [platformStats, setPlatformStats] = useState(null);
 
   useEffect(() => {
     const base = process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : '';
     fetch(`${base}/api/arc-live-stats`)
       .then(r => r.json())
       .then(setArcStats)
+      .catch(() => {});
+    fetch(`${base}/api/analytics/overview`)
+      .then(r => r.json())
+      .then(setPlatformStats)
       .catch(() => {});
   }, []);
 
@@ -61,6 +66,33 @@ const LandingPage = ({ onStartParticipation }) => {
           </div>
         </div>
       </div>
+
+      {/* Platform Stats Strip */}
+      {platformStats && (
+        <div className="stats-strip">
+          <div className="stats-strip-inner">
+            <div className="stats-strip-item">
+              <span className="stats-strip-num">{Number(platformStats.total_submissions).toLocaleString()}</span>
+              <span className="stats-strip-label">puzzles submitted</span>
+            </div>
+            <div className="stats-strip-divider" />
+            <div className="stats-strip-item">
+              <span className="stats-strip-num">{Number(platformStats.total_participants).toLocaleString()}</span>
+              <span className="stats-strip-label">participants</span>
+            </div>
+            <div className="stats-strip-divider" />
+            <div className="stats-strip-item">
+              <span className="stats-strip-num">{Number(platformStats.unique_tasks_attempted).toLocaleString()}</span>
+              <span className="stats-strip-label">tasks explored</span>
+            </div>
+            <div className="stats-strip-divider" />
+            <div className="stats-strip-item">
+              <span className="stats-strip-num">{Math.round(Number(platformStats.avg_duration_seconds))}s</span>
+              <span className="stats-strip-label">avg. time per puzzle</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="content-section">
