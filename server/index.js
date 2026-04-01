@@ -1172,6 +1172,105 @@ app.get('/api/analytics/task-explorer/:taskId', async (req, res) => {
 // Error Handling
 // =====================================================
 
+// =====================================================
+// ARC Prize Live Stats
+// =====================================================
+
+const https = require('https');
+
+// Simple in-memory cache: refresh every 6 hours
+let arcStatsCache = null;
+let arcStatsCachedAt = 0;
+const ARC_CACHE_TTL = 6 * 60 * 60 * 1000;
+
+function fetchJSON(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, { headers: { 'User-Agent': 'Tessera-ARC/1.0' } }, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); }
+        catch (e) { reject(new Error('JSON parse error: ' + e.message)); }
+      });
+    }).on('error', reject);
+  });
+}
+
+app.get('/api/arc-live-stats', async (req, res) => {
+  try {
+    const now = Date.now();
+    if (arcStatsCache && now - arcStatsCachedAt < ARC_CACHE_TTL) {
+      return res.json(arcStatsCache);
+    }
+
+    const [evaluations, models] = await Promise.all([
+      fetchJSON('https://arcprize.org/media/data/leaderboard/evaluations.json'),
+      fetchJSON('https://arcprize.org/media/data/models.json'),
+    ]);
+
+    // Build model lookup: id -> displayName
+    const modelById = {};
+    for (const m of models) modelById[m.id] = m;
+
+    // Focus on ARC-AGI-2 (v2_Semi_Private) — the main active benchmark
+    const v2 = evaluations.filter(e => e.datasetId === 'v2_Semi_Private');
+
+    // Human baseline
+    const humanEntry = v2.find(e => e.modelId === '2025_human_panel');
+    const humanScore = humanEntry ? Math.round(humanEntry.score * 100) : 100;
+
+    // Best AI score (exclude human entries, find highest score under $50/task)
+    const humanIds = new Set(['2025_human_panel', 'avg_mturker', 'human_panel', '2024_human_panel']);
+    const aiEntries = v2
+      .filter(e => !humanIds.has(e.modelId) && e.costPerTask != null && e.costPerTask <= 50)
+      .sort((a, b) => b.score - a.score);
+
+    const topAI = aiEntries.slice(0, 3).map(e => ({
+      modelId: e.modelId,
+      name: modelById[e.modelId]?.displayName || e.modelId,
+      score: Math.round(e.score * 100 * 10) / 10,
+      costPerTask: e.costPerTask,
+    }));
+
+    // Also get ARC-AGI-1 best score for the "historical gap" story
+    const v1 = evaluations.filter(e => e.datasetId === 'v1_Semi_Private');
+    const v1Human = v1.find(e => e.modelId === '2025_human_panel');
+    const v1AI = v1
+      .filter(e => !humanIds.has(e.modelId) && e.costPerTask != null && e.costPerTask <= 50)
+      .sort((a, b) => b.score - a.score)[0];
+
+    const result = {
+      benchmark: 'ARC-AGI-2',
+      humanScore,
+      topAI,
+      bestAIScore: topAI[0]?.score ?? null,
+      bestAIName: topAI[0]?.name ?? null,
+      v1: {
+        humanScore: v1Human ? Math.round(v1Human.score * 100) : 98,
+        bestAIScore: v1AI ? Math.round(v1AI.score * 100 * 10) / 10 : null,
+        bestAIName: v1AI ? (modelById[v1AI.modelId]?.displayName || v1AI.modelId) : null,
+      },
+      fetchedAt: new Date().toISOString(),
+    };
+
+    arcStatsCache = result;
+    arcStatsCachedAt = now;
+    res.json(result);
+  } catch (err) {
+    console.error('ARC live stats fetch error:', err.message);
+    // Return fallback data so the page still works
+    res.json({
+      benchmark: 'ARC-AGI-2',
+      humanScore: 100,
+      bestAIScore: 83,
+      bestAIName: 'GPT-5.4',
+      topAI: [{ name: 'GPT-5.4', score: 83, costPerTask: 16.4 }],
+      v1: { humanScore: 98, bestAIScore: 55.5, bestAIName: 'o3 (2024)' },
+      fetchedAt: null,
+    });
+  }
+});
+
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
