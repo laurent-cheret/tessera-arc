@@ -1,8 +1,89 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import MiniARCExample from './MiniARCExample';
 import TypewriterAnimation from './TypewriterAnimation';
 import PaintingGridAnimation from './PaintingGridAnimation';
 import './LandingPage.css';
+
+// ARC color palette (colors 0-9, skip black so cells are visible on dark bg)
+const ARC_COLORS = [
+  '#0074D9', '#FF4136', '#2ECC40', '#FFDC00',
+  '#AAAAAA', '#F012BE', '#FF851B', '#7FDBFF', '#870C25'
+];
+
+function FallingCells() {
+  const canvasRef = useRef(null);
+  const animRef = useRef(null);
+  const cellsRef = useRef([]);
+
+  const makeCell = useCallback((canvasWidth, canvasHeight, fromTop = false) => {
+    const size = Math.floor(Math.random() * 14) + 6; // 6–20 px
+    return {
+      x: Math.random() * canvasWidth,
+      y: fromTop ? -size - Math.random() * canvasHeight : Math.random() * canvasHeight,
+      size,
+      color: ARC_COLORS[Math.floor(Math.random() * ARC_COLORS.length)],
+      speed: Math.random() * 0.6 + 0.2,       // 0.2–0.8 px/frame
+      drift: (Math.random() - 0.5) * 0.3,     // slight horizontal wobble
+      alpha: Math.random() * 0.35 + 0.08,     // 0.08–0.43 opacity — subtle
+      rotation: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.01,
+    };
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const COUNT = 55;
+
+    const resize = () => {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Seed cells spread across full height
+    cellsRef.current = Array.from({ length: COUNT }, () =>
+      makeCell(canvas.width, canvas.height, false)
+    );
+
+    const draw = () => {
+      const { width, height } = canvas;
+      ctx.clearRect(0, 0, width, height);
+
+      for (const c of cellsRef.current) {
+        ctx.save();
+        ctx.globalAlpha = c.alpha;
+        ctx.translate(c.x + c.size / 2, c.y + c.size / 2);
+        ctx.rotate(c.rotation);
+        ctx.fillStyle = c.color;
+        ctx.fillRect(-c.size / 2, -c.size / 2, c.size, c.size);
+        ctx.restore();
+
+        c.y += c.speed;
+        c.x += c.drift;
+        c.rotation += c.rotSpeed;
+
+        // Reset when off the bottom
+        if (c.y > height + c.size) {
+          Object.assign(c, makeCell(width, height, true));
+        }
+      }
+
+      animRef.current = requestAnimationFrame(draw);
+    };
+
+    animRef.current = requestAnimationFrame(draw);
+
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      window.removeEventListener('resize', resize);
+    };
+  }, [makeCell]);
+
+  return <canvas ref={canvasRef} className="falling-cells-canvas" />;
+}
 
 const LandingPage = ({ onStartParticipation }) => {
   const [showResearchModal, setShowResearchModal] = useState(false);
@@ -44,6 +125,7 @@ const LandingPage = ({ onStartParticipation }) => {
     <div className="landing-page">
       {/* Hero Section */}
       <div className="hero-section">
+        <FallingCells />
         <div className="hero-content">
           <div className="logo-container">
             <img src="/logo192.png" alt="Tessera Logo" className="hero-logo" />
