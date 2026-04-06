@@ -192,7 +192,7 @@ const LandingPage = ({ onStartParticipation }) => {
             <div className="challenge-text">
               <h2>The ARC-AGI Challenge</h2>
               <p className="large-text">
-                The <a href="https://arcprize.org/" target="_blank" rel="noopener noreferrer"><strong>Abstraction and Reasoning Corpus</strong></a> is AI's most stubborn benchmark — a $2,000,000 prize for 2026. These visual puzzles test the kind of intuitive reasoning humans do effortlessly, but machines still can't reliably crack.
+                The <a href="https://arcprize.org/" target="_blank" rel="noopener noreferrer"><strong>Abstraction and Reasoning Corpus</strong></a> is AI's most stubborn benchmark. Despite years of effort, no AI has crossed the 85% threshold needed to claim the bonus prize on ARC-AGI-2 — and in March 2026, the challenge escalated further with the launch of <strong>ARC-AGI-3</strong>, where frontier models currently score <strong>0.26%</strong> against humans at 100%.
               </p>
               <p className="large-text">
                 After just one "incorrect" signal, humans improve their accuracy by <strong>+25.9 points</strong>. The best AI systems cost $14–17 per puzzle to match human scores, yet GPT-4o only gains <strong>+9.1%</strong> from the same feedback. Something fundamental about how humans think is still missing from AI — and your participation helps us capture it.
@@ -437,6 +437,36 @@ const LandingPage = ({ onStartParticipation }) => {
             </div>
             <div className="modal-body">
 
+              <div className="arc-status-2026">
+                <h3>Where We Stand in 2026</h3>
+                <p>
+                  The ARC prize landscape has changed significantly since this project launched. Here is the current picture:
+                </p>
+
+                <div className="status-grid">
+                  <div className="status-block status-v2">
+                    <div className="status-block-title">ARC-AGI-2 (Kaggle 2026)</div>
+                    <ul>
+                      <li>Best AI approaches <strong>~84%</strong> on the public set — but the 85% bonus prize threshold (<strong>$150,000–$200,000</strong>) remains unclaimed on the private hidden set.</li>
+                      <li>A <strong>guaranteed $500,000</strong> top-score award will be paid at the end of December 2026 to the #1 team, even without hitting 85%.</li>
+                      <li>Models that over-fit to the public set consistently drop in score on the hidden evaluation — the "last mile" problem persists.</li>
+                    </ul>
+                  </div>
+                  <div className="status-block status-v3">
+                    <div className="status-block-title">ARC-AGI-3 (Launched March 25, 2026)</div>
+                    <ul>
+                      <li>A fundamentally new format: <strong>no instructions, no examples</strong>. AI agents must explore an interactive environment and infer the rules from scratch.</li>
+                      <li>Frontier models (the ones topping every other benchmark) currently score <strong>0.26%</strong>. Humans score <strong>100%</strong>.</li>
+                      <li>Total prize pool across all tracks is now over <strong>$2,000,000</strong>.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <p className="status-footer">
+                  The four weaknesses described below still explain why V2 is stuck at its wall — and they become even more acute in V3, where compositional reasoning must happen without any demonstration at all.
+                </p>
+              </div>
+
               <h3>What is ARC-AGI?</h3>
               <p>
                 The Abstraction and Reasoning Corpus presents simple visual puzzles: colored grids that transform according to hidden rules. You see 2-3 examples of input-output pairs, then must discover the rule and apply it to a new test case. These puzzles test core knowledge—concepts like symmetry, counting, containment, and pathfinding—without requiring specialized expertise.
@@ -448,7 +478,7 @@ const LandingPage = ({ onStartParticipation }) => {
                 The <a href="https://arxiv.org/abs/2409.01374" target="_blank" rel="noopener noreferrer">H-ARC study</a> tested over 1,700 people and found that <strong>790 out of 800 tasks (98.8%)</strong> were solvable by at least one person within three attempts, confirming these are genuine intelligence tests, not trick questions.
               </p>
               <p>
-                The benchmark was specifically designed to resist the "scaling" approach that dominates modern AI. Early pure deep learning systems scored below 1% in the 2020 Kaggle competition. Even GPT-3 with direct prompting scored 0%. Five years and billions of dollars later, with the intense <a href="https://arxiv.org/abs/2412.04604" target="_blank" rel="noopener noreferrer">2024 ARC Prize competition</a>, the frontier has moved to only 55.5%, far short of the 85% needed to claim the grand prize.
+                The benchmark was specifically designed to resist the "scaling" approach that dominates modern AI. Early pure deep learning systems scored below 1% in the 2020 Kaggle competition. Even GPT-3 with direct prompting scored 0%. By the intense <a href="https://arxiv.org/abs/2412.04604" target="_blank" rel="noopener noreferrer">2024 ARC Prize competition</a>, the frontier reached 55.5% — and by 2026 the best systems are approaching ~84%. Yet the 85% bonus prize threshold remains unclaimed, and the gap on ARC-AGI-3 has reset back to near zero.
               </p>
 
               <h3>Why AI Struggles: Four Fundamental Weaknesses</h3>
