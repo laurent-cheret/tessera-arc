@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import MiniARCExample from './MiniARCExample';
 import TypewriterAnimation from './TypewriterAnimation';
 import PaintingGridAnimation from './PaintingGridAnimation';
+import config from '../config';
 import './LandingPage.css';
 
 // ARC color palette (colors 0-9, skip black so cells are visible on dark bg)
@@ -92,12 +93,11 @@ const LandingPage = ({ onStartParticipation }) => {
   const [platformStats, setPlatformStats] = useState(null);
 
   useEffect(() => {
-    const base = process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : '';
-    fetch(`${base}/api/arc-live-stats`)
+    fetch(`${config.API_URL}/api/arc-live-stats`)
       .then(r => r.json())
       .then(setArcStats)
       .catch(() => {});
-    fetch(`${base}/api/analytics/overview`)
+    fetch(`${config.API_URL}/api/analytics/overview`)
       .then(r => r.json())
       .then(setPlatformStats)
       .catch(() => {});
