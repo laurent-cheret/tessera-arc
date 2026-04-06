@@ -502,8 +502,8 @@ function App() {
     return Math.floor((endTime - startTime) / 1000);
   };
 
-  // Dashboard mode — activated by ?dashboard in URL
-  if (new URLSearchParams(window.location.search).has('dashboard')) {
+  // Dashboard route — tessera-arc.org/#/dashboard
+  if (window.location.hash === '#/dashboard') {
     return <AnalyticsDashboard />;
   }
 
