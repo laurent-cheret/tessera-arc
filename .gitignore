@@ -48,3 +48,12 @@ temp/
 # Optional: Large data files (if you don't want to track them)
 # data/training/*.json
 # data/evaluation/*.json
+
+# ARC Similarity — private training project (Colab notebooks, not for public repo)
+arc_similarity/
+
+# Task embeddings — large file, generated locally
+server/data/task_embeddings.json
+
+# Claude Code local session data
+.claude/

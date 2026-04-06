@@ -6,12 +6,50 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 // Database connection
 const db = require('./database/connection');
 const taskLoader = require('./taskLoader');
 
 require('dotenv').config();
+
+// =====================================================
+// Task Embeddings (similarity search)
+// =====================================================
+
+let taskEmbeddings = null; // { taskId: Float32Array }
+
+function loadEmbeddings() {
+  const embPath = path.join(__dirname, 'data', 'task_embeddings.json');
+  if (!fs.existsSync(embPath)) {
+    console.warn('⚠️  task_embeddings.json not found — /api/similar-tasks will return 503');
+    return;
+  }
+  try {
+    const raw = JSON.parse(fs.readFileSync(embPath, 'utf8'));
+    const validIds = new Set(taskLoader.getAllTaskIds().all);
+    taskEmbeddings = {};
+    let skipped = 0;
+    for (const [tid, vec] of Object.entries(raw)) {
+      if (!validIds.has(tid)) { skipped++; continue; }
+      taskEmbeddings[tid] = new Float32Array(vec);
+    }
+    console.log(`🔍 Loaded embeddings for ${Object.keys(taskEmbeddings).length} tasks (skipped ${skipped} non-ARC entries)`);
+  } catch (err) {
+    console.error('❌ Failed to load task_embeddings.json:', err.message);
+  }
+}
+
+// Dot product of two Float32Arrays (vectors are L2-normalized → equals cosine sim)
+function dotProduct(a, b) {
+  let s = 0;
+  for (let i = 0; i < a.length; i++) s += a[i] * b[i];
+  return s;
+}
+
+loadEmbeddings();
 
 const app = express();
 app.set('trust proxy', 1);
@@ -1065,10 +1103,24 @@ app.get('/api/analytics/task-explorer/:taskId', async (req, res) => {
        FROM tasks WHERE task_id = $1`,
       [taskId]
     );
+    let task;
     if (taskResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Task not found' });
+      // Task not in DB — build a lightweight record from taskLoader
+      const raw = taskLoader.getTaskById(taskId);
+      if (!raw) return res.status(404).json({ error: 'Task not found' });
+      task = {
+        task_id: taskId,
+        task_set: raw.type,
+        input_grids: raw.train.map(p => p.input),
+        output_grids: raw.train.map(p => p.output),
+        test_input_grid: raw.test[0]?.input ?? null,
+        ground_truth_output: raw.test[0]?.output ?? null,
+        number_of_examples: raw.train.length,
+      };
+      return res.json({ task, attempts: [], state_convergence: [] });
+    } else {
+      task = taskResult.rows[0];
     }
-    const task = taskResult.rows[0];
 
     // 2. Get all completed attempts with responses
     const attemptsResult = await db.query(`
@@ -1269,6 +1321,51 @@ app.get('/api/arc-live-stats', async (req, res) => {
       fetchedAt: null,
     });
   }
+});
+
+// =====================================================
+// Similarity Search
+// =====================================================
+
+app.get('/api/similar-tasks/:taskId', async (req, res) => {
+  if (!taskEmbeddings) {
+    return res.status(503).json({ error: 'Embeddings not loaded' });
+  }
+
+  const { taskId } = req.params;
+  const k = Math.min(parseInt(req.query.k) || 5, 20);
+  const queryVec = taskEmbeddings[taskId];
+
+  if (!queryVec) {
+    return res.status(404).json({ error: `No embedding for task ${taskId}` });
+  }
+
+  // Compute cosine similarity against all other tasks
+  const scores = [];
+  for (const [tid, vec] of Object.entries(taskEmbeddings)) {
+    if (tid === taskId) continue;
+    scores.push({ task_id: tid, score: dotProduct(queryVec, vec) });
+  }
+  scores.sort((a, b) => b.score - a.score);
+  const topK = scores.slice(0, k);
+
+  if (topK.length === 0) {
+    return res.json([]);
+  }
+
+  // Fetch grids from taskLoader (covers all ARC tasks, not just DB-stored ones)
+  const result = topK.map(t => {
+    const raw = taskLoader.getTaskById(t.task_id);
+    return {
+      task_id: t.task_id,
+      score: Math.round(t.score * 1000) / 1000,
+      input_grids: raw ? raw.train.map(p => p.input) : [],
+      output_grids: raw ? raw.train.map(p => p.output) : [],
+      test_input_grid: raw ? raw.test[0]?.input ?? null : null,
+    };
+  });
+
+  res.json(result);
 });
 
 // 404 handler

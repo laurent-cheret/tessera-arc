@@ -448,6 +448,192 @@
   text-align: center;
 }
 
+/* ─── Similar tasks section ───────────────────────────────────────────────── */
+
+.similar-tasks-section {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+}
+
+.similar-tasks-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.875rem;
+}
+
+.similar-tasks-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8b949e;
+}
+
+.similar-tasks-hint {
+  font-size: 0.72rem;
+  color: #484f58;
+}
+
+.similar-tasks-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6e7681;
+  font-size: 0.8rem;
+  padding: 0.5rem 0;
+}
+
+/* Horizontal scrollable strip of cards */
+.similar-tasks-strip {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scrollbar-width: thin;
+  scrollbar-color: #30363d transparent;
+}
+
+.similar-tasks-strip::-webkit-scrollbar {
+  height: 4px;
+}
+.similar-tasks-strip::-webkit-scrollbar-track { background: transparent; }
+.similar-tasks-strip::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+
+/* Individual card */
+.similar-task-card {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+
+.similar-task-card:hover {
+  border-color: #388bfd;
+  background: #1c2128;
+  transform: translateY(-2px);
+}
+
+.similar-task-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.similar-task-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.similar-arrow {
+  color: #484f58;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.similar-task-id {
+  font-family: 'Courier New', monospace;
+  font-size: 0.7rem;
+  color: #8b949e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.similar-task-score {
+  font-size: 0.72rem;
+  color: #3fb950;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ─── Hover popup ─────────────────────────────────────────────────────────── */
+
+.similar-popup {
+  position: fixed;
+  z-index: 1000;
+  background: #1c2128;
+  border: 1px solid #388bfd;
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  min-width: 280px;
+  max-width: 520px;
+}
+
+.similar-popup-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.875rem;
+  flex-wrap: wrap;
+}
+
+.similar-popup-id {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: #e6edf3;
+  font-weight: 600;
+}
+
+.similar-popup-score {
+  font-size: 0.75rem;
+  color: #3fb950;
+  font-weight: 700;
+}
+
+.similar-popup-nav {
+  margin-left: auto;
+  background: #388bfd;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.similar-popup-nav:hover {
+  background: #58a6ff;
+}
+
+.similar-popup-examples {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.similar-popup-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.similar-popup-pair-label {
+  font-size: 0.65rem;
+  color: #6e7681;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.similar-popup-pair-grids {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 /* Responsive */
 @media (max-width: 700px) {
   .task-examples-row {

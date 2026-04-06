@@ -342,6 +342,158 @@ function AttemptCard({ attempt, groundTruth, convergentHashes, index }) {
   );
 }
 
+// ─── Similar tasks hover popup ────────────────────────────────────────────────
+
+function SimilarTaskPopup({ task, anchorRect, onNavigate, onMouseEnter, onMouseLeave }) {
+  const [pos, setPos] = React.useState({ top: 0, left: 0 });
+  const popupRef = React.useRef(null);
+
+  React.useLayoutEffect(() => {
+    if (!popupRef.current || !anchorRect) return;
+    const popH = popupRef.current.offsetHeight;
+    const popW = popupRef.current.offsetWidth;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    // Prefer appearing above the card; fall back to below
+    let top = anchorRect.top - popH - 10;
+    if (top < 8) top = anchorRect.bottom + 10;
+
+    // Keep horizontally within viewport
+    let left = anchorRect.left + anchorRect.width / 2 - popW / 2;
+    if (left < 8) left = 8;
+    if (left + popW > vw - 8) left = vw - popW - 8;
+
+    // Clamp vertically
+    if (top + popH > vh - 8) top = vh - popH - 8;
+
+    setPos({ top, left });
+  }, [anchorRect]);
+
+  const inputGrids = task.input_grids || [];
+  const outputGrids = task.output_grids || [];
+
+  return (
+    <div
+      ref={popupRef}
+      className="similar-popup"
+      style={{ top: pos.top, left: pos.left }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <div className="similar-popup-header">
+        <span className="similar-popup-id">{task.task_id}</span>
+        <button className="similar-popup-nav" onClick={() => onNavigate(task.task_id)}>
+          Go to task →
+        </button>
+      </div>
+      <div className="similar-popup-examples">
+        {inputGrids.map((grid, i) => (
+          <div key={i} className="similar-popup-pair">
+            <div className="similar-popup-pair-label">Ex {i + 1}</div>
+            <div className="similar-popup-pair-grids">
+              <MiniGrid grid={grid} size={90} />
+              <span className="similar-arrow">→</span>
+              <MiniGrid grid={outputGrids[i]} size={90} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Similar tasks panel ──────────────────────────────────────────────────────
+
+function SimilarTasks({ taskId, onSelectTask }) {
+  const [similar, setSimilar] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [popup, setPopup] = useState(null); // { task, anchorRect }
+  const leaveTimer = React.useRef(null);
+
+  useEffect(() => {
+    if (!taskId) return;
+    setLoading(true);
+    setSimilar(null);
+    setPopup(null);
+    fetch(`${config.API_URL}/api/similar-tasks/${taskId}?k=5`)
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(data => setSimilar(data))
+      .catch(() => setSimilar([]))
+      .finally(() => setLoading(false));
+  }, [taskId]);
+
+  const showPopup = (task, e) => {
+    clearTimeout(leaveTimer.current);
+    setPopup({ task, anchorRect: e.currentTarget.getBoundingClientRect() });
+  };
+
+  const hidePopup = () => {
+    leaveTimer.current = setTimeout(() => setPopup(null), 120);
+  };
+
+  const keepPopup = () => clearTimeout(leaveTimer.current);
+
+  if (loading) return (
+    <div className="similar-tasks-section">
+      <div className="similar-tasks-header">
+        <span className="similar-tasks-title">Similar tasks</span>
+      </div>
+      <div className="similar-tasks-loading">
+        <div className="dash-spinner" style={{ width: 16, height: 16 }} />
+        <span>Finding similar tasks…</span>
+      </div>
+    </div>
+  );
+
+  if (!similar || similar.length === 0) return null;
+
+  return (
+    <>
+      <div className="similar-tasks-section">
+        <div className="similar-tasks-header">
+          <span className="similar-tasks-title">Similar tasks</span>
+          <span className="similar-tasks-hint">Top 5 closest tasks · Hover to preview · Click to navigate</span>
+        </div>
+        <div className="similar-tasks-strip">
+          {similar.map(t => {
+            const firstInput = t.input_grids?.[0];
+            const firstOutput = t.output_grids?.[0];
+            return (
+              <button
+                key={t.task_id}
+                className="similar-task-card"
+                onClick={() => onSelectTask(t.task_id)}
+                onMouseEnter={e => showPopup(t, e)}
+                onMouseLeave={hidePopup}
+              >
+                <div className="similar-task-preview">
+                  <MiniGrid grid={firstInput} size={72} />
+                  <span className="similar-arrow">→</span>
+                  <MiniGrid grid={firstOutput} size={72} />
+                </div>
+                <div className="similar-task-footer">
+                  <span className="similar-task-id">{t.task_id}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {popup && (
+        <SimilarTaskPopup
+          task={popup.task}
+          anchorRect={popup.anchorRect}
+          onNavigate={id => { setPopup(null); onSelectTask(id); }}
+          onMouseEnter={keepPopup}
+          onMouseLeave={hidePopup}
+        />
+      )}
+    </>
+  );
+}
+
 // ─── Main TaskExplorer component ──────────────────────────────────────────────
 
 export default function TaskExplorer() {
@@ -445,6 +597,11 @@ export default function TaskExplorer() {
           {/* Task grids */}
           <div className="explorer-section">
             <TaskDisplay task={explorerData.task} />
+          </div>
+
+          {/* Similar tasks strip */}
+          <div className="explorer-section">
+            <SimilarTasks taskId={selectedTaskId} onSelectTask={setSelectedTaskId} />
           </div>
 
           {/* State space graph */}
