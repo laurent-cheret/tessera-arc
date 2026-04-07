@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import MiniARCExample from './MiniARCExample';
 import TypewriterAnimation from './TypewriterAnimation';
-import PaintingGridAnimation from './PaintingGridAnimation';
+import LiveDemo from './LiveDemo';
 import config from '../config';
 import './LandingPage.css';
 
@@ -92,6 +92,8 @@ const LandingPage = ({ onStartParticipation }) => {
   const [arcStats, setArcStats] = useState(null);
   const [platformStats, setPlatformStats] = useState(null);
 
+  const [demo, setDemo] = useState(null);
+
   useEffect(() => {
     fetch(`${config.API_URL}/api/arc-live-stats`)
       .then(r => r.json())
@@ -100,6 +102,10 @@ const LandingPage = ({ onStartParticipation }) => {
     fetch(`${config.API_URL}/api/analytics/overview`)
       .then(r => r.json())
       .then(setPlatformStats)
+      .catch(() => {});
+    fetch(`${config.API_URL}/api/landing-demo`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data && !data.error) setDemo(data); })
       .catch(() => {});
   }, []);
 
@@ -263,49 +269,36 @@ const LandingPage = ({ onStartParticipation }) => {
         {/* How You Can Contribute - UPDATED */}
         <div className="content-card highlight">
           <h2>📝 How You Can Contribute</h2>
-          <div className="steps-grid-animated">
-            
-            {/* Step 1: Observe */}
-            <div className="step-animated">
-              <span className="step-number">1</span>
-              <div className="step-content">
-                <h3>🔍 Observe</h3>
-                <p>Look at the example transformations and form your initial hypothesis about the pattern</p>
-                <TypewriterAnimation 
-                  phrases={observePhrases}
-                  speed={50}
-                  pauseDuration={2000}
-                  isItalic={true}
-                />
+          {demo
+            ? <LiveDemo demo={demo} />
+            : (
+              <div className="steps-grid-animated">
+                <div className="step-animated">
+                  <span className="step-number">1</span>
+                  <div className="step-content">
+                    <h3>🔍 Observe</h3>
+                    <p>Look at the example transformations and form your initial hypothesis about the pattern</p>
+                    <TypewriterAnimation phrases={observePhrases} speed={50} pauseDuration={2000} isItalic={true} />
+                  </div>
+                </div>
+                <div className="step-animated">
+                  <span className="step-number">2</span>
+                  <div className="step-content">
+                    <h3>🎨 Solve</h3>
+                    <p>Create your solution by clicking and coloring cells one by one</p>
+                  </div>
+                </div>
+                <div className="step-animated">
+                  <span className="step-number">3</span>
+                  <div className="step-content">
+                    <h3>👨‍🏫 Instruct</h3>
+                    <p>Imagine instructing a friend who can only see the test input—guide them step-by-step to produce your exact solution</p>
+                    <TypewriterAnimation phrases={teachPhrases} speed={50} pauseDuration={2000} isItalic={true} />
+                  </div>
+                </div>
               </div>
-            </div>
-
-            {/* Step 2: Solve */}
-            <div className="step-animated">
-              <span className="step-number">2</span>
-              <div className="step-content">
-                <h3>🎨 Solve</h3>
-                <p>Create your solution by clicking and coloring cells one by one</p>
-                <PaintingGridAnimation />
-              </div>
-            </div>
-
-            {/* Step 3: Teach - UPDATED */}
-            <div className="step-animated">
-              <span className="step-number">3</span>
-              <div className="step-content">
-                <h3>👨‍🏫 Instruct</h3>
-                <p>Imagine instructing a friend who can only see the test input—guide them step-by-step to produce your exact solution</p>
-                <TypewriterAnimation 
-                  phrases={teachPhrases}
-                  speed={50}
-                  pauseDuration={2000}
-                  isItalic={true}
-                />
-              </div>
-            </div>
-
-          </div>
+            )
+          }
 
           {/* Teaching Explanation Box */}
           <div className="instruction-rationale">

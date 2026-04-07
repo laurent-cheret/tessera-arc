@@ -1324,6 +1324,88 @@ app.get('/api/arc-live-stats', async (req, res) => {
 });
 
 // =====================================================
+// Landing Page Demo — real attempt data
+// =====================================================
+
+app.get('/api/landing-demo', async (req, res) => {
+  try {
+    // Pick a random correct attempt that has all three teaching fields filled
+    const attemptResult = await db.query(`
+      SELECT ta.attempt_id, ta.task_id,
+             r.q1_main_idea, r.q3a_what_to_look_for, r.q3b_how_to_transform, r.q3c_how_to_verify
+      FROM task_attempts ta
+      JOIN responses r ON r.attempt_id = ta.attempt_id
+      WHERE ta.is_correct = true
+        AND ta.attempt_status = 'completed'
+        AND r.q1_main_idea IS NOT NULL AND LENGTH(r.q1_main_idea) > 20
+        AND r.q3a_what_to_look_for IS NOT NULL AND LENGTH(r.q3a_what_to_look_for) > 20
+        AND r.q3b_how_to_transform IS NOT NULL AND LENGTH(r.q3b_how_to_transform) > 20
+        AND r.q3c_how_to_verify IS NOT NULL AND LENGTH(r.q3c_how_to_verify) > 20
+      ORDER BY RANDOM()
+      LIMIT 1
+    `);
+
+    if (attemptResult.rows.length === 0) {
+      return res.status(404).json({ error: 'No demo data available yet' });
+    }
+
+    const attempt = attemptResult.rows[0];
+
+    // Get the task's grids
+    const taskResult = await db.query(
+      'SELECT test_input_grid, input_grids, output_grids FROM tasks WHERE task_id = $1',
+      [attempt.task_id]
+    );
+    const taskRow = taskResult.rows[0];
+    const testInput = taskRow?.test_input_grid ?? null;
+    const trainingInputs = taskRow?.input_grids ?? [];
+    const trainingOutputs = taskRow?.output_grids ?? [];
+
+    // Get action traces — reconstruct a sampled frame sequence
+    const tracesResult = await db.query(`
+      SELECT action_type, cell_row, cell_column,
+             color_value_before, color_value_after,
+             timestamp_ms, grid_state_after
+      FROM action_traces
+      WHERE attempt_id = $1
+      ORDER BY sequence_number ASC
+    `, [attempt.attempt_id]);
+
+    const allSnapshots = reconstructGridPath(tracesResult.rows, testInput);
+
+    // Sample evenly — target ~24 frames max so the animation isn't too long
+    const editSnapshots = allSnapshots.filter(s => s.event === 'edit' || s.event === 'start');
+    const TARGET = 24;
+    let frames;
+    if (editSnapshots.length <= TARGET) {
+      frames = editSnapshots.map(s => s.grid);
+    } else {
+      const step = editSnapshots.length / TARGET;
+      frames = Array.from({ length: TARGET }, (_, i) =>
+        editSnapshots[Math.floor(i * step)].grid
+      );
+      // Always include the final state
+      frames.push(editSnapshots[editSnapshots.length - 1].grid);
+    }
+
+    res.json({
+      q1: attempt.q1_main_idea,
+      q3a: attempt.q3a_what_to_look_for,
+      q3b: attempt.q3b_how_to_transform,
+      q3c: attempt.q3c_how_to_verify,
+      task_input: testInput,
+      training_inputs: trainingInputs,
+      training_outputs: trainingOutputs,
+      frames,
+    });
+
+  } catch (error) {
+    console.error('Error fetching landing demo:', error);
+    res.status(500).json({ error: 'Failed to fetch demo data' });
+  }
+});
+
+// =====================================================
 // Similarity Search
 // =====================================================
 
