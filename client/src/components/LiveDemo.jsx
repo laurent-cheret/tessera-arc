@@ -41,7 +41,7 @@ function Cursor() {
   return <span className="demo-cursor">|</span>;
 }
 
-export default function LiveDemo({ demo }) {
+export default function LiveDemo({ demo, onCycleEnd }) {
   const [phase, setPhase] = useState(0);
   const [fadeIn, setFadeIn] = useState(true);
 
@@ -118,9 +118,12 @@ export default function LiveDemo({ demo }) {
 
       const typeSentence = (si, ci) => {
         if (si >= sentences.length) {
-          // All done — mark all rows as committed, hold 2.5s then loop
+          // All done — mark all rows as committed, hold 2.5s then fetch new demo + loop
           setP3Idx(sentences.length);
-          timer.current = setTimeout(() => goTo(0), 2500);
+          timer.current = setTimeout(() => {
+            if (onCycleEnd) onCycleEnd();
+            goTo(0);
+          }, 2500);
           return;
         }
         setP3Idx(si);

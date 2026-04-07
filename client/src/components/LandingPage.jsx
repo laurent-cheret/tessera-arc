@@ -103,11 +103,15 @@ const LandingPage = ({ onStartParticipation }) => {
       .then(r => r.json())
       .then(setPlatformStats)
       .catch(() => {});
+    fetchDemo();
+  }, []);
+
+  const fetchDemo = () => {
     fetch(`${config.API_URL}/api/landing-demo`)
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data && !data.error) setDemo(data); })
       .catch(() => {});
-  }, []);
+  };
 
   // Phrases for observe phase
   const observePhrases = [
@@ -270,7 +274,7 @@ const LandingPage = ({ onStartParticipation }) => {
         <div className="content-card highlight">
           <h2>📝 How You Can Contribute</h2>
           {demo
-            ? <LiveDemo demo={demo} />
+            ? <LiveDemo demo={demo} onCycleEnd={fetchDemo} />
             : (
               <div className="steps-grid-animated">
                 <div className="step-animated">
